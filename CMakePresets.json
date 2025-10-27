@@ -1,0 +1,146 @@
+{
+    "version": 3,
+    "cmakeMinimumRequired": {
+        "major": 3,
+        "minor": 22,
+        "patch": 0
+    },
+    "configurePresets": [
+        {
+            "name": "Defaults",
+            "description": "Default configuration",
+            "binaryDir": "${sourceDir}/build",
+            "hidden": true,
+            "cacheVariables": {
+                "CMAKE_BUILD_TYPE": "Debug",
+                "CMAKE_EXPORT_COMPILE_COMMANDS": "ON",
+                "CMAKE_CXX_STANDARD": "20",
+                "CMAKE_CXX_STANDARD_REQUIRED": "ON",
+                "CMAKE_CXX_EXTENSIONS": "OFF",
+                "CMAKE_TOOLCHAIN_FILE": "$env{VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake"
+            },
+            "generator": "Ninja"
+        },
+        {
+            "name": "Debug",
+            "hidden": true,
+            "description": "Debug configuration",
+            "binaryDir": "${sourceDir}/build/debug",
+            "inherits": "Defaults"
+        },
+        {
+            "name": "Release",
+            "hidden": true,
+            "description": "Release configuration",
+            "binaryDir": "${sourceDir}/build/release",
+            "inherits": "Defaults",
+            "cacheVariables": {
+                "CMAKE_BUILD_TYPE": "Release",
+		"CMAKE_INTERPROCEDURAL_OPTIMIZATION": "ON"
+            }
+        },
+        {
+            "name": "clang",
+            "description": "clang configuration",
+            "cacheVariables": {
+                "CMAKE_CXX_FLAGS": "-Wall -Wextra -Wshadow -Wnon-virtual-dtor -Wold-style-cast -Wcast-align -Wunused -Woverloaded-virtual  -Wpedantic -Wconversion -Wsign-conversion -Wnull-dereference -Wdouble-promotion -Wformat=2 -Wimplicit-fallthrough"
+            }
+        },
+        {
+            "name": "gcc",
+            "description": "gcc configuration",
+            "cacheVariables": {
+                "CMAKE_CXX_FLAGS": "-Wall -Wextra -Wshadow -Wnon-virtual-dtor -Wold-style-cast -Wcast-align -Wunused -Woverloaded-virtual  -Wpedantic -Wconversion -Wsign-conversion -Wnull-dereference -Wdouble-promotion -Wformat=2 -Wimplicit-fallthrough -Wmisleading-indentation -Wduplicated-cond  -Wduplicated-branches -Wlogical-op -Wuseless-cast -Wsuggest-override"
+            }
+        },
+        {
+            "name": "msvc", 
+            "description": "msvc configuration", 
+            "cacheVariables": { 
+                "CMAKE_CXX_FLAGS": "/W4 /w14242 /w14254 /w14263 /w14265 /w14287 /we4289 /w14296 /w14311 /w14545 /w14546 /w14547 /w14549 /w14555 /w14619 /w14640 /w14826 /w14905 /w14906 /w14928 /permissive-"
+            }
+        },
+        {
+            "name": "linux-clang-debug",
+            "description": "clang linux debug configuration",
+            "inherits": [ "Debug", "clang" ],
+            "cacheVariables": {
+                "CMAKE_C_COMPILER": "clang",
+                "CMAKE_CXX_COMPILER": "clang++"
+            }
+        },
+        {
+            "name": "linux-clang-release",
+            "description": "clang linux release configuration",
+            "inherits": [ "Release", "clang" ],
+            "cacheVariables": {
+                "CMAKE_C_COMPILER": "clang",
+                "CMAKE_CXX_COMPILER": "clang++"
+            }
+        },
+        {
+            "name": "linux-gcc-debug",
+            "description": "gcc linux debug configuration",
+            "inherits": [ "Debug", "gcc" ],
+            "cacheVariables": {
+                "CMAKE_C_COMPILER": "gcc",
+                "CMAKE_CXX_COMPILER": "g++"
+            }
+        },
+        {
+            "name": "linux-gcc-release",
+            "description": "gcc linux release configuration",
+            "inherits": [ "Release", "gcc" ],
+            "cacheVariables": {
+                "CMAKE_C_COMPILER": "gcc",
+                "CMAKE_CXX_COMPILER": "g++"
+            }
+        },
+        {
+            "name": "windows-clang-debug",
+            "description": "clang windows debug configuration",
+            "inherits": [ "Debug", "clang" ],
+            "cacheVariables": {
+                "CMAKE_C_COMPILER": "clang-cl",
+                "CMAKE_CXX_COMPILER": "clang-cl"
+            },
+            "vendor": {
+                "microsoft.com/VisualStudioSettings/CMake/1.0": {
+                    "intelliSenseMode": "windows-clang-x64"
+                }
+            }
+        },
+        {
+            "name": "windows-clang-release",
+            "description": "clang windows release configuration",
+            "inherits": [ "Release", "clang" ],
+            "cacheVariables": {
+                "CMAKE_C_COMPILER": "clang-cl",
+                "CMAKE_CXX_COMPILER": "clang-cl"
+            },
+            "vendor": {
+                "microsoft.com/VisualStudioSettings/CMake/1.0": {
+                    "intelliSenseMode": "windows-clang-x64"
+                }
+            }
+        },
+        {
+            "name": "windows-msvc-debug",
+            "description": "msvc windows debug configuration",
+            "inherits": [ "Debug", "msvc" ],
+            "cacheVariables": {
+                "CMAKE_C_COMPILER": "cl",
+                "CMAKE_CXX_COMPILER": "cl"
+            }
+        },
+        {
+            "name": "windows-msvc-release",
+            "description": "msvc windows release configuration",
+            "inherits": [ "Release", "msvc" ],
+            "cacheVariables": {
+                "CMAKE_C_COMPILER": "cl",
+                "CMAKE_CXX_COMPILER": "cl"
+            }
+        }
+    ]
+}
