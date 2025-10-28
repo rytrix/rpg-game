@@ -6,6 +6,7 @@
 #include <random>
 #include <stdexcept>
 #include <vector>
+#include <algorithm>
 
 using usize = std::size_t;
 using u8 = uint8_t;
