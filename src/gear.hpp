@@ -20,6 +20,7 @@ struct Statsheet {
 class Item {
 public:
     Item() = default;
+    Item(sqlite3* database, std::string& sqlite_command);
     Item(u32 item_level, u32 slot, Statsheet<u64> base_stats);
 
     [[nodiscard]] u32 get_slot() const;
