@@ -60,12 +60,11 @@ int main()
     //         .m_recovery = 2,
     //     });
 
-    Item legs{};
     std::string sql_command = R"(
         SELECT * FROM ITEMS
         WHERE ID IS 2
     )";
-    legs.import_from_sql_cmd(db, sql_command);
+    Item legs(db, sql_command);
 
     c1.equip_item(chest);
     c1.equip_item(legs);

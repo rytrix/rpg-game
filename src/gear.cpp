@@ -10,6 +10,11 @@ Item::Item(u32 item_level, u32 slot, Statsheet<u64> base_stats)
     // }
 }
 
+Item::Item(sqlite3* database, std::string& sqlite_command)
+{
+    this->import_from_sql_cmd(database, sqlite_command);
+}
+
 [[nodiscard]] u32 Item::get_slot() const
 {
     return m_slot;
