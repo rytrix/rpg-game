@@ -19,7 +19,7 @@ struct Statsheet {
 
 class Item {
 public:
-    Item();
+    Item() = default;
     Item(u32 item_level, u32 slot, Statsheet<u64> base_stats);
 
     [[nodiscard]] u32 get_slot() const;
@@ -28,6 +28,7 @@ public:
 
     [[nodiscard]] static std::string create_sql_table_cmd(const char* table_name);
     [[nodiscard]] std::string export_to_sql_cmd(const char* table_name, int id, const char* item_name) const;
+    int import_from_sql_cmd(sqlite3* database, std::string& sql_command);
 
     static constexpr u32 HELMET_SLOT = 0;
     static constexpr u32 SHOULDER_SLOT = 1;
@@ -43,6 +44,8 @@ public:
     static constexpr u32 TRINKET_SLOT2 = 11;
     static constexpr u32 WEAPON_SLOT = 12;
     static constexpr u32 OFFHAND_SLOT = 13;
+
+    void debug_print();
 
 private:
     u32 m_item_level = {};

@@ -18,8 +18,6 @@ int sqlite_cmd(sqlite3* db, T command)
 
 int main()
 {
-    std::print("Hello, world!\n");
-
     sqlite3* db = nullptr;
     int error = sqlite3_open("Gear.db", &db);
     if (error != 0) {
@@ -45,22 +43,29 @@ int main()
             .m_recovery = 2,
         });
 
-    Item legs(3, Item::LEG_SLOT,
-        Statsheet<u64> {
-            .m_stamina = 2,
-            .m_resource = 2,
+    // Item legs(3, Item::LEG_SLOT,
+    //     Statsheet<u64> {
+    //         .m_stamina = 2,
+    //         .m_resource = 2,
+    //
+    //         .m_armor = 2,
+    //         .m_resist = 1,
+    //
+    //         .m_primary = 1,
+    //         .m_crit = 1,
+    //         .m_haste = 1,
+    //         .m_expertise = 1,
+    //
+    //         .m_spirit = 2,
+    //         .m_recovery = 2,
+    //     });
 
-            .m_armor = 2,
-            .m_resist = 1,
-
-            .m_primary = 1,
-            .m_crit = 1,
-            .m_haste = 1,
-            .m_expertise = 1,
-
-            .m_spirit = 2,
-            .m_recovery = 2,
-        });
+    Item legs{};
+    std::string sql_command = R"(
+        SELECT * FROM ITEMS
+        WHERE ID IS 2
+    )";
+    legs.import_from_sql_cmd(db, sql_command);
 
     c1.equip_item(chest);
     c1.equip_item(legs);

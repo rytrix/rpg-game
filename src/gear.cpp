@@ -1,10 +1,5 @@
 #include "gear.hpp"
 
-Item::Item()
-    : m_item_level(0)
-{
-}
-
 Item::Item(u32 item_level, u32 slot, Statsheet<u64> base_stats)
     : m_item_level(item_level)
     , m_slot(slot)
@@ -87,3 +82,52 @@ Item::Item(u32 item_level, u32 slot, Statsheet<u64> base_stats)
     return command;
 }
 
+int Item::import_from_sql_cmd(sqlite3* database, std::string& sql_command)
+{
+    sqlite3_stmt* statement = nullptr;
+    if (sqlite3_prepare_v2(database, sql_command.c_str(), static_cast<int>(sql_command.length()), &statement, nullptr) != SQLITE_OK) {
+        std::println("Failed to prepare sqlite3 statement \"{}\"", sql_command);
+        return -1;
+    }
+
+    if (sqlite3_step(statement) == SQLITE_ROW) {
+        m_item_level = static_cast<u32>(sqlite3_column_int(statement, 2));
+        m_slot = static_cast<u32>(sqlite3_column_int(statement, 3));
+        m_base_stats.m_stamina = static_cast<u64>(sqlite3_column_int(statement, 4));
+        m_base_stats.m_resource = static_cast<u64>(sqlite3_column_int(statement, 5));
+
+        m_base_stats.m_armor = static_cast<u64>(sqlite3_column_int(statement, 6));
+        m_base_stats.m_resist = static_cast<u64>(sqlite3_column_int(statement, 7));
+
+        m_base_stats.m_primary = static_cast<u64>(sqlite3_column_int(statement, 8));
+        m_base_stats.m_crit = static_cast<u64>(sqlite3_column_int(statement, 9));
+        m_base_stats.m_haste = static_cast<u64>(sqlite3_column_int(statement, 10));
+        m_base_stats.m_expertise = static_cast<u64>(sqlite3_column_int(statement, 11));
+
+        m_base_stats.m_spirit = static_cast<u64>(sqlite3_column_int(statement, 12));
+        m_base_stats.m_recovery = static_cast<u64>(sqlite3_column_int(statement, 13));
+    }
+
+    sqlite3_finalize(statement);
+
+    return 0;
+}
+
+void Item::debug_print()
+{
+    std::println("item level: {}", m_item_level);
+    std::println("slot: {}", m_slot);
+
+    std::println("stamina: {}", m_base_stats.m_stamina);
+    std::println("resource: {}", m_base_stats.m_resource);
+
+    std::println("armor: {}", m_base_stats.m_armor);
+    std::println("resist: {}", m_base_stats.m_resist);
+
+    std::println("primary: {}", m_base_stats.m_primary);
+    std::println("crit: {}", m_base_stats.m_crit);
+    std::println("haste: {}", m_base_stats.m_haste);
+    std::println("expertise: {}", m_base_stats.m_expertise);
+    std::println("recovery: {}", m_base_stats.m_recovery);
+    std::println("spirit: {}", m_base_stats.m_spirit);
+}
