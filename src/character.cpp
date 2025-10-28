@@ -74,15 +74,15 @@ f64 Character::get_cur_resource() const
 }
 
 
-Item Character::equip_item(const Item& item, const u32 slot)
+Item Character::equip_item(const Item& item)
 {
-    if (slot >= ITEM_SLOTS) {
-        throw std::runtime_error(fmt::format("Invalid item slot \"{}\", should within 0-{}", slot, ITEM_SLOTS));
+    if (item.get_slot() >= ITEM_SLOTS) {
+        throw std::runtime_error(std::format("Invalid item slot \"{}\", should within 0-{}", item.get_slot(), ITEM_SLOTS));
     }
 
-    Item old_item = m_items.at(slot);
+    Item old_item = m_items.at(item.get_slot());
 
-    m_items.at(slot) = item;
+    m_items.at(item.get_slot()) = item;
 
     // Update stored stat value
     // I kinda hate this (maybe put it somewhere else)
@@ -108,18 +108,18 @@ void Character::regen_tick(u32 ticks)
 
 void Character::debug_print()
 {
-    fmt::println("stamina: {} {}/{}", m_max_stats.m_stamina, m_cur_stamina, max_stamina());
-    fmt::println("resource: {} {}/{}", m_max_stats.m_resource, m_cur_resource, max_resource());
+    std::println("stamina: {} {}/{}", m_max_stats.m_stamina, m_cur_stamina, max_stamina());
+    std::println("resource: {} {}/{}", m_max_stats.m_resource, m_cur_resource, max_resource());
 
-    fmt::println("armor: {}", m_max_stats.m_armor);
-    fmt::println("resist: {}", m_max_stats.m_resist);
+    std::println("armor: {}", m_max_stats.m_armor);
+    std::println("resist: {}", m_max_stats.m_resist);
 
-    fmt::println("primary: {}", m_max_stats.m_primary);
-    fmt::println("crit: {}", m_max_stats.m_crit);
-    fmt::println("haste: {}", m_max_stats.m_haste);
-    fmt::println("expertise: {}", m_max_stats.m_expertise);
-    fmt::println("recovery: {}", m_max_stats.m_recovery);
-    fmt::println("spirit: {}", m_max_stats.m_spirit);
+    std::println("primary: {}", m_max_stats.m_primary);
+    std::println("crit: {}", m_max_stats.m_crit);
+    std::println("haste: {}", m_max_stats.m_haste);
+    std::println("expertise: {}", m_max_stats.m_expertise);
+    std::println("recovery: {}", m_max_stats.m_recovery);
+    std::println("spirit: {}", m_max_stats.m_spirit);
 }
 
 [[nodiscard]] f64 Character::max_stamina() const
@@ -139,7 +139,7 @@ void Character::calculate_max_stats()
     stats.m_resource = 1;
 
     for (auto& item : m_items) {
-        const auto item_stats = item.get_statsheet();
+        const auto item_stats = item.get_leveled_statsheet();
 
         stats.m_stamina += item_stats.m_stamina;
         stats.m_resource += item_stats.m_resource;
