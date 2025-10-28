@@ -30,7 +30,7 @@ public:
     [[nodiscard]] f64 get_cur_resource() const;
     [[nodiscard]] const Statsheet<u64>& get_statsheet() const;
 
-    Item equip_item(const Item& item, u32 slot);
+    Item equip_item(const Item& item);
 
     void reset_stamina_resource();
     void regen_tick(u32 ticks = 1);

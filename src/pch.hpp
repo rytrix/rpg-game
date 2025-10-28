@@ -1,5 +1,7 @@
 #pragma once
 
+#include "sqlite3.h"
+
 #include <array>
 #include <cstdint>
 #include <fmt/core.h>
@@ -7,6 +9,7 @@
 #include <stdexcept>
 #include <vector>
 #include <algorithm>
+#include <print>
 
 using usize = std::size_t;
 using u8 = uint8_t;
