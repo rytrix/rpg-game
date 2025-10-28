@@ -9,13 +9,5 @@ add_executable(${PROJECT_NAME} src/main.cpp src/gear.cpp src/character.cpp)
 
 target_precompile_headers(${PROJECT_NAME} PRIVATE src/pch.hpp)
 
-include(cmake/CPM.cmake)
-CPMAddPackage("gh:fmtlib/fmt#10.0.0")
-
-find_package(fmt REQUIRED)
-target_link_libraries(${PROJECT_NAME} 
-    fmt::fmt
-)
-target_include_directories(${PROJECT_NAME} 
-    PRIVATE ${fmt_SOURCE_DIRS}/include
-)
+add_subdirectory(src/sqlite)
+target_link_libraries(${PROJECT_NAME} sqlite)
