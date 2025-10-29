@@ -71,6 +71,18 @@ Character::Character()
 {
 }
 
+Character Character::random_character(u32 item_level)
+{
+    Character random_character {};
+
+    for (u32 i = 0; i < Item::TOTAL_SLOTS; i++) {
+        Item random_item = Item::random_item(item_level, i);
+        random_character.equip_item(random_item);
+    }
+
+    return random_character;
+}
+
 f64 Character::get_cur_stamina() const
 {
     return m_cur_stamina;
@@ -98,8 +110,8 @@ f64 Character::get_cur_resource() const
 
 Item Character::equip_item(const Item& item)
 {
-    if (item.get_slot() >= ITEM_SLOTS) {
-        throw std::runtime_error(std::format("Invalid item slot \"{}\", should within 0-{}", item.get_slot(), ITEM_SLOTS));
+    if (item.get_slot() >= Item::TOTAL_SLOTS) {
+        throw std::runtime_error(std::format("Invalid item slot \"{}\", should within 0-{}", item.get_slot(), Item::TOTAL_SLOTS));
     }
 
     Item old_item = m_items.at(item.get_slot());

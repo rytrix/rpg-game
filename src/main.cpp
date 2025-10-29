@@ -24,41 +24,41 @@ int main()
         std::println("Can't open database: {}", sqlite3_errmsg(db));
     }
 
-    Character c1;
+    Character c1 = Character::random_character(2);
 
-    Item chest(5, Item::CHEST_SLOT,
-        Statsheet<u64> {
-            .m_stamina = 2,
-            .m_resource = 2,
-
-            .m_armor = 2,
-            .m_resist = 0,
-
-            .m_primary = 2,
-            .m_crit = 1,
-            .m_haste = 1,
-            .m_expertise = 3,
-
-            .m_spirit = 2,
-            .m_recovery = 2,
-        });
-
-    Item legs(3, Item::LEG_SLOT,
-        Statsheet<u64> {
-            .m_stamina = 2,
-            .m_resource = 2,
-
-            .m_armor = 2,
-            .m_resist = 1,
-
-            .m_primary = 1,
-            .m_crit = 1,
-            .m_haste = 1,
-            .m_expertise = 1,
-
-            .m_spirit = 2,
-            .m_recovery = 2,
-        });
+    // Item chest(5, Item::CHEST_SLOT,
+    //     Statsheet<u64> {
+    //         .m_stamina = 2,
+    //         .m_resource = 2,
+    //
+    //         .m_armor = 2,
+    //         .m_resist = 0,
+    //
+    //         .m_primary = 2,
+    //         .m_crit = 1,
+    //         .m_haste = 1,
+    //         .m_expertise = 3,
+    //
+    //         .m_spirit = 2,
+    //         .m_recovery = 2,
+    //     });
+    //
+    // Item legs(3, Item::LEG_SLOT,
+    //     Statsheet<u64> {
+    //         .m_stamina = 2,
+    //         .m_resource = 2,
+    //
+    //         .m_armor = 2,
+    //         .m_resist = 1,
+    //
+    //         .m_primary = 1,
+    //         .m_crit = 1,
+    //         .m_haste = 1,
+    //         .m_expertise = 1,
+    //
+    //         .m_spirit = 2,
+    //         .m_recovery = 2,
+    //     });
 
     // std::string sql_command = R"(
     //     SELECT * FROM ITEMS
@@ -66,31 +66,32 @@ int main()
     // )";
     // Item legs(db, sql_command);
 
-    c1.equip_item(chest);
-    c1.equip_item(legs);
-    c1.regen_tick(10);
-
-    sqlite_cmd(db, Item::create_sql_table_cmd("items"));
-    sqlite_cmd(db, chest.export_to_sql_cmd("items", 1, "chest"));
-    sqlite_cmd(db, legs.export_to_sql_cmd("items", 2, "legs"));
+    // c1.equip_item(chest);
+    // c1.equip_item(legs);
+    // c1.regen_tick(10);
+    //
+    // sqlite_cmd(db, Item::create_sql_table_cmd("items"));
+    // sqlite_cmd(db, chest.export_to_sql_cmd("items", 1, "chest"));
+    // sqlite_cmd(db, legs.export_to_sql_cmd("items", 2, "legs"));
 
     c1.debug_print();
 
     Ability test(Statsheet<f64> {
-        .m_stamina = 0,
-        .m_resource = 2,
+                     .m_stamina = 0,
+                     .m_resource = 2,
 
-        .m_armor = 1.05,
-        .m_resist = 1.05,
+                     .m_armor = 1.05,
+                     .m_resist = 1.05,
 
-        .m_primary = 1,
-        .m_crit = 1,
-        .m_haste = 0,
-        .m_expertise = 1,
+                     .m_primary = 1,
+                     .m_crit = 1,
+                     .m_haste = 0,
+                     .m_expertise = 1,
 
-        .m_spirit = 0,
-        .m_recovery = 0,
-    }, Ability::PHYSICAL_DAMAGE);
+                     .m_spirit = 0,
+                     .m_recovery = 0,
+                 },
+        Ability::PHYSICAL_DAMAGE);
 
     Ability::Cost cost = test.get_cost(c1);
 

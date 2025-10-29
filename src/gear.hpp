@@ -47,6 +47,7 @@ public:
     static constexpr u32 TRINKET_SLOT2 = 11;
     static constexpr u32 WEAPON_SLOT = 12;
     static constexpr u32 OFFHAND_SLOT = 13;
+    static constexpr u32 TOTAL_SLOTS = 14;
 
     void debug_print();
 
