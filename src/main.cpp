@@ -43,28 +43,28 @@ int main()
             .m_recovery = 2,
         });
 
-    // Item legs(3, Item::LEG_SLOT,
-    //     Statsheet<u64> {
-    //         .m_stamina = 2,
-    //         .m_resource = 2,
-    //
-    //         .m_armor = 2,
-    //         .m_resist = 1,
-    //
-    //         .m_primary = 1,
-    //         .m_crit = 1,
-    //         .m_haste = 1,
-    //         .m_expertise = 1,
-    //
-    //         .m_spirit = 2,
-    //         .m_recovery = 2,
-    //     });
+    Item legs(3, Item::LEG_SLOT,
+        Statsheet<u64> {
+            .m_stamina = 2,
+            .m_resource = 2,
 
-    std::string sql_command = R"(
-        SELECT * FROM ITEMS
-        WHERE ID IS 2
-    )";
-    Item legs(db, sql_command);
+            .m_armor = 2,
+            .m_resist = 1,
+
+            .m_primary = 1,
+            .m_crit = 1,
+            .m_haste = 1,
+            .m_expertise = 1,
+
+            .m_spirit = 2,
+            .m_recovery = 2,
+        });
+
+    // std::string sql_command = R"(
+    //     SELECT * FROM ITEMS
+    //     WHERE ID IS 2
+    // )";
+    // Item legs(db, sql_command);
 
     c1.equip_item(chest);
     c1.equip_item(legs);
@@ -80,8 +80,8 @@ int main()
         .m_stamina = 0,
         .m_resource = 2,
 
-        .m_armor = 0,
-        .m_resist = 0,
+        .m_armor = 1.05,
+        .m_resist = 1.05,
 
         .m_primary = 1,
         .m_crit = 1,
@@ -90,13 +90,13 @@ int main()
 
         .m_spirit = 0,
         .m_recovery = 0,
-    });
+    }, Ability::PHYSICAL_DAMAGE);
 
-    Ability::Cost cost = test.get_cost(c1.get_statsheet());
+    Ability::Cost cost = test.get_cost(c1);
 
     std::println("Stamina cost {}, Resource cost {}", cost.m_stamina, cost.m_resource);
 
-    f64 effectiveness = test.get_effectiveness(c1.get_statsheet());
+    f64 effectiveness = test.get_effectiveness(c1);
 
     std::println("Effectiveness {}", effectiveness);
 

@@ -1,13 +1,18 @@
 #include "character.hpp"
 
-Ability::Ability(Statsheet<f64> scaling_power)
+Ability::Ability(Statsheet<f64> scaling_power, u32 damage_type)
     : m_scaling_power(scaling_power)
+    , m_damage_type(damage_type)
 {
 }
 
-[[nodiscard]] f64 Ability::get_effectiveness(const Statsheet<u64>& max_stats) const
+[[nodiscard]] f64 Ability::get_effectiveness(const Character& character) const
 {
-    f64 effectiveness = m_scaling_power.m_primary * static_cast<f64>(max_stats.m_primary);
+    Statsheet<u64> max_stats = character.get_statsheet();
+
+    f64 effectiveness {};
+
+    effectiveness = m_scaling_power.m_primary * static_cast<f64>(max_stats.m_primary);
 
     effectiveness += m_scaling_power.m_stamina * static_cast<f64>(max_stats.m_stamina);
 
@@ -21,11 +26,19 @@ Ability::Ability(Statsheet<f64> scaling_power)
 
     effectiveness = crit_effectiveness(effectiveness, m_scaling_power.m_crit, static_cast<f64>(max_stats.m_crit));
 
+    if (m_damage_type == PHYSICAL_DAMAGE) {
+        effectiveness = effectiveness - (effectiveness * character.get_armor_dr()) * m_scaling_power.m_armor;
+    } else if (m_damage_type == MAGIC_DAMAGE) {
+        // std::println("{} = {} - ({} * {}) * {}", effectiveness, effectiveness, effectiveness, character.get_resist_dr(), m_scaling_power.m_resist);
+        effectiveness = effectiveness - (effectiveness * character.get_resist_dr()) * m_scaling_power.m_resist;
+    }
+
     return effectiveness;
 }
 
-[[nodiscard]] Ability::Cost Ability::get_cost(const Statsheet<u64>& max_stats) const
+[[nodiscard]] Ability::Cost Ability::get_cost(const Character& character) const
 {
+    Statsheet<u64> max_stats = character.get_statsheet();
     return {
         .m_stamina = static_cast<f64>(max_stats.m_stamina) * m_scaling_power.m_stamina,
         .m_resource = static_cast<f64>(max_stats.m_resource) * m_scaling_power.m_resource
@@ -73,6 +86,15 @@ f64 Character::get_cur_resource() const
     return m_max_stats;
 }
 
+[[nodiscard]] f64 Character::get_armor_dr() const
+{
+    return static_cast<f64>(m_max_stats.m_armor) / max_stamina() * DR_SCALING;
+}
+
+[[nodiscard]] f64 Character::get_resist_dr() const
+{
+    return static_cast<f64>(m_max_stats.m_resist) / max_stamina() * DR_SCALING;
+}
 
 Item Character::equip_item(const Item& item)
 {
@@ -111,8 +133,8 @@ void Character::debug_print()
     std::println("stamina: {} {}/{}", m_max_stats.m_stamina, m_cur_stamina, max_stamina());
     std::println("resource: {} {}/{}", m_max_stats.m_resource, m_cur_resource, max_resource());
 
-    std::println("armor: {}", m_max_stats.m_armor);
-    std::println("resist: {}", m_max_stats.m_resist);
+    std::println("armor: {}, dr: {}", m_max_stats.m_armor, this->get_armor_dr());
+    std::println("resist: {}, dr: {}", m_max_stats.m_resist, this->get_resist_dr());
 
     std::println("primary: {}", m_max_stats.m_primary);
     std::println("crit: {}", m_max_stats.m_crit);
