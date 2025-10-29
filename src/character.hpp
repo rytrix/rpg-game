@@ -2,21 +2,27 @@
 
 #include "gear.hpp"
 
+class Character;
+
 class Ability {
 public:
-    explicit Ability(Statsheet<f64> scaling_power);
+    Ability(Statsheet<f64> scaling_power, u32 damage_type);
 
-    [[nodiscard]] f64 get_effectiveness(const Statsheet<u64>& max_stats) const;
+    [[nodiscard]] f64 get_effectiveness(const Character& character) const;
 
     struct Cost {
         f64 m_stamina;
         f64 m_resource;
     };
 
-    [[nodiscard]] Cost get_cost(const Statsheet<u64>& max_stats) const;
+    [[nodiscard]] Cost get_cost(const Character& character) const;
+
+    static constexpr u32 PHYSICAL_DAMAGE = 0;
+    static constexpr u32 MAGIC_DAMAGE = 1;
 
 private:
     Statsheet<f64> m_scaling_power;
+    u32 m_damage_type;
 
     static constexpr u32 CRIT_CAP = 70;
     [[nodiscard]] static f64 crit_effectiveness(f64 effectiveness, f64 scaling_power, f64 crit_stat);
@@ -30,6 +36,11 @@ public:
     [[nodiscard]] f64 get_cur_resource() const;
     [[nodiscard]] const Statsheet<u64>& get_statsheet() const;
 
+    // Armor reduces phys damage
+    [[nodiscard]] f64 get_armor_dr() const;
+    // Resist reduces magic damage
+    [[nodiscard]] f64 get_resist_dr() const;
+
     Item equip_item(const Item& item);
 
     void reset_stamina_resource();
@@ -42,6 +53,7 @@ private:
 
     static constexpr f64 STAMINA_SCALING = 10.0;
     static constexpr f64 RESOURCE_SCALING = 10.0;
+    static constexpr f64 DR_SCALING = 2.0;
 
     [[nodiscard]] f64 max_stamina() const;
     [[nodiscard]] f64 max_resource() const;

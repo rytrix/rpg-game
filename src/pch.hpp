@@ -1,10 +1,9 @@
 #pragma once
 
-#include "sqlite3.h"
+#include "sqlite/sqlite3.h"
 
 #include <array>
 #include <cstdint>
-#include <fmt/core.h>
 #include <random>
 #include <stdexcept>
 #include <vector>
