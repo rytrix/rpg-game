@@ -23,6 +23,8 @@ public:
     Item(sqlite3* database, std::string& sqlite_command);
     Item(u32 item_level, u32 slot, Statsheet<u64> base_stats);
 
+    [[nodiscard]] static Item random_item(u32 item_level, u32 slot);
+
     [[nodiscard]] u32 get_slot() const;
     [[nodiscard]] const Statsheet<u64>& get_base_statsheet() const;
     [[nodiscard]] Statsheet<u64> get_leveled_statsheet() const;
