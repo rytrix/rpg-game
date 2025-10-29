@@ -32,6 +32,8 @@ class Character {
 public:
     Character();
 
+    static Character random_character(u32 item_level);
+
     [[nodiscard]] f64 get_cur_stamina() const;
     [[nodiscard]] f64 get_cur_resource() const;
     [[nodiscard]] const Statsheet<u64>& get_statsheet() const;
@@ -61,7 +63,6 @@ private:
     f64 m_cur_stamina = {};
     f64 m_cur_resource = {};
 
-    static constexpr u32 ITEM_SLOTS = 14;
     // 0  - helmet
     // 1  - shoulders
     // 2  - chest
@@ -76,7 +77,7 @@ private:
     // 11 - trinket
     // 12 - weapon
     // 13 - offhand
-    std::array<Item, ITEM_SLOTS> m_items;
+    std::array<Item, Item::TOTAL_SLOTS> m_items;
 
     void calculate_max_stats();
 };

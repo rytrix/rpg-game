@@ -18,7 +18,7 @@ Item::Item(sqlite3* database, std::string& sqlite_command)
 [[nodiscard]] Item Item::random_item(u32 item_level, u32 slot)
 {
     static thread_local std::mt19937 generator(std::random_device {}());
-    std::uniform_int_distribution<u64> distribution(1, 5);
+    std::uniform_int_distribution<u64> distribution(1, 3);
 
     Statsheet<u64> base_stats;
 
