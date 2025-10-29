@@ -8,7 +8,7 @@ class Ability {
 public:
     Ability(Statsheet<f64> scaling_power, u32 damage_type);
 
-    [[nodiscard]] f64 get_effectiveness(const Character& character) const;
+    [[nodiscard]] f64 get_effectiveness(const Character& caster, const Character& target) const;
 
     struct Cost {
         f64 m_stamina;
