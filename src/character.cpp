@@ -6,9 +6,9 @@ Ability::Ability(Statsheet<f64> scaling_power, u32 damage_type)
 {
 }
 
-[[nodiscard]] f64 Ability::get_effectiveness(const Character& character) const
+[[nodiscard]] f64 Ability::get_effectiveness(const Character& caster, const Character& target) const
 {
-    Statsheet<u64> max_stats = character.get_statsheet();
+    Statsheet<u64> max_stats = caster.get_statsheet();
 
     f64 effectiveness {};
 
@@ -27,10 +27,10 @@ Ability::Ability(Statsheet<f64> scaling_power, u32 damage_type)
     effectiveness = crit_effectiveness(effectiveness, m_scaling_power.m_crit, static_cast<f64>(max_stats.m_crit));
 
     if (m_damage_type == PHYSICAL_DAMAGE) {
-        effectiveness = effectiveness - (effectiveness * character.get_armor_dr()) * m_scaling_power.m_armor;
+        effectiveness = effectiveness - ((effectiveness * target.get_armor_dr()) * m_scaling_power.m_armor);
     } else if (m_damage_type == MAGIC_DAMAGE) {
         // std::println("{} = {} - ({} * {}) * {}", effectiveness, effectiveness, effectiveness, character.get_resist_dr(), m_scaling_power.m_resist);
-        effectiveness = effectiveness - (effectiveness * character.get_resist_dr()) * m_scaling_power.m_resist;
+        effectiveness = effectiveness - ((effectiveness * target.get_resist_dr()) * m_scaling_power.m_resist);
     }
 
     return effectiveness;
