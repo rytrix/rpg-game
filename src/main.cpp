@@ -96,7 +96,7 @@ int main()
 
     std::println("Stamina cost {}, Resource cost {}", cost.m_stamina, cost.m_resource);
 
-    f64 effectiveness = test.get_effectiveness(c1);
+    f64 effectiveness = test.get_effectiveness(c1, c1);
 
     std::println("Effectiveness {}", effectiveness);
 
