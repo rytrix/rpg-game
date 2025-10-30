@@ -118,13 +118,23 @@ f64 Character::get_cur_resource() const
 
 [[nodiscard]] f64 Character::get_armor_dr() const
 {
-    // return static_cast<f64>(m_max_stats.m_armor) / max_stamina() * STAT_SCALING.m_armor;
-    return static_cast<f64>(m_max_stats.m_armor) * STAT_SCALING.m_armor;
+    // f64 damage_reduction = static_cast<f64>(m_max_stats.m_armor) * STAT_SCALING.m_armor;
+    f64 damage_reduction = (1.0 - std::pow(std::numbers::e, -STAT_SCALING.m_resist * static_cast<f64>(m_max_stats.m_resist))) * 100.0;
+
+    damage_reduction = std::clamp(damage_reduction, 0.0, 90.0);
+
+    return damage_reduction;
 }
 
 [[nodiscard]] f64 Character::get_resist_dr() const
 {
-    return static_cast<f64>(m_max_stats.m_resist) * STAT_SCALING.m_resist;
+    // f64 damage_reduction = static_cast<f64>(m_max_stats.m_resist) * STAT_SCALING.m_resist;
+    f64 damage_reduction = (1.0 - std::pow(std::numbers::e, -STAT_SCALING.m_resist * static_cast<f64>(m_max_stats.m_resist))) * 100.0;
+    // std::println("{} = (1.0 - {} ^ {} * {}) * 100.0", damage_reduction, std::numbers::e, STAT_SCALING.m_resist, m_max_stats.m_resist);
+
+    damage_reduction = std::clamp(damage_reduction, 0.0, 90.0);
+
+    return damage_reduction;
 }
 
 Item Character::equip_item(const Item& item)

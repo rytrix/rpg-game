@@ -24,7 +24,7 @@ int main()
         std::println("Can't open database: {}", sqlite3_errmsg(db));
     }
 
-    Character c1 = Character::random_character(50);
+    Character c1 = Character::random_character(5);
 
     // Item chest(5, Item::CHEST_SLOT,
     //     Statsheet<u64> {
