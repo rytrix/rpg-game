@@ -37,10 +37,9 @@ public:
     [[nodiscard]] f64 get_cur_stamina() const;
     [[nodiscard]] f64 get_cur_resource() const;
     [[nodiscard]] const Statsheet<u64>& get_statsheet() const;
+    [[nodiscard]] Statsheet<f64> get_scaled_statsheet() const;
 
-    // Armor reduces phys damage
     [[nodiscard]] f64 get_armor_dr() const;
-    // Resist reduces magic damage
     [[nodiscard]] f64 get_resist_dr() const;
 
     Item equip_item(const Item& item);
@@ -53,9 +52,21 @@ public:
 private:
     Statsheet<u64> m_max_stats = {};
 
-    static constexpr f64 STAMINA_SCALING = 10.0;
-    static constexpr f64 RESOURCE_SCALING = 10.0;
-    static constexpr f64 DR_SCALING = 2.0;
+    static constexpr Statsheet<f64> STAT_SCALING = {
+        .m_stamina = 10.0,
+        .m_resource = 10.0,
+
+        .m_armor = 0.02,
+        .m_resist = 0.02,
+
+        .m_primary = 1,
+        .m_crit = 0.01,
+        .m_haste = 0.01,
+        .m_expertise = 0.01,
+
+        .m_spirit = 0.02,
+        .m_recovery = 0.02,
+    };
 
     [[nodiscard]] f64 max_stamina() const;
     [[nodiscard]] f64 max_resource() const;

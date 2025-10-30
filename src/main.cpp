@@ -24,7 +24,7 @@ int main()
         std::println("Can't open database: {}", sqlite3_errmsg(db));
     }
 
-    Character c1 = Character::random_character(2);
+    Character c1 = Character::random_character(50);
 
     // Item chest(5, Item::CHEST_SLOT,
     //     Statsheet<u64> {
@@ -76,29 +76,36 @@ int main()
 
     c1.debug_print();
 
-    Ability test(Statsheet<f64> {
-                     .m_stamina = 0,
-                     .m_resource = 2,
+    Ability test(
+        Statsheet<f64> {
+            .m_stamina = 0,
+            .m_resource = 0.02,
 
-                     .m_armor = 1.05,
-                     .m_resist = 1.05,
+            .m_armor = 1.00,
+            .m_resist = 1.00,
 
-                     .m_primary = 1,
-                     .m_crit = 1,
-                     .m_haste = 0,
-                     .m_expertise = 1,
+            .m_primary = 1,
+            .m_crit = 2.0,
+            .m_haste = 0,
+            .m_expertise = 1,
 
-                     .m_spirit = 0,
-                     .m_recovery = 0,
-                 },
+            .m_spirit = 0,
+            .m_recovery = 0,
+        },
         Ability::PHYSICAL_DAMAGE);
 
     Ability::Cost cost = test.get_cost(c1);
 
+    std::println("Ability:");
     std::println("Stamina cost {}, Resource cost {}", cost.m_stamina, cost.m_resource);
 
     f64 effectiveness = test.get_effectiveness(c1, c1);
+    std::println("Effectiveness {}", effectiveness);
 
+    effectiveness = test.get_effectiveness(c1, c1);
+    std::println("Effectiveness {}", effectiveness);
+
+    effectiveness = test.get_effectiveness(c1, c1);
     std::println("Effectiveness {}", effectiveness);
 
     sqlite3_close(db);
