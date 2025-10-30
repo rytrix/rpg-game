@@ -4,11 +4,13 @@
 
 #include <array>
 #include <cstdint>
+#include <numbers>
 #include <random>
 #include <stdexcept>
 #include <vector>
 #include <algorithm>
 #include <print>
+#include <cmath>
 
 using usize = std::size_t;
 using u8 = uint8_t;

@@ -56,8 +56,8 @@ private:
         .m_stamina = 10.0,
         .m_resource = 10.0,
 
-        .m_armor = 0.02,
-        .m_resist = 0.02,
+        .m_armor = 0.0001,
+        .m_resist = 0.0001,
 
         .m_primary = 1,
         .m_crit = 0.01,
