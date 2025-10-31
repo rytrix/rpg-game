@@ -1,5 +1,8 @@
 #include "character.hpp"
 #include "gear.hpp"
+#include <print>
+
+namespace {
 
 template <typename T = std::string&>
 int sqlite_cmd(sqlite3* db, T command)
@@ -16,6 +19,29 @@ int sqlite_cmd(sqlite3* db, T command)
     return 0;
 }
 
+void average_stats_test()
+{
+    f32 average_crit = 0.0;
+    f32 average_haste = 0.0;
+    f32 average_expertise = 0.0;
+
+    for (int i = 0; i < 2000; i++) {
+        Item test = Item::random_item(5, Item::BOOT_SLOT);
+
+        auto statsheet = test.get_leveled_statsheet();
+
+        average_crit += static_cast<f32>(statsheet.m_crit);
+        average_haste += static_cast<f32>(statsheet.m_haste);
+        average_expertise += static_cast<f32>(statsheet.m_expertise);
+    }
+
+    std::println("Average_crit: {}", average_crit);
+    std::println("Average_haste: {}", average_haste);
+    std::println("Average_expertise: {}", average_expertise);
+}
+
+}
+
 int main()
 {
     sqlite3* db = nullptr;
@@ -24,57 +50,14 @@ int main()
         std::println("Can't open database: {}", sqlite3_errmsg(db));
     }
 
-    Character c1 = Character::random_character(5);
+    Character c1 = Character::random_character(50);
+    Character c2 = Character::random_character(50);
 
-    // Item chest(5, Item::CHEST_SLOT,
-    //     Statsheet<u64> {
-    //         .m_stamina = 2,
-    //         .m_resource = 2,
-    //
-    //         .m_armor = 2,
-    //         .m_resist = 0,
-    //
-    //         .m_primary = 2,
-    //         .m_crit = 1,
-    //         .m_haste = 1,
-    //         .m_expertise = 3,
-    //
-    //         .m_spirit = 2,
-    //         .m_recovery = 2,
-    //     });
-    //
-    // Item legs(3, Item::LEG_SLOT,
-    //     Statsheet<u64> {
-    //         .m_stamina = 2,
-    //         .m_resource = 2,
-    //
-    //         .m_armor = 2,
-    //         .m_resist = 1,
-    //
-    //         .m_primary = 1,
-    //         .m_crit = 1,
-    //         .m_haste = 1,
-    //         .m_expertise = 1,
-    //
-    //         .m_spirit = 2,
-    //         .m_recovery = 2,
-    //     });
-
-    // std::string sql_command = R"(
-    //     SELECT * FROM ITEMS
-    //     WHERE ID IS 2
-    // )";
-    // Item legs(db, sql_command);
-
-    // c1.equip_item(chest);
-    // c1.equip_item(legs);
-    // c1.regen_tick(10);
-    //
-    // sqlite_cmd(db, Item::create_sql_table_cmd("items"));
-    // sqlite_cmd(db, chest.export_to_sql_cmd("items", 1, "chest"));
-    // sqlite_cmd(db, legs.export_to_sql_cmd("items", 2, "legs"));
-
+    std::println("C1");
     c1.debug_print();
+    std::println("\n\nC2");
+    c2.debug_print();
+    std::println("\n");
 
     Ability test(
         Statsheet<f64> {
@@ -99,13 +82,13 @@ int main()
     std::println("Ability:");
     std::println("Stamina cost {}, Resource cost {}", cost.m_stamina, cost.m_resource);
 
-    f64 effectiveness = test.get_effectiveness(c1, c1);
+    f64 effectiveness = test.get_effectiveness(c1, c2);
     std::println("Effectiveness {}", effectiveness);
 
-    effectiveness = test.get_effectiveness(c1, c1);
+    effectiveness = test.get_effectiveness(c1, c2);
     std::println("Effectiveness {}", effectiveness);
 
-    effectiveness = test.get_effectiveness(c1, c1);
+    effectiveness = test.get_effectiveness(c1, c2);
     std::println("Effectiveness {}", effectiveness);
 
     sqlite3_close(db);
@@ -113,3 +96,51 @@ int main()
 
     return 0;
 }
+
+// Item chest(5, Item::CHEST_SLOT,
+//     Statsheet<u64> {
+//         .m_stamina = 2,
+//         .m_resource = 2,
+//
+//         .m_armor = 2,
+//         .m_resist = 0,
+//
+//         .m_primary = 2,
+//         .m_crit = 1,
+//         .m_haste = 1,
+//         .m_expertise = 3,
+//
+//         .m_spirit = 2,
+//         .m_recovery = 2,
+//     });
+//
+// Item legs(3, Item::LEG_SLOT,
+//     Statsheet<u64> {
+//         .m_stamina = 2,
+//         .m_resource = 2,
+//
+//         .m_armor = 2,
+//         .m_resist = 1,
+//
+//         .m_primary = 1,
+//         .m_crit = 1,
+//         .m_haste = 1,
+//         .m_expertise = 1,
+//
+//         .m_spirit = 2,
+//         .m_recovery = 2,
+//     });
+
+// std::string sql_command = R"(
+//     SELECT * FROM ITEMS
+//     WHERE ID IS 2
+// )";
+// Item legs(db, sql_command);
+
+// c1.equip_item(chest);
+// c1.equip_item(legs);
+// c1.regen_tick(10);
+//
+// sqlite_cmd(db, Item::create_sql_table_cmd("items"));
+// sqlite_cmd(db, chest.export_to_sql_cmd("items", 1, "chest"));
+// sqlite_cmd(db, legs.export_to_sql_cmd("items", 2, "legs"));
