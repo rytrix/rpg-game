@@ -19,6 +19,7 @@ public:
 
     static constexpr u32 PHYSICAL_DAMAGE = 0;
     static constexpr u32 MAGIC_DAMAGE = 1;
+    static constexpr u32 HEALING = 2;
 
 private:
     Statsheet<f64> m_scaling_power;
@@ -39,9 +40,6 @@ public:
     [[nodiscard]] const Statsheet<u64>& get_statsheet() const;
     [[nodiscard]] Statsheet<f64> get_scaled_statsheet() const;
 
-    [[nodiscard]] f64 get_armor_dr() const;
-    [[nodiscard]] f64 get_resist_dr() const;
-
     Item equip_item(const Item& item);
 
     void reset_stamina_resource();
@@ -54,18 +52,18 @@ private:
 
     static constexpr Statsheet<f64> STAT_SCALING = {
         .m_stamina = 10.0,
-        .m_resource = 10.0,
+        .m_resource = 1.0,
 
-        .m_armor = 0.0001,
-        .m_resist = 0.0001,
+        .m_armor = 1.0,
+        .m_resist = 1.0,
 
         .m_primary = 1,
         .m_crit = 0.01,
         .m_haste = 0.01,
         .m_expertise = 0.01,
 
-        .m_spirit = 0.02,
-        .m_recovery = 0.02,
+        .m_spirit = 0.01,
+        .m_recovery = 0.01,
     };
 
     [[nodiscard]] f64 max_stamina() const;

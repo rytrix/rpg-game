@@ -18,23 +18,59 @@ Item::Item(sqlite3* database, std::string& sqlite_command)
 [[nodiscard]] Item Item::random_item(u32 item_level, u32 slot)
 {
     static thread_local std::mt19937 generator(std::random_device {}());
-    std::uniform_int_distribution<u64> distribution(1, 3);
+
+    std::uniform_int_distribution<u32> distribution_1(1, 2);
+    std::uniform_int_distribution<u32> distribution_2(0, 2);
+    std::uniform_int_distribution<u32> distribution_3(0, 1);
 
     Statsheet<u64> base_stats;
 
-    base_stats.m_stamina = distribution(generator);
-    base_stats.m_resource = distribution(generator);
+    base_stats.m_stamina = distribution_1(generator);
+    base_stats.m_resource = distribution_1(generator);
 
-    base_stats.m_armor = distribution(generator);
-    base_stats.m_resist = distribution(generator);
+    base_stats.m_armor = distribution_1(generator);
+    base_stats.m_resist = distribution_1(generator);
 
-    base_stats.m_primary = distribution(generator);
-    base_stats.m_crit = distribution(generator);
-    base_stats.m_haste = distribution(generator);
-    base_stats.m_expertise = distribution(generator);
+    base_stats.m_primary = distribution_1(generator);
 
-    base_stats.m_spirit = distribution(generator);
-    base_stats.m_recovery = distribution(generator);
+    u32 budget = 2;
+
+    while (budget > 0) {
+        std::uniform_int_distribution<u32> chooser(0, 2);
+        switch (chooser(generator)) {
+            case 0:
+                base_stats.m_crit += 1;
+                break;
+            case 1:
+                base_stats.m_haste += 1;
+                break;
+            case 2:
+                base_stats.m_expertise += 1;
+                break;
+            default:
+                throw std::runtime_error("Chooser error (crit,haste,expertise)");
+                continue;
+        }
+        budget -= 1;
+    }
+
+    budget = 2;
+
+    while (budget > 0) {
+        std::uniform_int_distribution<u32> chooser(0, 1);
+        switch (chooser(generator)) {
+            case 0:
+                base_stats.m_spirit += 1;
+                break;
+            case 1:
+                base_stats.m_recovery += 1;
+                break;
+            default:
+                throw std::runtime_error("Chooser error (sprit,recovery)");
+                continue;
+        }
+        budget -= 1;
+    }
 
     return Item { item_level, slot, base_stats };
 }
@@ -98,15 +134,13 @@ Item::Item(sqlite3* database, std::string& sqlite_command)
 {
     std::string command = std::format(
         R"(REPLACE INTO {} (
-        id, name, ilvl, slot, stamina, resource, armor, resist,
-        primary_stat, crit, haste, expertise, spirit, recovery
+        id, name, ilvl, slot, stamina, resource, armor, resist, primary_stat, crit, haste, expertise, spirit, recovery
         ) VALUES (
         {}, '{}', {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {});
     )",
         table_name, id, item_name, m_item_level, m_slot, m_base_stats.m_stamina, m_base_stats.m_resource,
-        m_base_stats.m_armor, m_base_stats.m_resist, m_base_stats.m_primary,
-        m_base_stats.m_crit, m_base_stats.m_haste, m_base_stats.m_expertise,
-        m_base_stats.m_spirit, m_base_stats.m_recovery);
+        m_base_stats.m_armor, m_base_stats.m_resist, m_base_stats.m_primary, m_base_stats.m_crit,
+        m_base_stats.m_haste, m_base_stats.m_expertise, m_base_stats.m_spirit, m_base_stats.m_recovery);
 
     return command;
 }
@@ -157,6 +191,7 @@ void Item::debug_print()
     std::println("crit: {}", m_base_stats.m_crit);
     std::println("haste: {}", m_base_stats.m_haste);
     std::println("expertise: {}", m_base_stats.m_expertise);
+
     std::println("recovery: {}", m_base_stats.m_recovery);
     std::println("spirit: {}", m_base_stats.m_spirit);
 }

@@ -56,5 +56,5 @@ private:
     u32 m_slot = {};
     Statsheet<u64> m_base_stats = {};
 
-    static constexpr u64 ILVL_SCALING_FACTOR = 1.0;
+    static constexpr u64 ILVL_SCALING_FACTOR = 1;
 };
