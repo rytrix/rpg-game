@@ -163,33 +163,6 @@ f64 Character::get_cur_resource() const
     return item_level;
 }
 
-// [[nodiscard]] f64 Character::get_armor_dr() const
-// {
-//     // TODO get rid of this I think
-//     // f64 damage_reduction = static_cast<f64>(m_max_stats.m_armor) * STAT_SCALING.m_armor;
-//     f64 armor = static_cast<f64>(m_max_stats.m_armor);// - (static_cast<f64>(m_max_stats.m_stamina) * 0.5);
-//
-//     f64 damage_reduction = (0.9 - std::pow(std::numbers::e, -STAT_SCALING.m_armor * armor)) * 100.0;
-//
-//     damage_reduction = std::clamp(damage_reduction, 0.0, 90.0);
-//
-//     return damage_reduction;
-// }
-//
-// [[nodiscard]] f64 Character::get_resist_dr() const
-// {
-//     // TODO get rid of this I think
-//     // f64 damage_reduction = static_cast<f64>(m_max_stats.m_resist) * STAT_SCALING.m_resist;
-//     f64 resist = static_cast<f64>(m_max_stats.m_resist);// - (static_cast<f64>(m_max_stats.m_stamina) * 0.5);
-//
-//     f64 damage_reduction = (0.9 - std::pow(std::numbers::e, -STAT_SCALING.m_resist * resist)) * 100.0;
-//     std::println("{} = (1.0 - {} ^ {} * {}) * 100.0", damage_reduction, std::numbers::e, STAT_SCALING.m_resist, resist);
-//
-//     damage_reduction = std::clamp(damage_reduction, 0.0, 90.0);
-//
-//     return damage_reduction;
-// }
-
 Item Character::equip_item(const Item& item)
 {
     if (item.get_slot() >= Item::TOTAL_SLOTS) {
