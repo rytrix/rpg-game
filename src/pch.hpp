@@ -1,6 +1,7 @@
 #pragma once
 
 #include "sqlite/sqlite3.h"
+#include "json/json.hpp"
 
 #include <array>
 #include <cstdint>

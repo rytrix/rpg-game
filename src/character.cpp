@@ -23,8 +23,6 @@ Ability::Ability(Statsheet<f64> scaling_power, u32 damage_type)
     effectiveness *= 1.0 + (m_scaling_power.m_spirit * caster_stats.m_spirit / 100.0);
     effectiveness *= 1.0 + (m_scaling_power.m_recovery * caster_stats.m_recovery / 100.0);
 
-    effectiveness = crit_effectiveness(effectiveness, m_scaling_power.m_crit, caster_stats.m_crit);
-
     Statsheet<f64> target_stats = target.get_scaled_statsheet();
     if (m_damage_type == PHYSICAL_DAMAGE) {
         f64 armor = target_stats.m_armor; //- caster_stats.m_armor_pen;
@@ -46,6 +44,8 @@ Ability::Ability(Statsheet<f64> scaling_power, u32 damage_type)
 
         effectiveness -= reduced_damage;
     }
+
+    effectiveness = crit_effectiveness(effectiveness, m_scaling_power.m_crit, caster_stats.m_crit);
 
     return effectiveness;
 }
@@ -75,23 +75,27 @@ Ability::Ability(Statsheet<f64> scaling_power, u32 damage_type)
 
     if (crit_chance <= value) {
         // std::println("{} * ({} + {} / 100.0)", effectiveness, scaling_power, overflow_crit);
-        return effectiveness * (scaling_power + overflow_crit / 100.0);
+        f64 bonus = effectiveness * (scaling_power + (overflow_crit / 100.0));
+
+        return effectiveness + bonus;
     } else {
         return effectiveness;
     }
 }
 
-Character::Character()
-    : m_items({})
+Character::Character(const char* name)
+    : m_name(name)
+    , m_equiped({})
 {
 }
 
-Character Character::random_character(u32 item_level)
+Character Character::random_character(const char* name, u32 item_level)
 {
-    Character random_character {};
+    Character random_character(name);
 
     for (u32 i = 0; i < Item::TOTAL_SLOTS; i++) {
-        Item random_item = Item::random_item(item_level, i);
+        std::string item_name = std::format("item_{}", i);
+        Item random_item = Item::random_item(item_level, i, item_name.c_str());
         random_character.equip_item(random_item);
     }
 
@@ -148,6 +152,17 @@ f64 Character::get_cur_resource() const
     return stats;
 }
 
+[[nodiscard]] f64 Character::get_item_level() const
+{
+    f64 item_level = 0.0;
+    for (const auto& item : m_equiped) {
+        item_level += static_cast<f64>(item.get_item_level());
+    }
+    item_level = item_level / static_cast<f64>(m_equiped.size());
+
+    return item_level;
+}
+
 // [[nodiscard]] f64 Character::get_armor_dr() const
 // {
 //     // TODO get rid of this I think
@@ -181,13 +196,12 @@ Item Character::equip_item(const Item& item)
         throw std::runtime_error(std::format("Invalid item slot \"{}\", should within 0-{}", item.get_slot(), Item::TOTAL_SLOTS));
     }
 
-    Item old_item = m_items.at(item.get_slot());
+    Item old_item = m_equiped.at(item.get_slot());
 
-    m_items.at(item.get_slot()) = item;
+    m_equiped.at(item.get_slot()) = item;
 
-    // Update stored stat value
-    // I kinda hate this (maybe put it somewhere else)
-    calculate_max_stats();
+    stats_need_updated = true;
+    update_max_stats();
 
     return old_item;
 }
@@ -209,9 +223,86 @@ void Character::regen_tick(u32 ticks)
     m_cur_resource = std::clamp(m_cur_resource, 0.0, max_resource());
 }
 
+[[nodiscard]] std::string Character::create_sql_table_cmd()
+{
+    std::string command = std::format(
+        R"(
+        CREATE TABLE IF NOT EXISTS characters (
+        id INTEGER PRIMARY KEY,
+        name TEXT NOT NULL,
+        item_table TEXT NOT NULL,
+        equiped JSON 
+        );
+    )");
+
+    return command;
+}
+
+[[nodiscard]] std::string Character::export_to_sql_cmd(const char* item_table_name, int id) const
+{
+    std::string command = "BEGIN TRANSACTION;\n";
+
+    for (u32 i = 0; i < Item::TOTAL_SLOTS; i++) {
+        command.append(m_equiped.at(i).export_to_sql_cmd(item_table_name, static_cast<i32>(i)));
+    }
+
+    command.append(std::format(
+        R"(
+        REPLACE INTO characters (id, name, item_table, equiped) VALUES (
+            {}, '{}', '{}', '[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13]'
+        );
+    )",
+        id, m_name, item_table_name));
+
+    command.append("COMMIT;");
+
+    return command;
+}
+
+[[nodiscard]] Character Character::import_from_sql_cmd(sqlite3* database, int id)
+{
+    std::string sql_command = std::format(R"(
+        SELECT * FROM characters 
+        WHERE ID IS {}
+    )",
+        id);
+
+    sqlite3_stmt* statement = nullptr;
+    if (sqlite3_prepare_v2(database, sql_command.c_str(), static_cast<int>(sql_command.length()), &statement, nullptr) != SQLITE_OK) {
+        throw std::runtime_error(std::format("Failed to prepare sqlite3 statement \"{}\"", sql_command));
+    }
+
+    std::string name;
+    nlohmann::json equiped_json;
+    std::string item_table;
+    if (sqlite3_step(statement) == SQLITE_ROW) {
+        name = reinterpret_cast<const char*>(sqlite3_column_text(statement, 1));
+        item_table = { reinterpret_cast<const char*>(sqlite3_column_text(statement, 2)) };
+        std::string equiped = { reinterpret_cast<const char*>(sqlite3_column_text(statement, 3)) };
+
+        equiped_json = nlohmann::json::parse(equiped);
+    }
+
+    sqlite3_finalize(statement);
+
+    Character character(name.c_str());
+
+    for (u32 i = 0; i < Item::TOTAL_SLOTS; i++) {
+        i32 slot = equiped_json.at(i);
+        Item item = Item::import_from_sql_cmd(database, item_table.c_str(), slot);
+
+        character.equip_item(item);
+    }
+
+    return character;
+}
+
 void Character::debug_print()
 {
     Statsheet<f64> stats = get_scaled_statsheet();
+
+    std::println("name: \"{}\"", m_name);
+    std::println("item level: {}", get_item_level());
 
     std::println("stamina: {} {}/{}", m_max_stats.m_stamina, m_cur_stamina, max_stamina());
     std::println("resource: {} {}/{}", m_max_stats.m_resource, m_cur_resource, max_resource());
@@ -228,29 +319,33 @@ void Character::debug_print()
     std::println("spirit: {}, {}%", m_max_stats.m_spirit, stats.m_spirit);
 }
 
-void Character::calculate_max_stats()
+void Character::update_max_stats()
 {
-    Statsheet<u64> stats = {};
-    stats.m_stamina = 1;
-    stats.m_resource = 1;
+    if (stats_need_updated) {
+        Statsheet<u64> stats = {};
+        stats.m_stamina = 1;
+        stats.m_resource = 1;
 
-    for (auto& item : m_items) {
-        const auto item_stats = item.get_leveled_statsheet();
+        for (auto& item : m_equiped) {
+            const auto item_stats = item.get_leveled_statsheet();
 
-        stats.m_stamina += item_stats.m_stamina;
-        stats.m_resource += item_stats.m_resource;
+            stats.m_stamina += item_stats.m_stamina;
+            stats.m_resource += item_stats.m_resource;
 
-        stats.m_armor += item_stats.m_armor;
-        stats.m_resist += item_stats.m_resist;
+            stats.m_armor += item_stats.m_armor;
+            stats.m_resist += item_stats.m_resist;
 
-        stats.m_primary += item_stats.m_primary;
-        stats.m_crit += item_stats.m_crit;
-        stats.m_haste += item_stats.m_haste;
-        stats.m_expertise += item_stats.m_expertise;
+            stats.m_primary += item_stats.m_primary;
+            stats.m_crit += item_stats.m_crit;
+            stats.m_haste += item_stats.m_haste;
+            stats.m_expertise += item_stats.m_expertise;
 
-        stats.m_recovery += item_stats.m_recovery;
-        stats.m_spirit += item_stats.m_spirit;
+            stats.m_recovery += item_stats.m_recovery;
+            stats.m_spirit += item_stats.m_spirit;
+        }
+
+        m_max_stats = stats;
+
+        stats_need_updated = false;
     }
-
-    m_max_stats = stats;
 }
