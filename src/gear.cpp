@@ -1,7 +1,8 @@
 #include "gear.hpp"
 
-Item::Item(u32 item_level, u32 slot, Statsheet<u64> base_stats)
-    : m_item_level(item_level)
+Item::Item(u32 item_level, u32 slot, const char* name, Statsheet<u64> base_stats)
+    : m_name(name)
+    , m_item_level(item_level)
     , m_slot(slot)
     , m_base_stats(base_stats)
 {
@@ -10,12 +11,7 @@ Item::Item(u32 item_level, u32 slot, Statsheet<u64> base_stats)
     // }
 }
 
-Item::Item(sqlite3* database, std::string& sqlite_command)
-{
-    this->import_from_sql_cmd(database, sqlite_command);
-}
-
-[[nodiscard]] Item Item::random_item(u32 item_level, u32 slot)
+[[nodiscard]] Item Item::random_item(u32 item_level, u32 slot, const char* name)
 {
     static thread_local std::mt19937 generator(std::random_device {}());
 
@@ -72,7 +68,7 @@ Item::Item(sqlite3* database, std::string& sqlite_command)
         budget -= 1;
     }
 
-    return Item { item_level, slot, base_stats };
+    return Item { item_level, slot, name, base_stats };
 }
 
 [[nodiscard]] u32 Item::get_slot() const
@@ -106,6 +102,11 @@ Item::Item(sqlite3* database, std::string& sqlite_command)
     return stats;
 }
 
+[[nodiscard]] u32 Item::get_item_level() const
+{
+    return m_item_level;
+}
+
 [[nodiscard]] std::string Item::create_sql_table_cmd(const char* table_name)
 {
     std::string command = std::format(
@@ -130,7 +131,7 @@ Item::Item(sqlite3* database, std::string& sqlite_command)
     return command;
 }
 
-[[nodiscard]] std::string Item::export_to_sql_cmd(const char* table_name, int id, const char* item_name) const
+[[nodiscard]] std::string Item::export_to_sql_cmd(const char* table_name, int id) const
 {
     std::string command = std::format(
         R"(REPLACE INTO {} (
@@ -138,42 +139,50 @@ Item::Item(sqlite3* database, std::string& sqlite_command)
         ) VALUES (
         {}, '{}', {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {});
     )",
-        table_name, id, item_name, m_item_level, m_slot, m_base_stats.m_stamina, m_base_stats.m_resource,
+        table_name, id, m_name, m_item_level, m_slot, m_base_stats.m_stamina, m_base_stats.m_resource,
         m_base_stats.m_armor, m_base_stats.m_resist, m_base_stats.m_primary, m_base_stats.m_crit,
         m_base_stats.m_haste, m_base_stats.m_expertise, m_base_stats.m_spirit, m_base_stats.m_recovery);
 
     return command;
 }
 
-int Item::import_from_sql_cmd(sqlite3* database, std::string& sql_command)
+[[nodiscard]] Item Item::import_from_sql_cmd(sqlite3* database, const char* table_name, int id)
 {
+    std::string sql_command = std::format(R"(
+        SELECT * FROM {} 
+        WHERE ID IS {}
+    )",
+        table_name, id);
+
+    Item item {};
+
     sqlite3_stmt* statement = nullptr;
     if (sqlite3_prepare_v2(database, sql_command.c_str(), static_cast<int>(sql_command.length()), &statement, nullptr) != SQLITE_OK) {
-        std::println("Failed to prepare sqlite3 statement \"{}\"", sql_command);
-        return -1;
+        throw std::runtime_error(std::format("Failed to prepare sqlite3 statement \"{}\"", sql_command));
     }
 
     if (sqlite3_step(statement) == SQLITE_ROW) {
-        m_item_level = static_cast<u32>(sqlite3_column_int(statement, 2));
-        m_slot = static_cast<u32>(sqlite3_column_int(statement, 3));
-        m_base_stats.m_stamina = static_cast<u64>(sqlite3_column_int(statement, 4));
-        m_base_stats.m_resource = static_cast<u64>(sqlite3_column_int(statement, 5));
+        item.m_name = std::string(reinterpret_cast<const char*>(sqlite3_column_text(statement, 1)));
+        item.m_item_level = static_cast<u32>(sqlite3_column_int(statement, 2));
+        item.m_slot = static_cast<u32>(sqlite3_column_int(statement, 3));
+        item.m_base_stats.m_stamina = static_cast<u64>(sqlite3_column_int(statement, 4));
+        item.m_base_stats.m_resource = static_cast<u64>(sqlite3_column_int(statement, 5));
 
-        m_base_stats.m_armor = static_cast<u64>(sqlite3_column_int(statement, 6));
-        m_base_stats.m_resist = static_cast<u64>(sqlite3_column_int(statement, 7));
+        item.m_base_stats.m_armor = static_cast<u64>(sqlite3_column_int(statement, 6));
+        item.m_base_stats.m_resist = static_cast<u64>(sqlite3_column_int(statement, 7));
 
-        m_base_stats.m_primary = static_cast<u64>(sqlite3_column_int(statement, 8));
-        m_base_stats.m_crit = static_cast<u64>(sqlite3_column_int(statement, 9));
-        m_base_stats.m_haste = static_cast<u64>(sqlite3_column_int(statement, 10));
-        m_base_stats.m_expertise = static_cast<u64>(sqlite3_column_int(statement, 11));
+        item.m_base_stats.m_primary = static_cast<u64>(sqlite3_column_int(statement, 8));
+        item.m_base_stats.m_crit = static_cast<u64>(sqlite3_column_int(statement, 9));
+        item.m_base_stats.m_haste = static_cast<u64>(sqlite3_column_int(statement, 10));
+        item.m_base_stats.m_expertise = static_cast<u64>(sqlite3_column_int(statement, 11));
 
-        m_base_stats.m_spirit = static_cast<u64>(sqlite3_column_int(statement, 12));
-        m_base_stats.m_recovery = static_cast<u64>(sqlite3_column_int(statement, 13));
+        item.m_base_stats.m_spirit = static_cast<u64>(sqlite3_column_int(statement, 12));
+        item.m_base_stats.m_recovery = static_cast<u64>(sqlite3_column_int(statement, 13));
     }
 
     sqlite3_finalize(statement);
 
-    return 0;
+    return item;
 }
 
 void Item::debug_print()

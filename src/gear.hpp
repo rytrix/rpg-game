@@ -20,18 +20,18 @@ struct Statsheet {
 class Item {
 public:
     Item() = default;
-    Item(sqlite3* database, std::string& sqlite_command);
-    Item(u32 item_level, u32 slot, Statsheet<u64> base_stats);
+    Item(u32 item_level, u32 slot, const char* name, Statsheet<u64> base_stats);
 
-    [[nodiscard]] static Item random_item(u32 item_level, u32 slot);
+    [[nodiscard]] static Item random_item(u32 item_level, u32 slot, const char* name);
 
     [[nodiscard]] u32 get_slot() const;
     [[nodiscard]] const Statsheet<u64>& get_base_statsheet() const;
     [[nodiscard]] Statsheet<u64> get_leveled_statsheet() const;
+    [[nodiscard]] u32 get_item_level() const;
 
     [[nodiscard]] static std::string create_sql_table_cmd(const char* table_name);
-    [[nodiscard]] std::string export_to_sql_cmd(const char* table_name, int id, const char* item_name) const;
-    int import_from_sql_cmd(sqlite3* database, std::string& sql_command);
+    [[nodiscard]] std::string export_to_sql_cmd(const char* table_name, int id) const;
+    [[nodiscard]] static Item import_from_sql_cmd(sqlite3* database, const char* table_name, int id);
 
     static constexpr u32 HELMET_SLOT = 0;
     static constexpr u32 SHOULDER_SLOT = 1;
@@ -52,6 +52,7 @@ public:
     void debug_print();
 
 private:
+    std::string m_name;
     u32 m_item_level = {};
     u32 m_slot = {};
     Statsheet<u64> m_base_stats = {};

@@ -31,23 +31,29 @@ private:
 
 class Character {
 public:
-    Character();
+    explicit Character(const char* name);
 
-    static Character random_character(u32 item_level);
+    static Character random_character(const char* name, u32 item_level);
 
     [[nodiscard]] f64 get_cur_stamina() const;
     [[nodiscard]] f64 get_cur_resource() const;
     [[nodiscard]] const Statsheet<u64>& get_statsheet() const;
     [[nodiscard]] Statsheet<f64> get_scaled_statsheet() const;
+    [[nodiscard]] f64 get_item_level() const;
 
     Item equip_item(const Item& item);
 
     void reset_stamina_resource();
     void regen_tick(u32 ticks = 1);
 
+    [[nodiscard]] static std::string create_sql_table_cmd();
+    [[nodiscard]] std::string export_to_sql_cmd(const char* item_table_name, int id) const;
+    [[nodiscard]] static Character import_from_sql_cmd(sqlite3* database, int id);
+
     void debug_print();
 
 private:
+    std::string m_name;
     Statsheet<u64> m_max_stats = {};
 
     static constexpr Statsheet<f64> STAT_SCALING = {
@@ -86,7 +92,8 @@ private:
     // 11 - trinket
     // 12 - weapon
     // 13 - offhand
-    std::array<Item, Item::TOTAL_SLOTS> m_items;
+    std::array<Item, Item::TOTAL_SLOTS> m_equiped;
 
-    void calculate_max_stats();
+    bool stats_need_updated = false;
+    void update_max_stats();
 };

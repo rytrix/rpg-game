@@ -1,6 +1,5 @@
 #include "character.hpp"
 #include "gear.hpp"
-#include <print>
 
 namespace {
 
@@ -26,7 +25,7 @@ void average_stats_test()
     f32 average_expertise = 0.0;
 
     for (int i = 0; i < 2000; i++) {
-        Item test = Item::random_item(5, Item::BOOT_SLOT);
+        Item test = Item::random_item(5, Item::BOOT_SLOT, "item");
 
         auto statsheet = test.get_leveled_statsheet();
 
@@ -50,14 +49,14 @@ int main()
         std::println("Can't open database: {}", sqlite3_errmsg(db));
     }
 
-    Character c1 = Character::random_character(50);
-    Character c2 = Character::random_character(50);
+    Character c1 = Character::random_character("c1", 531);
+    Character c2 = Character::random_character("c2", 500);
 
     std::println("C1");
     c1.debug_print();
-    std::println("\n\nC2");
+    std::println("\nC2");
     c2.debug_print();
-    std::println("\n");
+    std::println("");
 
     Ability test(
         Statsheet<f64> {
@@ -68,9 +67,9 @@ int main()
             .m_resist = 1.00,
 
             .m_primary = 1,
-            .m_crit = 2.0,
-            .m_haste = 0,
-            .m_expertise = 1,
+            .m_crit = 1.0,
+            .m_haste = 1.0,
+            .m_expertise = 1.0,
 
             .m_spirit = 0,
             .m_recovery = 0,
@@ -90,6 +89,13 @@ int main()
 
     effectiveness = test.get_effectiveness(c1, c2);
     std::println("Effectiveness {}", effectiveness);
+    std::println("");
+
+    sqlite_cmd(db, c1.create_sql_table_cmd());
+    sqlite_cmd(db, c1.export_to_sql_cmd("items", 0));
+
+    Character c3 = Character::import_from_sql_cmd(db, 0);
+    c3.debug_print();
 
     sqlite3_close(db);
     db = nullptr;
