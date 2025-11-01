@@ -18,13 +18,15 @@ gameplay loop
 
 spell system needs to be ironed out
   -be specific ffs
-  -currently stats scale linearly, except for crit which is exponential, FIXME
-
-enemy generation based on item levels
-    - Need to do gear generation (done)
 
 # Done
 resistances/damage reduction
  -make armor scale off of max hp, 
-  -meaning more armor relative to the scaled stamina grants more % damage reduction
-  -abilities need a scaling factor with armor and resistance indicating how much they get reduced by those stats
+   -meaning more armor relative to the scaled stamina grants more % damage reduction
+   -abilities need a scaling factor with armor and resistance indicating how much they get reduced by those stats
+   -ARMOR PENETRATION IS THE SOLUTION! maybe.. lol, I think it might just be noise
+
+enemy generation based on item levels
+  -Need to do gear generation (done)
+
+character saving to sqlite
