@@ -39,33 +39,7 @@ void average_stats_test()
     std::println("Average_expertise: {}", average_expertise);
 }
 
-void raylib_test()
-{
-    const int screenWidth = 800;
-    const int screenHeight = 450;
-
-    InitWindow(screenWidth, screenHeight, "raylib [core] example - basic window");
-
-    SetTargetFPS(60);
-
-    // Main game loop
-    while (!WindowShouldClose()) // Detect window close button or ESC key
-    {
-        BeginDrawing();
-
-        ClearBackground(RAYWHITE);
-
-        DrawText("Congrats! You created your first window!", 190, 200, 20, LIGHTGRAY);
-
-        EndDrawing();
-    }
-
-    CloseWindow(); // Close window and OpenGL context
-}
-
-}
-
-int main()
+void character_sqlite_ability_tests()
 {
     sqlite3* db = nullptr;
     int error = sqlite3_open("Gear.db", &db);
@@ -123,8 +97,44 @@ int main()
 
     sqlite3_close(db);
     db = nullptr;
+}
 
-    // raylib_test();
+void raylib_test()
+{
+    const int screenWidth = 1600;
+    const int screenHeight = 800;
+
+    InitWindow(screenWidth, screenHeight, "Dungeons");
+
+    SetTargetFPS(144);
+
+    // Main game loop
+    while (!WindowShouldClose()) // Detect window close button or ESC key
+    {
+        BeginDrawing();
+
+        ClearBackground(BLACK);
+
+        DrawRectangle(0, 0, 60, 60, GRAY);
+
+        Vector2 mouse_position = GetMousePosition();
+        if (mouse_position.x >= 0 && mouse_position.x <= 60 && mouse_position.y >= 0 && mouse_position.y <= 60) {
+            DrawText("W", 30, 30, 10, BLACK);
+        }
+
+        DrawText("Congrats! You created your first window!", 190, 200, 20, WHITE);
+
+        EndDrawing();
+    }
+
+    CloseWindow(); // Close window and OpenGL context
+}
+
+}
+
+int main()
+{
+    raylib_test();
 
     return 0;
 }
