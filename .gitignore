@@ -1,3 +1,5 @@
+*.db
+
 # Build directories and binary files
 build/
 out/
