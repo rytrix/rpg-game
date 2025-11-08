@@ -2,10 +2,6 @@
 
 namespace Renderer {
 
-Texture::Texture()
-{
-}
-
 Texture::Texture(TextureInfo* info)
 {
     init(info);
@@ -13,117 +9,113 @@ Texture::Texture(TextureInfo* info)
 
 Texture::~Texture()
 {
-    glDeleteTextures(1, &id);
+    glDeleteTextures(1, &m_id);
 }
 
 void Texture::init(TextureInfo* info)
 {
-    dimensions = info->dimensions;
-    glCreateTextures(dimensions, 1, &id);
+    m_dimensions = info->dimensions;
+    glCreateTextures(m_dimensions, 1, &m_id);
 
-    glTextureParameteri(id, GL_TEXTURE_MIN_FILTER, info->min_filter);
-    glTextureParameteri(id, GL_TEXTURE_MAG_FILTER, info->mag_filter);
-    glTextureParameteri(id, GL_TEXTURE_WRAP_S, info->wrap_s);
-    glTextureParameteri(id, GL_TEXTURE_WRAP_T, info->wrap_t);
+    glTextureParameteri(m_id, GL_TEXTURE_MIN_FILTER, info->min_filter);
+    glTextureParameteri(m_id, GL_TEXTURE_MAG_FILTER, info->mag_filter);
+    glTextureParameteri(m_id, GL_TEXTURE_WRAP_S, info->wrap_s);
+    glTextureParameteri(m_id, GL_TEXTURE_WRAP_T, info->wrap_t);
 
-    if (info->fromFile) {
-        fromFile(info->file);
+    if (info->from_file) {
+        from_file(info->file);
     } else {
-        textureStorage(&info->size, info->internalFormat);
+        texture_storage(&info->size, info->internal_format);
     }
 
     if (info->mipmaps) {
-        generateMipmap();
+        generate_mipmap();
     }
 }
 
-void Texture::generateMipmap()
+void Texture::generate_mipmap()
 {
-    glGenerateTextureMipmap(id);
+    glGenerateTextureMipmap(m_id);
 }
 
-void Texture::subImage(TextureSubimageInfo* info)
+void Texture::sub_image(TextureSubimageInfo* info)
 {
-    switch (dimensions) {
-    case GL_TEXTURE_1D:
-        glTextureSubImage1D(id,
-            info->level,
-            info->offsets.width,
-            info->size.width,
-            info->format,
-            info->type,
-            info->pixels);
-        break;
-    case GL_TEXTURE_2D:
-        glTextureSubImage2D(id,
-            info->level,
-            info->offsets.width,
-            info->offsets.height,
-            info->size.width,
-            info->size.height,
-            info->format,
-            info->type,
-            info->pixels);
-        break;
-    case GL_TEXTURE_3D:
-        glTextureSubImage3D(id,
-            info->level,
-            info->offsets.width,
-            info->offsets.height,
-            info->offsets.depth,
-            info->size.width,
-            info->size.height,
-            info->size.depth,
-            info->format,
-            info->type,
-            info->pixels);
-        break;
-    default:
-        std::print("invalid texture dimensions {}\n", dimensions);
-        exit(EXIT_FAILURE);
+    switch (m_dimensions) {
+        case GL_TEXTURE_1D:
+            glTextureSubImage1D(m_id,
+                info->level,
+                info->offsets.width,
+                info->size.width,
+                info->format,
+                info->type,
+                info->pixels);
+            break;
+        case GL_TEXTURE_2D:
+            glTextureSubImage2D(m_id,
+                info->level,
+                info->offsets.width,
+                info->offsets.height,
+                info->size.width,
+                info->size.height,
+                info->format,
+                info->type,
+                info->pixels);
+            break;
+        case GL_TEXTURE_3D:
+            glTextureSubImage3D(m_id,
+                info->level,
+                info->offsets.width,
+                info->offsets.height,
+                info->offsets.depth,
+                info->size.width,
+                info->size.height,
+                info->size.depth,
+                info->format,
+                info->type,
+                info->pixels);
+            break;
+        default:
+            throw std::runtime_error(std::format("invalid texture dimensions {}\n", m_dimensions));
     }
 }
 
-void Texture::bind(GLuint textureUnit)
+void Texture::bind(GLuint texture_unit)
 {
-    glBindTextureUnit(textureUnit, id);
+    glBindTextureUnit(texture_unit, m_id);
 }
 
-void Texture::textureStorage(TextureSize* size, GLenum internalFormat)
+void Texture::texture_storage(TextureSize* size, GLenum internal_format)
 {
-    switch (dimensions) {
-    case GL_TEXTURE_1D:
-        glTextureStorage1D(id, 1, internalFormat, size->width);
-        break;
-    case GL_TEXTURE_2D:
-        glTextureStorage2D(id, 1, internalFormat, size->width, size->height);
-        break;
-    case GL_TEXTURE_3D:
-        glTextureStorage3D(id, 1, internalFormat, size->width, size->height, size->depth);
-        break;
-    default:
-        std::print("invalid texture dimensions {}\n", dimensions);
-        exit(EXIT_FAILURE);
+    switch (m_dimensions) {
+        case GL_TEXTURE_1D:
+            glTextureStorage1D(m_id, 1, internal_format, size->width);
+            break;
+        case GL_TEXTURE_2D:
+            glTextureStorage2D(m_id, 1, internal_format, size->width, size->height);
+            break;
+        case GL_TEXTURE_3D:
+            glTextureStorage3D(m_id, 1, internal_format, size->width, size->height, size->depth);
+            break;
+        default:
+            throw std::runtime_error(std::format("invalid texture dimensions {}\n", m_dimensions));
     }
 }
 
-void Texture::fromFile(const char* file)
+void Texture::from_file(const char* file)
 {
-    if (dimensions != GL_TEXTURE_2D) {
-        std::print("currently only 2D textures are supported to be loaded from files\n");
-        exit(EXIT_FAILURE);
+    if (m_dimensions != GL_TEXTURE_2D) {
+        throw std::runtime_error("currently only 2D textures are supported to be loaded from files");
     }
 
-    stbi_set_flip_vertically_on_load(true);
-    TextureSize size;
-    int nrChannels;
-    unsigned char* data = stbi_load(file, &size.width, &size.height, &nrChannels, 0);
+    stbi_set_flip_vertically_on_load(1);
+    TextureSize size {};
+    int nr_channels {};
+    unsigned char* data = stbi_load(file, &size.width, &size.height, &nr_channels, 0);
     if (data == nullptr) {
-        std::print("failed to load texture {}", file);
-        exit(EXIT_FAILURE);
+        throw std::runtime_error(std::format("failed to load texture {}", file));
     }
 
-    textureStorage(&size, GL_RGB8);
+    texture_storage(&size, GL_RGB8);
 
     TextureSubimageInfo info {};
     info.format = GL_RGB;
@@ -131,9 +123,9 @@ void Texture::fromFile(const char* file)
     info.size = size;
     info.pixels = data;
 
-    subImage(&info);
+    sub_image(&info);
 
     stbi_image_free(data);
 }
 
-} // namespace Mcq
+} // namespace Renderer
