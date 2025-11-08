@@ -2,7 +2,8 @@
 
 namespace Renderer {
 
-struct VertexArray {
+class VertexArray {
+public:
     VertexArray();
     ~VertexArray();
 
