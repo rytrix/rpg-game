@@ -2,45 +2,46 @@
 
 namespace Renderer {
 
-enum ShaderInfoEnum {
-	Text = 0,
-	File = 1,
-};
-
 struct ShaderInfo {
-    const ShaderInfoEnum isFile{};
-    const char* shader{};
-    GLenum type{};
+    bool is_file {};
+    const char* shader {};
+    GLenum type {};
 };
 
-struct ShaderProgram {
-    ShaderProgram();
-	ShaderProgram(ShaderInfo* shaderInfo, int shaderCount);
-	~ShaderProgram();
+class ShaderProgram {
+public:
+    ShaderProgram() = default;
+    ShaderProgram(ShaderInfo* shader_info, std::size_t shader_count);
+    ~ShaderProgram();
 
-    void init(ShaderInfo* shaderInfo, int shaderCount);
-	void bind();
+    ShaderProgram(const ShaderProgram&) = delete;
+    ShaderProgram& operator=(const ShaderProgram&) = delete;
+    ShaderProgram(ShaderProgram&&) = default;
+    ShaderProgram& operator=(ShaderProgram&&) = default;
 
-	void setBool(const char* name, bool value);
-	void setInt(const char* name, int value);
-	void setFloat(const char* name, float value);
-	void setVec2(const char* name, glm::vec2 value);
-	void setVec2s(const char* name, float value1, float value2);
-	void setVec3(const char* name, glm::vec3 value);
-	void setVec3s(const char* name, float value1, float value2, float value3);
-	void setVec4(const char* name, glm::vec4 value);
-	void setVec4s(const char* name, float value1, float value2, float value3, float value4);
-	void setMat2(const char* name, glm::mat2 value);
-	void setMat3(const char* name, glm::mat3 value);
-	void setMat4(const char* name, glm::mat4 value);
+    void init(ShaderInfo* shader_info, std::size_t shader_count);
+    void bind();
 
-    bool hasErrors() { return errors; }
+    void set_bool(const char* name, bool value);
+    void set_int(const char* name, int value);
+    void set_float(const char* name, float value);
+    void set_vec2(const char* name, glm::vec2 value);
+    void set_vec2s(const char* name, float value1, float value2);
+    void set_vec3(const char* name, glm::vec3 value);
+    void set_vec3s(const char* name, float value1, float value2, float value3);
+    void set_vec4(const char* name, glm::vec4 value);
+    void set_vec4s(const char* name, float value1, float value2, float value3, float value4);
+    void set_mat2(const char* name, glm::mat2 value);
+    void set_mat3(const char* name, glm::mat3 value);
+    void set_mat4(const char* name, glm::mat4 value);
+
+    [[nodiscard]] bool has_errors() const;
 
 private:
-	GLuint id{};
-	bool errors = true;
+    GLuint m_id {};
+    bool m_errors = true;
 
-	bool hasErrorsInternal();
+    [[nodiscard]] bool errors_internal() const;
 };
 
 } // namespace Renderer

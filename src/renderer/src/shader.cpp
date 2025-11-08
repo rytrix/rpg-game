@@ -1,203 +1,216 @@
 #include "shader.hpp"
 
-#include <cstdio>
+#include <fstream>
 
 namespace Renderer {
 
-struct Shader {
-    Shader(bool isFile, const char* shader, GLenum type);
-    Shader();
-    ~Shader();
+namespace {
 
-    void init(bool isFile, const char* shader, GLenum type);
+    constexpr std::size_t MAX_ERROR_LENGTH = 512;
 
-    NODISCARD GLuint getId() const { return id; }
+    class Shader {
+    public:
+        Shader() = default;
+        Shader(bool is_file, const char* shader, GLenum type);
+        ~Shader();
 
-private:
-    GLuint id {};
-    bool errors = true;
+        Shader(const Shader&) = delete;
+        Shader& operator=(const Shader&) = delete;
+        Shader(Shader&&) = default;
+        Shader& operator=(Shader&&) = default;
 
-    bool hasErrors();
-    char* fromFile(const char* path);
-};
+        void init(bool is_file, const char* shader, GLenum type);
 
-Shader::Shader(bool isFile, const char* shader, GLenum type)
-{
-    init(isFile, shader, type);
-}
+        [[nodiscard]] GLuint get_id() const;
 
-Shader::Shader() { }
+    private:
+        GLuint m_id {};
+        bool m_errors = true;
 
-Shader::~Shader()
-{
-    if (!errors)
-        glDeleteShader(id);
-}
+        [[nodiscard]] bool has_errors() const;
+        static std::vector<char> from_file(const char* path);
+    };
 
-void Shader::init(bool isFile, const char* shader, GLenum type)
-{
-    id = glCreateShader(type);
-
-    if (isFile) {
-        char* shaderText = fromFile(shader);
-        glShaderSource(id, 1, &shaderText, NULL);
-        free(shaderText);
-    } else {
-        glShaderSource(id, 1, &shader, NULL);
+    Shader::Shader(bool is_file, const char* shader, GLenum type)
+    {
+        init(is_file, shader, type);
     }
 
-    glCompileShader(id);
-
-    errors = hasErrors();
-}
-
-bool Shader::hasErrors()
-{
-    int success;
-    char infoLog[512];
-    glGetShaderiv(id, GL_COMPILE_STATUS, &success);
-
-    if (!success) {
-        glGetShaderInfoLog(id, 512, NULL, infoLog);
-        std::print("shader failed to compile: {}\n", infoLog);
-        return true;
+    Shader::~Shader()
+    {
+        if (!m_errors) {
+            glDeleteShader(m_id);
+        }
     }
 
-    return false;
-}
+    void Shader::init(bool is_file, const char* shader, GLenum type)
+    {
+        m_id = glCreateShader(type);
 
-char* Shader::fromFile(const char* path)
-{
-    FILE* file = fopen(path, "r");
-    if (file == nullptr) {
-        std::print("could not open file {}\n", path);
-        return NULL;
+        if (is_file) {
+            std::vector<char> shader_text = from_file(shader);
+            const char* data_text = shader_text.data();
+            glShaderSource(m_id, 1, &data_text, nullptr);
+        } else {
+            glShaderSource(m_id, 1, &shader, nullptr);
+        }
+
+        glCompileShader(m_id);
+
+        m_errors = has_errors();
     }
 
-    fseek(file, 0, SEEK_END);
-    size_t size = ftell(file);
-    fseek(file, 0, SEEK_SET);
+    [[nodiscard]] bool Shader::has_errors() const
+    {
+        int success = 0;
+        std::array<char, MAX_ERROR_LENGTH> info_log {};
+        glGetShaderiv(m_id, GL_COMPILE_STATUS, &success);
 
-    char* shaderText = (char*)malloc(size + 1);
-    if (shaderText == nullptr) {
-        std::print("failed to malloc data for file {}\n", path);
+        if (success != 0) {
+            glGetShaderInfoLog(m_id, MAX_ERROR_LENGTH, nullptr, info_log.data());
+            std::print("shader failed to compile: {}\n", info_log.data());
+            return true;
+        }
+
+        return false;
     }
 
-    fread(shaderText, size, 1, file);
-    shaderText[size] = '\0';
+    std::vector<char> Shader::from_file(const char* path)
+    {
+        std::ifstream file(path, std::ios::in | std::ios::binary);
+        if (!file) {
+            std::println("Could not open file \"{}\"", path);
+            return {};
+        }
 
-    return shaderText;
-}
+        std::vector<char> shader_text((std::istreambuf_iterator<char>(file)),
+            std::istreambuf_iterator<char>());
 
-ShaderProgram::ShaderProgram()
+        shader_text.push_back('\0');
+
+        return shader_text;
+    }
+
+    [[nodiscard]] GLuint Shader::get_id() const
+    {
+        return m_id;
+    }
+
+} // Anonymous namespace
+
+ShaderProgram::ShaderProgram(ShaderInfo* shader_info, std::size_t shader_count)
 {
-}
-
-ShaderProgram::ShaderProgram(ShaderInfo* shaderInfo, int shaderCount)
-{
-    init(shaderInfo, shaderCount);
+    init(shader_info, shader_count);
 }
 
 ShaderProgram::~ShaderProgram()
 {
-    if (!errors)
-        glDeleteProgram(id);
+    if (!m_errors) {
+        glDeleteProgram(m_id);
+    }
 }
 
-void ShaderProgram::init(ShaderInfo* shaderInfo, int shaderCount)
+void ShaderProgram::init(ShaderInfo* shader_info, std::size_t shader_count)
 {
-    if (shaderCount > 5) {
+    static constexpr size_t MAX_SHADER_COUNT = 5;
+    if (shader_count > MAX_SHADER_COUNT) {
         std::print("shader programs do not currently support more than 5 shaders\n");
         return;
     }
-    Shader shaders[5];
+    std::array<Shader, MAX_SHADER_COUNT> shaders;
 
-    id = glCreateProgram();
+    m_id = glCreateProgram();
 
-    for (int i = 0; i < shaderCount; i++) {
-        shaders[i].init((bool)shaderInfo[i].isFile, shaderInfo[i].shader, shaderInfo[i].type);
-        glAttachShader(id, shaders[i].getId());
+    for (std::size_t i = 0; i < shader_count; i++) {
+        shaders.at(i).init(shader_info[i].is_file, shader_info[i].shader, shader_info[i].type);
+
+        glAttachShader(m_id, shaders[i].get_id());
     }
 
-    glLinkProgram(id);
+    glLinkProgram(m_id);
 
-    errors = hasErrorsInternal();
+    m_errors = errors_internal();
 }
 
 void ShaderProgram::bind()
 {
-    glUseProgram(id);
+    glUseProgram(m_id);
 }
 
-void ShaderProgram::setBool(const char* name, bool value)
+void ShaderProgram::set_bool(const char* name, bool value)
 {
-    glUniform1i(glGetUniformLocation(id, name), value);
+    glUniform1i(glGetUniformLocation(m_id, name), value);
 }
 
-void ShaderProgram::setInt(const char* name, int value)
+void ShaderProgram::set_int(const char* name, int value)
 {
-    glUniform1i(glGetUniformLocation(id, name), value);
+    glUniform1i(glGetUniformLocation(m_id, name), value);
 }
 
-void ShaderProgram::setFloat(const char* name, float value)
+void ShaderProgram::set_float(const char* name, float value)
 {
-    glUniform1f(glGetUniformLocation(id, name), value);
+    glUniform1f(glGetUniformLocation(m_id, name), value);
 }
 
-void ShaderProgram::setVec2(const char* name, glm::vec2 value)
+void ShaderProgram::set_vec2(const char* name, glm::vec2 value)
 {
-    glUniform2fv(glGetUniformLocation(id, name), 1, &value[0]);
+    glUniform2fv(glGetUniformLocation(m_id, name), 1, &value[0]);
 }
 
-void ShaderProgram::setVec2s(const char* name, float value1, float value2)
+void ShaderProgram::set_vec2s(const char* name, float value1, float value2)
 {
-    glUniform2f(glGetUniformLocation(id, name), value1, value2);
+    glUniform2f(glGetUniformLocation(m_id, name), value1, value2);
 }
 
-void ShaderProgram::setVec3(const char* name, glm::vec3 value)
+void ShaderProgram::set_vec3(const char* name, glm::vec3 value)
 {
-    glUniform3fv(glGetUniformLocation(id, name), 1, &value[0]);
+    glUniform3fv(glGetUniformLocation(m_id, name), 1, &value[0]);
 }
 
-void ShaderProgram::setVec3s(const char* name, float value1, float value2, float value3)
+void ShaderProgram::set_vec3s(const char* name, float value1, float value2, float value3)
 {
-    glUniform3f(glGetUniformLocation(id, name), value1, value2, value3);
+    glUniform3f(glGetUniformLocation(m_id, name), value1, value2, value3);
 }
 
-void ShaderProgram::setVec4(const char* name, glm::vec4 value)
+void ShaderProgram::set_vec4(const char* name, glm::vec4 value)
 {
-    glUniform4fv(glGetUniformLocation(id, name), 1, &value[0]);
+    glUniform4fv(glGetUniformLocation(m_id, name), 1, &value[0]);
 }
 
-void ShaderProgram::setVec4s(const char* name, float value1, float value2, float value3, float value4)
+void ShaderProgram::set_vec4s(const char* name, float value1, float value2, float value3, float value4)
 {
-    glUniform4f(glGetUniformLocation(id, name), value1, value2, value3, value4);
+    glUniform4f(glGetUniformLocation(m_id, name), value1, value2, value3, value4);
 }
 
-void ShaderProgram::setMat2(const char* name, glm::mat2 value)
+void ShaderProgram::set_mat2(const char* name, glm::mat2 value)
 {
-    glUniformMatrix2fv(glGetUniformLocation(id, name), 1, GL_FALSE, &value[0][0]);
+    glUniformMatrix2fv(glGetUniformLocation(m_id, name), 1, GL_FALSE, &value[0][0]);
 }
 
-void ShaderProgram::setMat3(const char* name, glm::mat3 value)
+void ShaderProgram::set_mat3(const char* name, glm::mat3 value)
 {
-    glUniformMatrix3fv(glGetUniformLocation(id, name), 1, GL_FALSE, &value[0][0]);
+    glUniformMatrix3fv(glGetUniformLocation(m_id, name), 1, GL_FALSE, &value[0][0]);
 }
 
-void ShaderProgram::setMat4(const char* name, glm::mat4 value)
+void ShaderProgram::set_mat4(const char* name, glm::mat4 value)
 {
-    glUniformMatrix4fv(glGetUniformLocation(id, name), 1, GL_FALSE, &value[0][0]);
+    glUniformMatrix4fv(glGetUniformLocation(m_id, name), 1, GL_FALSE, &value[0][0]);
 }
 
-bool ShaderProgram::hasErrorsInternal()
+bool ShaderProgram::has_errors() const
 {
-    int success;
-    char infoLog[512];
-    glGetProgramiv(id, GL_LINK_STATUS, &success);
+    return m_errors;
+}
 
-    if (!success) {
-        glGetProgramInfoLog(id, 512, NULL, infoLog);
-        std::print("shader program failed to link: {}\n", infoLog);
+bool ShaderProgram::errors_internal() const
+{
+    int success = {};
+    std::array<char, MAX_ERROR_LENGTH> info_log {};
+    glGetProgramiv(m_id, GL_LINK_STATUS, &success);
+
+    if (success != 0) {
+        glGetProgramInfoLog(m_id, MAX_ERROR_LENGTH, nullptr, info_log.data());
+        std::print("shader program failed to link: {}\n", info_log.data());
         return true;
     }
 
