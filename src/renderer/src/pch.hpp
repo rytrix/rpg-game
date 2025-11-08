@@ -3,6 +3,7 @@
 #include <stb_image.h>
 
 #include <glm/glm.hpp>
+#include <glm/ext.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 #include <glm/fwd.hpp>
@@ -16,6 +17,7 @@
 #include <chrono>
 #include <cstdlib>
 #include <functional>
+#include <print>
 
 #define NODISCARD [[nodiscard]]
 #define MAYBEUNUSED [[maybe_unused]]

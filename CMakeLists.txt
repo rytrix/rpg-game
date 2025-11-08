@@ -14,18 +14,20 @@ add_executable(${PROJECT_NAME}
 target_precompile_headers(${PROJECT_NAME} PRIVATE src/pch.hpp)
 
 add_subdirectory(src/sqlite)
+add_subdirectory(src/renderer)
 # add_subdirectory(src/raylib)
-add_subdirectory(src/sdl3)
-add_subdirectory(src/glad)
+# add_subdirectory(src/sdl3)
+# add_subdirectory(src/glad)
 
 target_link_libraries(${PROJECT_NAME} 
     sqlite 
+    renderer
     # raylib 
-    SDL3-static
-    glad
+    # SDL3-static
+    # glad
 )
 
-target_include_directories(${PROJECT_NAME} 
-    PUBLIC src/SDL3/include
-    PUBLIC src/glad/include
-)
+# target_include_directories(${PROJECT_NAME} 
+#     PUBLIC src/SDL3/include
+#     PUBLIC src/glad/include
+# )

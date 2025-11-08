@@ -59,7 +59,7 @@ bool Shader::hasErrors()
 
     if (!success) {
         glGetShaderInfoLog(id, 512, NULL, infoLog);
-        fmt::print("shader failed to compile: {}\n", infoLog);
+        std::print("shader failed to compile: {}\n", infoLog);
         return true;
     }
 
@@ -70,7 +70,7 @@ char* Shader::fromFile(const char* path)
 {
     FILE* file = fopen(path, "r");
     if (file == nullptr) {
-        fmt::print("could not open file {}\n", path);
+        std::print("could not open file {}\n", path);
         return NULL;
     }
 
@@ -80,7 +80,7 @@ char* Shader::fromFile(const char* path)
 
     char* shaderText = (char*)malloc(size + 1);
     if (shaderText == nullptr) {
-        fmt::print("failed to malloc data for file {}\n", path);
+        std::print("failed to malloc data for file {}\n", path);
     }
 
     fread(shaderText, size, 1, file);
@@ -107,7 +107,7 @@ ShaderProgram::~ShaderProgram()
 void ShaderProgram::init(ShaderInfo* shaderInfo, int shaderCount)
 {
     if (shaderCount > 5) {
-        fmt::print("shader programs do not currently support more than 5 shaders\n");
+        std::print("shader programs do not currently support more than 5 shaders\n");
         return;
     }
     Shader shaders[5];
@@ -197,7 +197,7 @@ bool ShaderProgram::hasErrorsInternal()
 
     if (!success) {
         glGetProgramInfoLog(id, 512, NULL, infoLog);
-        fmt::print("shader program failed to link: {}\n", infoLog);
+        std::print("shader program failed to link: {}\n", infoLog);
         return true;
     }
 
