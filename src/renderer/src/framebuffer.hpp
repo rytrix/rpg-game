@@ -2,18 +2,24 @@
 
 namespace Renderer {
 
-struct Framebuffer {
+class Framebuffer {
+public:
     Framebuffer();
     ~Framebuffer() = default;
 
-    void bind() { glBindFramebuffer(GL_FRAMEBUFFER, id); }
-    void unbind() { glBindFramebuffer(GL_FRAMEBUFFER, 0); }
+    Framebuffer(const Framebuffer&) = delete;
+    Framebuffer& operator=(const Framebuffer&) = delete;
+    Framebuffer(Framebuffer&&) = default;
+    Framebuffer& operator=(Framebuffer&&) = default;
 
-    void bindTexture(GLenum attachment, GLuint texture, GLint level);
-    GLuint getId() { return id; }
+    void bind() const;
+    static void unbind();
+
+    void bind_texture(GLenum attachment, GLuint texture, GLint level) const;
+    [[nodiscard]] GLuint get_id() const;
 
 private:
-    GLuint id;
+    GLuint m_id;
 };
 
 } // namespace Renderer
