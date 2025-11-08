@@ -1,7 +1,5 @@
 #pragma once
 
-#include <glm/glm.hpp>
-
 namespace Renderer {
 
 #undef near
@@ -49,28 +47,28 @@ public:
     void setSpeed(float speed);
 
 private:
-    bool firstMouse = true;
+    bool m_first_mouse = true;
 
-    float fov;
-    float near;
-    float far;
-    float aspectRatio;
+    float m_fov;
+    float m_near;
+    float m_far;
+    float m_aspect_ratio;
 
-    float speed;
-    float sensitivity;
+    float m_speed;
+    float m_sensitivity;
 
-    float lastX;
-    float lastY;
-    float yaw;
-    float pitch;
+    float m_last_x;
+    float m_last_y;
+    float m_yaw;
+    float m_pitch;
 
-    glm::vec3 pos;
-    glm::vec3 front;
-    glm::vec3 up;
-    glm::vec3 right;
+    glm::vec3 m_pos;
+    glm::vec3 m_front;
+    glm::vec3 m_up;
+    glm::vec3 m_right;
 
-    glm::mat4 proj;
-    glm::mat4 view;
+    glm::mat4 m_proj;
+    glm::mat4 m_view;
 };
 
 } // namespace Renderer

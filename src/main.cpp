@@ -1,77 +1,73 @@
 #include "character.hpp"
 #include "gear.hpp"
 
-#include <SDL3/SDL.h>
-#include <SDL3/SDL_video.h>
-#include <glad/glad.h>
-
 namespace {
 
-void processInput(SDL_Window *window) {
-    SDL_Event event;
-    while (SDL_PollEvent(&event)) {
-        if (event.type == SDL_EVENT_QUIT) {
-            SDL_DestroyWindow(window);
-            SDL_Quit();
-            exit(0);
-        }
-    }
-}
+// void processInput(SDL_Window *window) {
+//     SDL_Event event;
+//     while (SDL_PollEvent(&event)) {
+//         if (event.type == SDL_EVENT_QUIT) {
+//             SDL_DestroyWindow(window);
+//             SDL_Quit();
+//             exit(0);
+//         }
+//     }
+// }
 
-int sdl_test()
-{
-    if (!SDL_Init(SDL_INIT_VIDEO)) {
-        std::println(stderr, "Could not initialize SDL: {}", SDL_GetError());
-        return -1;
-    }
+// int sdl_test()
+// {
+//     if (!SDL_Init(SDL_INIT_VIDEO)) {
+//         std::println(stderr, "Could not initialize SDL: {}", SDL_GetError());
+//         return -1;
+//     }
 
-    SDL_Window* window = SDL_CreateWindow("SDL3 OpenGL with GLAD",
-        800, 600,
-        SDL_WINDOW_OPENGL);
+//     SDL_Window* window = SDL_CreateWindow("SDL3 OpenGL with GLAD",
+//         800, 600,
+//         SDL_WINDOW_OPENGL);
 
-    if (window == nullptr) {
-        std::println(stderr, "Could not create window: {}", SDL_GetError());
-        SDL_Quit();
-        return -1;
-    }
+//     if (window == nullptr) {
+//         std::println(stderr, "Could not create window: {}", SDL_GetError());
+//         SDL_Quit();
+//         return -1;
+//     }
 
-    SDL_GLContext context = SDL_GL_CreateContext(window);
-    if (context == nullptr) {
-        std::println(stderr, "Could not create OpenGL context: {}", SDL_GetError());
-        SDL_DestroyWindow(window);
-        SDL_Quit();
-        return -1;
-    }
+//     SDL_GLContext context = SDL_GL_CreateContext(window);
+//     if (context == nullptr) {
+//         std::println(stderr, "Could not create OpenGL context: {}", SDL_GetError());
+//         SDL_DestroyWindow(window);
+//         SDL_Quit();
+//         return -1;
+//     }
 
-    if (gladLoadGLLoader((GLADloadproc)SDL_GL_GetProcAddress) == 0) {
-        std::println(stderr, "Failed to initialize GLAD");
-        SDL_GL_DestroyContext(context);
-        SDL_DestroyWindow(window);
-        SDL_Quit();
-        return -1;
-    }
+//     if (gladLoadGLLoader((GLADloadproc)SDL_GL_GetProcAddress) == 0) {
+//         std::println(stderr, "Failed to initialize GLAD");
+//         SDL_GL_DestroyContext(context);
+//         SDL_DestroyWindow(window);
+//         SDL_Quit();
+//         return -1;
+//     }
 
-    while (true) {
-        processInput(window);
+//     while (true) {
+//         processInput(window);
 
-        glClearColor(0.1f, 0.2f, 0.3f, 1.0f);
-        glClear(GL_COLOR_BUFFER_BIT);
+//         glClearColor(0.1f, 0.2f, 0.3f, 1.0f);
+//         glClear(GL_COLOR_BUFFER_BIT);
 
-        SDL_GL_SwapWindow(window);
-    }
+//         SDL_GL_SwapWindow(window);
+//     }
 
-    SDL_GL_DestroyContext(context);
-    SDL_DestroyWindow(window);
-    SDL_Quit();
+//     SDL_GL_DestroyContext(context);
+//     SDL_DestroyWindow(window);
+//     SDL_Quit();
 
-    return 0;
-}
+//     return 0;
+// }
 
 } // anonymous namespace
 
 int main()
 {
-    return sdl_test();
+    return 0;
 }
 
 // Item chest(5, Item::CHEST_SLOT,

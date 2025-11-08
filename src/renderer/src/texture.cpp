@@ -79,7 +79,7 @@ void Texture::subImage(TextureSubimageInfo* info)
             info->pixels);
         break;
     default:
-        fmt::print("invalid texture dimensions {}\n", dimensions);
+        std::print("invalid texture dimensions {}\n", dimensions);
         exit(EXIT_FAILURE);
     }
 }
@@ -102,7 +102,7 @@ void Texture::textureStorage(TextureSize* size, GLenum internalFormat)
         glTextureStorage3D(id, 1, internalFormat, size->width, size->height, size->depth);
         break;
     default:
-        fmt::print("invalid texture dimensions {}\n", dimensions);
+        std::print("invalid texture dimensions {}\n", dimensions);
         exit(EXIT_FAILURE);
     }
 }
@@ -110,7 +110,7 @@ void Texture::textureStorage(TextureSize* size, GLenum internalFormat)
 void Texture::fromFile(const char* file)
 {
     if (dimensions != GL_TEXTURE_2D) {
-        fmt::print("currently only 2D textures are supported to be loaded from files\n");
+        std::print("currently only 2D textures are supported to be loaded from files\n");
         exit(EXIT_FAILURE);
     }
 
@@ -119,7 +119,7 @@ void Texture::fromFile(const char* file)
     int nrChannels;
     unsigned char* data = stbi_load(file, &size.width, &size.height, &nrChannels, 0);
     if (data == nullptr) {
-        fmt::print("failed to load texture {}", file);
+        std::print("failed to load texture {}", file);
         exit(EXIT_FAILURE);
     }
 

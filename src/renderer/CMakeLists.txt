@@ -16,7 +16,7 @@ add_library(${PROJECT_NAME}
     src/framebuffer.cpp
 )
 
-target_precompile_headers(${PROJECT_NAME} PRIVATE pch.hpp)
+target_precompile_headers(${PROJECT_NAME} PRIVATE src/pch.hpp)
 
 add_subdirectory(dep/glad)
 add_subdirectory(dep/stb_image)
@@ -24,13 +24,13 @@ add_subdirectory(dep/sdl3)
 
 target_link_libraries(${PROJECT_NAME} 
 	glad
-	glm
 	stb_image
-	sdl3-static
+	SDL3-shared
 )
 
 target_include_directories(${PROJECT_NAME}
 	PUBLIC dep/glad/include/
 	PUBLIC dep/stb_image/include
 	PUBLIC dep/sdl3/include
+	PUBLIC dep/glm/
 )
