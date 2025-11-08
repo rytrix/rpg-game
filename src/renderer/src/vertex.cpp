@@ -4,45 +4,50 @@ namespace Renderer {
 
 VertexArray::VertexArray()
 {
-    glCreateVertexArrays(1, &id);
-	glBindVertexArray(id);
+    glCreateVertexArrays(1, &m_id);
+    glBindVertexArray(m_id);
 }
 
 VertexArray::~VertexArray()
 {
-    glDeleteVertexArrays(1, &id);
+    glDeleteVertexArrays(1, &m_id);
 }
 
-void VertexArray::vertexAttrib(GLuint attribIndex, GLuint bindingIndex, GLint valuesPerVertex, GLenum dataType, GLuint relativeOffsetInBytes)
+void VertexArray::vertex_attrib(GLuint attrib_index, GLuint binding_index, GLint values_per_vertex, GLenum data_type, GLuint relative_offset_in_bytes)
 {
-    glEnableVertexArrayAttrib(id, attribIndex);
-    glVertexArrayAttribBinding(id, attribIndex, bindingIndex);
-    glVertexArrayAttribFormat(id, attribIndex, valuesPerVertex, dataType, GL_FALSE, relativeOffsetInBytes);
+    glEnableVertexArrayAttrib(m_id, attrib_index);
+    glVertexArrayAttribBinding(m_id, attrib_index, binding_index);
+    glVertexArrayAttribFormat(m_id, attrib_index, values_per_vertex, data_type, GL_FALSE, relative_offset_in_bytes);
 }
 
-void VertexArray::bindVertexBuffer(GLuint bindingIndex, GLuint vertexBuffer, GLintptr offset, GLsizei strideInBytes)
+void VertexArray::bind_vertex_buffer(GLuint binding_index, GLuint vertex_buffer, GLintptr offset, GLsizei stride_in_bytes)
 {
-	glVertexArrayVertexBuffer(id, bindingIndex, vertexBuffer, offset, strideInBytes);
+    glVertexArrayVertexBuffer(m_id, binding_index, vertex_buffer, offset, stride_in_bytes);
 }
 
-void VertexArray::bindVertexBuffers(GLuint first, GLsizei count, const GLuint *bufferIds, const GLintptr *offsets, const GLsizei *stridesInBytes)
+void VertexArray::bind_vertex_buffers(GLuint first, GLsizei count, const GLuint* buffer_ids, const GLintptr* offsets, const GLsizei* strides_in_bytes)
 {
-	glVertexArrayVertexBuffers(id, first, count, bufferIds, offsets, stridesInBytes);
+    glVertexArrayVertexBuffers(m_id, first, count, buffer_ids, offsets, strides_in_bytes);
 }
 
-void VertexArray::bindElementBuffer(GLuint elementBufferId)
+void VertexArray::bind_element_buffer(GLuint element_buffer_id)
 {
-	glVertexArrayElementBuffer(id, elementBufferId);
+    glVertexArrayElementBuffer(m_id, element_buffer_id);
 }
 
-void VertexArray::bindingDevisor(GLuint bindingIndex, GLuint divisor)
+void VertexArray::binding_devisor(GLuint binding_index, GLuint divisor)
 {
-	glVertexArrayBindingDivisor(id, bindingIndex, divisor);
+    glVertexArrayBindingDivisor(m_id, binding_index, divisor);
 }
 
 void VertexArray::bind()
 {
-	glBindVertexArray(id);
+    glBindVertexArray(m_id);
+}
+
+[[nodiscard]] GLuint VertexArray::get_id() const
+{
+    return m_id;
 }
 
 } // namespace Renderer
