@@ -1,3 +1,7 @@
 [submodule "raylib"]
     path = src/raylib
     url = https://github.com/raysan5/raylib.git
+
+[submodule "glm"]
+    path = src/renderer/dep/glm
+    url = https://github.com/g-truc/glm.git
