@@ -6,14 +6,19 @@ struct Buffer {
     Buffer();
     ~Buffer();
 
-    void bufferData(GLsizeiptr size, const void* data, GLenum usage);
-	void bufferStorage(GLsizeiptr size, const void* data, GLbitfield flags);
-	void bufferSubData(GLsizeiptr offset, GLsizeiptr size, const void* data);
+    Buffer(const Buffer&) = delete;
+    Buffer& operator=(const Buffer&) = delete;
+    Buffer(Buffer&&) = default;
+    Buffer& operator=(Buffer&&) = default;
 
-	GLuint getId() const noexcept { return id; }
+    void buffer_data(GLsizeiptr size, const void* data, GLenum usage);
+	void buffer_storage(GLsizeiptr size, const void* data, GLbitfield flags);
+	void buffer_sub_data(GLsizeiptr offset, GLsizeiptr size, const void* data);
+
+    [[nodiscard]] GLuint get_id() const;
 
 private:
-    GLuint id;
+    GLuint m_id;
 };
 
 } // namespace Renderer
