@@ -9,7 +9,7 @@ struct TextureSize {
 };
 
 struct TextureInfo {
-    bool fromFile = GL_FALSE;
+    bool from_file = GL_FALSE;
     union {
         const char* file = nullptr;
         TextureSize size;
@@ -20,36 +20,41 @@ struct TextureInfo {
     GLint wrap_s = GL_REPEAT;
     GLint wrap_t = GL_REPEAT;
     bool mipmaps = GL_FALSE;
-    GLenum internalFormat = GL_RGBA8;
+    GLenum internal_format = GL_RGBA8;
 };
 
 struct TextureSubimageInfo {
-    GLint level;
-    TextureSize offsets;
-    TextureSize size;
-    GLenum format;
-    GLenum type;
-    void* pixels;
+    GLint level {};
+    TextureSize offsets {};
+    TextureSize size {};
+    GLenum format {};
+    GLenum type {};
+    void* pixels {};
 };
 
 struct Texture {
-    Texture();
+    Texture() = default;
     explicit Texture(TextureInfo* info);
     ~Texture();
 
+    Texture(const Texture&) = delete;
+    Texture& operator=(const Texture&) = delete;
+    Texture(Texture&&) = default;
+    Texture& operator=(Texture&&) = default;
+
     void init(TextureInfo* info);
-    void subImage(TextureSubimageInfo* info);
+    void sub_image(TextureSubimageInfo* info);
     void bind(GLuint textureUnit);
 
-    NODISCARD GLuint getId() const noexcept { return id; }
+    [[nodiscard]] GLuint get_id() const noexcept { return m_id; }
 
 private:
-    GLuint id;
-    GLenum dimensions;
+    GLuint m_id {};
+    GLenum m_dimensions {};
 
-    void generateMipmap();
-    void textureStorage(TextureSize* size, GLenum internalFormat);
-    void fromFile(const char* file);
+    void generate_mipmap();
+    void texture_storage(TextureSize* size, GLenum internal_format);
+    void from_file(const char* file);
 };
 
 } // namespace Mcq
