@@ -16,7 +16,7 @@ add_library(${PROJECT_NAME}
     src/framebuffer.cpp
 )
 
-target_precompile_headers(${PROJECT_NAME} PRIVATE src/pch.hpp)
+target_precompile_headers(${PROJECT_NAME} PRIVATE include/pch.hpp)
 
 add_subdirectory(dep/glad)
 add_subdirectory(dep/stb_image)
@@ -25,7 +25,7 @@ add_subdirectory(dep/sdl3)
 target_link_libraries(${PROJECT_NAME} 
 	glad
 	stb_image
-	SDL3-shared
+	SDL3-static
 )
 
 target_include_directories(${PROJECT_NAME}
@@ -33,4 +33,11 @@ target_include_directories(${PROJECT_NAME}
 	PUBLIC dep/stb_image/include
 	PUBLIC dep/sdl3/include
 	PUBLIC dep/glm/
+	PRIVATE include
 )
+
+# file(GLOB PUBLIC_HEADERS "src/*.hpp")
+# foreach(PUBLIC_HEADER ${PUBLIC_HEADERS})
+# 	message("${PUBLIC_HEADER} to ${CMAKE_SOURCE_DIR}/include/")
+# 	file(COPY ${PUBLIC_HEADER} DESTINATION "${CMAKE_SOURCE_DIR}/include/")
+# endforeach()
