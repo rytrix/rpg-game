@@ -2,9 +2,6 @@
 
 namespace Renderer {
 
-#undef near
-#undef far
-
 class Camera {
 public:
     enum class Movement;
