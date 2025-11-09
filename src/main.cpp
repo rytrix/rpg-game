@@ -9,19 +9,23 @@ namespace {
 
 int main()
 {
-    Renderer::Window window("Test Window", 800, 600);
+    try {
+        Renderer::Window window("Test Window", 800, 600);
 
-    window.process_input_callback([&](SDL_Event& event) {
-        if (event.type == SDL_EVENT_MOUSE_MOTION) {
-            std::println("Mouse moved to {}, {}", event.motion.x, event.motion.y);
-            std::println("Mouse moved relative {}, {}", event.motion.xrel, event.motion.yrel);
-        }
-    });
+        window.process_input_callback([&](SDL_Event& event) {
+            if (event.type == SDL_EVENT_MOUSE_MOTION) {
+                // std::println("Mouse moved to {}, {}", event.motion.x, event.motion.y);
+                // std::println("Mouse moved relative {}, {}", event.motion.xrel, event.motion.yrel);
+            }
+        });
 
-    window.loop([&]() {
-        glClearColor(0.1f, 0.2f, 0.3f, 1.0f);
-        glClear(GL_COLOR_BUFFER_BIT);
-    });
+        window.loop([&]() {
+            glClearColor(0.1f, 0.2f, 0.3f, 1.0f);
+            glClear(GL_COLOR_BUFFER_BIT);
+        });
+    } catch (std::runtime_error& error) {
+        std::println("Caught error: {}", error.what());
+    }
 
     return 0;
 }
