@@ -1,5 +1,5 @@
 [submodule "raylib"]
-    path = src/raylib
+    path = dep/raylib
     url = https://github.com/raysan5/raylib.git
 
 [submodule "glm"]

@@ -1,7 +1,5 @@
 #include "camera.hpp"
 
-#include <algorithm>
-
 namespace Renderer {
 
 namespace defaults {

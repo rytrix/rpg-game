@@ -1,72 +1,28 @@
-#include "character.hpp"
-#include "gear.hpp"
+#include "game_logic/character.hpp"
+#include "game_logic/gear.hpp"
+
+#include "renderer.hpp"
 
 namespace {
-
-// void processInput(SDL_Window *window) {
-//     SDL_Event event;
-//     while (SDL_PollEvent(&event)) {
-//         if (event.type == SDL_EVENT_QUIT) {
-//             SDL_DestroyWindow(window);
-//             SDL_Quit();
-//             exit(0);
-//         }
-//     }
-// }
-
-// int sdl_test()
-// {
-//     if (!SDL_Init(SDL_INIT_VIDEO)) {
-//         std::println(stderr, "Could not initialize SDL: {}", SDL_GetError());
-//         return -1;
-//     }
-
-//     SDL_Window* window = SDL_CreateWindow("SDL3 OpenGL with GLAD",
-//         800, 600,
-//         SDL_WINDOW_OPENGL);
-
-//     if (window == nullptr) {
-//         std::println(stderr, "Could not create window: {}", SDL_GetError());
-//         SDL_Quit();
-//         return -1;
-//     }
-
-//     SDL_GLContext context = SDL_GL_CreateContext(window);
-//     if (context == nullptr) {
-//         std::println(stderr, "Could not create OpenGL context: {}", SDL_GetError());
-//         SDL_DestroyWindow(window);
-//         SDL_Quit();
-//         return -1;
-//     }
-
-//     if (gladLoadGLLoader((GLADloadproc)SDL_GL_GetProcAddress) == 0) {
-//         std::println(stderr, "Failed to initialize GLAD");
-//         SDL_GL_DestroyContext(context);
-//         SDL_DestroyWindow(window);
-//         SDL_Quit();
-//         return -1;
-//     }
-
-//     while (true) {
-//         processInput(window);
-
-//         glClearColor(0.1f, 0.2f, 0.3f, 1.0f);
-//         glClear(GL_COLOR_BUFFER_BIT);
-
-//         SDL_GL_SwapWindow(window);
-//     }
-
-//     SDL_GL_DestroyContext(context);
-//     SDL_DestroyWindow(window);
-//     SDL_Quit();
-
-//     return 0;
-// }
 
 } // anonymous namespace
 
 int main()
 {
+    Renderer::Window window("Test Window", 800, 600);
+
+    window.process_input_callback([&](SDL_Event& event) {
+        if (event.type == SDL_EVENT_MOUSE_MOTION) {
+            std::println("Mouse moved to {}, {}", event.motion.x, event.motion.y);
+            std::println("Mouse moved relative {}, {}", event.motion.xrel, event.motion.yrel);
+        }
+    });
+
+    window.loop([&]() {
+        glClearColor(0.1f, 0.2f, 0.3f, 1.0f);
+        glClear(GL_COLOR_BUFFER_BIT);
+    });
+
     return 0;
 }
 

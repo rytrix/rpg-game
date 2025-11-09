@@ -2,100 +2,123 @@
 
 namespace Renderer {
 
-// namespace {
+namespace {
 
-// #ifdef _DEBUG
-//     void GLAPIENTRY
-//     MessageCallback(UNUSED GLenum source,
-//         GLenum type,
-//         UNUSED GLuint id,
-//         GLenum severity,
-//         UNUSED GLsizei length,
-//         const GLchar* message,
-//         UNUSED const void* userParam)
-//     {
-//         fprintf(stderr, "GL CALLBACK: %s type = 0x%x, severity = 0x%x, message = %s\n",
-//             (type == GL_DEBUG_TYPE_ERROR ? "** GL ERROR **" : ""),
-//             type, severity, message);
-//     }
-// #endif
+#ifdef _DEBUG
+    void GLAPIENTRY
+    MessageCallback([[maybe_unused]] GLenum source,
+        GLenum type,
+        [[maybe_unused]] GLuint id,
+        GLenum severity,
+        [[maybe_unused]] GLsizei length,
+        const GLchar* message,
+        [[maybe_unused]] const void* userParam)
+    {
+        std::println(stderr, "GL CALLBACK: {} type = 0x{:x}, severity = 0x{:x}, message = {}",
+            (type == GL_DEBUG_TYPE_ERROR ? "** GL ERROR **" : ""),
+            type, severity, message);
+    }
+#endif
 
-//     static Window* currentWindowPtr = nullptr;
+    Window* currentWindowPtr = nullptr;
 
-// } // anonymous namespace
+} // anonymous namespace
 
-// Window::Window(const char* name, int width, int height)
-//     : width(width)
-//     , height(height)
-// {
-//     glfwInit();
-//     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
-//     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 6);
-//     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+Window::Window(const char* name, int width, int height)
+    : m_width(width)
+    , m_height(height)
+{
 
-//     window = glfwCreateWindow(width, height, name, NULL, NULL);
-//     if (window == nullptr) {
-//         std::print("Failed to create GLFW window\n");
-//         glfwTerminate();
-//         exit(EXIT_FAILURE);
-//     }
-//     glfwMakeContextCurrent(window);
-//     glfwSwapInterval(1);
+    if (!SDL_Init(SDL_INIT_VIDEO)) {
+        throw std::runtime_error(std::format("Could not initialize SDL: {}", SDL_GetError()));
+    }
 
-//     if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress)) {
-//         std::print("Failed to initialize GLAD\n");
-//         exit(EXIT_FAILURE);
-//     }
+    SDL_GL_SetAttribute(SDL_GL_CONTEXT_FLAGS, 0);
+    SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_COMPATIBILITY);
+    SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 4);
+    SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 6);
 
-// #ifdef _DEBUG
-//     glEnable(GL_DEBUG_OUTPUT);
-//     glDebugMessageCallback(MessageCallback, 0);
-// #endif
+    m_window = SDL_CreateWindow(name,
+        width, height,
+        SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE);
 
-//     glViewport(0, 0, width, height);
-//     glfwSetFramebufferSizeCallback(window, framebufferSizeCallback);
+    if (m_window == nullptr) {
+        SDL_Quit();
+        throw std::runtime_error(std::format("Could not create window: {}", SDL_GetError()));
+    }
 
-//     glfwSetCursorPosCallback(window, windowMouseCallback);
-//     glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+    m_context = SDL_GL_CreateContext(m_window);
+    if (m_context == nullptr) {
+        SDL_DestroyWindow(m_window);
+        SDL_Quit();
+        throw std::runtime_error(std::format("Could not create OpenGL context: {}", SDL_GetError()));
+    }
 
-//     currentWindowPtr = this;
-// }
+    if (gladLoadGLLoader((GLADloadproc)SDL_GL_GetProcAddress) == 0) {
+        SDL_GL_DestroyContext(m_context);
+        SDL_DestroyWindow(m_window);
+        SDL_Quit();
+        throw std::runtime_error("Failed to initialize GLAD");
+    }
 
-// Window::~Window()
-// {
-//     glfwDestroyWindow(window);
-//     glfwTerminate();
-// }
+    SDL_GL_MakeCurrent(m_window, m_context);
+    SDL_GL_SetSwapInterval(1); // Enable vsync
 
-// void Window::loop(std::function<void()>&& commands)
-// {
-//     while (!glfwWindowShouldClose(window)) {
-//         commands();
+#ifdef _DEBUG
+    glEnable(GL_DEBUG_OUTPUT);
+    glDebugMessageCallback(MessageCallback, 0);
+#endif
 
-//         glfwSwapBuffers(window);
-//         glfwPollEvents();
-//     }
-// }
+    glViewport(0, 0, width, height);
+    // glfwSetFramebufferSizeCallback(window, framebufferSizeCallback);
+    //
+    // glfwSetCursorPosCallback(window, windowMouseCallback);
+    // glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 
-// void Window::setFrameBufferCallback(std::function<void(int width, int height)>&& fn)
-// {
-//     frameBufferFn = std::move(fn);
-// }
+    currentWindowPtr = this;
+}
 
-// void Window::setMouseCallback(std::function<void(double x, double y)>&& fn)
-// {
-//     mouseCallbackFn = std::move(fn);
-// }
+Window::~Window()
+{
+    SDL_GL_DestroyContext(m_context);
+    SDL_DestroyWindow(m_window);
+    SDL_Quit();
+}
 
-// void Window::framebufferSizeCallback(UNUSED GLFWwindow* _window, int width, int height)
-// {
-//     glViewport(0, 0, width, height);
-//     if (currentWindowPtr != nullptr && currentWindowPtr->frameBufferFn != nullptr) {
-//         currentWindowPtr->width = width;
-//         currentWindowPtr->height = height;
-//         currentWindowPtr->frameBufferFn(width, height);
-//     }
-// }
+void Window::process_input_callback(const std::function<void(SDL_Event& event)>& commands)
+{
+    m_process_input_fn = commands;
+}
+
+void Window::process_input_internal()
+{
+    SDL_Event event;
+    while (SDL_PollEvent(&event)) {
+        if (event.type == SDL_EVENT_QUIT) {
+            m_should_close = true;
+        }
+        if (event.type == SDL_EVENT_WINDOW_RESIZED) {
+            SDL_GetWindowSize(m_window, &m_width, &m_height);
+            glViewport(0, 0, m_width, m_height);
+        }
+
+        m_process_input_fn(event);
+    }
+}
+
+void Window::loop(const std::function<void()>& commands)
+{
+    while (!m_should_close) {
+        process_input_internal();
+        if (m_should_close) {
+            break;
+        }
+
+        commands();
+
+        SDL_GL_SwapWindow(m_window);
+    }
+}
 
 // void Window::windowMouseCallback(UNUSED GLFWwindow* _window, double x, double y)
 // {
@@ -103,5 +126,15 @@ namespace Renderer {
 //         currentWindowPtr->mouseCallbackFn(x, y);
 //     }
 // }
+
+[[nodiscard]] SDL_Window* Window::get_window_ptr() const
+{
+    return m_window;
+}
+
+[[nodiscard]] std::pair<int, int> Window::getSize() const
+{
+    return { m_width, m_height };
+}
 
 } // namespace Renderer

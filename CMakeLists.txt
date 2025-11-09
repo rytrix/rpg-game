@@ -7,17 +7,17 @@ endif()
 project(rpg)
 add_executable(${PROJECT_NAME} 
     src/main.cpp 
-    src/gear.cpp 
-    src/character.cpp
+    src/game_logic/gear.cpp 
+    src/game_logic/character.cpp
 )
 
 target_precompile_headers(${PROJECT_NAME} PRIVATE src/pch.hpp)
 
-add_subdirectory(src/sqlite)
+add_subdirectory(dep/sqlite)
 add_subdirectory(src/renderer)
-# add_subdirectory(src/raylib)
-# add_subdirectory(src/sdl3)
-# add_subdirectory(src/glad)
+# add_subdirectory(dep/raylib)
+# add_subdirectory(dep/sdl3)
+# add_subdirectory(dep/glad)
 
 target_link_libraries(${PROJECT_NAME} 
     sqlite 
@@ -27,7 +27,9 @@ target_link_libraries(${PROJECT_NAME}
     # glad
 )
 
-# target_include_directories(${PROJECT_NAME} 
-#     PUBLIC src/SDL3/include
-#     PUBLIC src/glad/include
-# )
+target_include_directories(${PROJECT_NAME} 
+    PUBLIC src/renderer/include
+    PUBLIC dep
+    # PUBLIC src/SDL3/include
+    # PUBLIC src/glad/include
+)
