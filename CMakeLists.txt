@@ -39,7 +39,7 @@ target_include_directories(${PROJECT_NAME}
     PUBLIC src/renderer/include
     PUBLIC dep
 	PUBLIC dep/glad/include/
-	PUBLIC dep/stb_image/include
+	PUBLIC dep/stb/include
 	PUBLIC dep/sdl3/include
 	PUBLIC dep/glm/
 )
