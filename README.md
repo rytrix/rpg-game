@@ -19,6 +19,10 @@ gameplay loop
 spell system needs to be ironed out
   -be specific ffs
 
+physics engine, probably https://github.com/jrouwe/JoltPhysics
+
+model loading..
+
 # Done
 resistances/damage reduction
  -make armor scale off of max hp, 
