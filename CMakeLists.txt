@@ -26,6 +26,7 @@ add_subdirectory(dep/sqlite)
 add_subdirectory(dep/glad)
 add_subdirectory(dep/stb_image)
 add_subdirectory(dep/sdl3)
+add_subdirectory(dep/assimp)
 
 target_link_libraries(${PROJECT_NAME} 
     sqlite 
