@@ -18,14 +18,20 @@ add_executable(${PROJECT_NAME}
 	src/renderer/texture.cpp
 	src/renderer/camera.cpp
     src/renderer/framebuffer.cpp
+	src/renderer/mesh.cpp
+	src/renderer/model.cpp
 )
 
 target_precompile_headers(${PROJECT_NAME} PUBLIC src/pch.hpp)
 
 add_subdirectory(dep/sqlite)
 add_subdirectory(dep/glad)
-add_subdirectory(dep/stb_image)
+add_subdirectory(dep/stb)
+set(SDL_SHARED OFF CACHE BOOL "Prefer building static" FORCE)
+set(SDL_STATIC ON CACHE BOOL "Prefer building static")
+set(SDL_TEST_LIBRARY OFF CACHE BOOL "Not testing SDL3")
 add_subdirectory(dep/sdl3)
+set(ASSIMP_WARNINGS_AS_ERRORS OFF CACHE BOOL "Enable compiling with extra warnings" FORCE)
 add_subdirectory(dep/assimp)
 
 target_link_libraries(${PROJECT_NAME} 
@@ -33,6 +39,7 @@ target_link_libraries(${PROJECT_NAME}
 	glad
 	stb_image
 	SDL3::SDL3
+    assimp
 )
 
 target_include_directories(${PROJECT_NAME} 
@@ -42,4 +49,6 @@ target_include_directories(${PROJECT_NAME}
 	PUBLIC dep/stb/include
 	PUBLIC dep/sdl3/include
 	PUBLIC dep/glm/
+    PUBLIC dep/assimp/include
+    PUBLIC ${CMAKE_CURRENT_BINARY_DIR}/dep/assimp/include
 )

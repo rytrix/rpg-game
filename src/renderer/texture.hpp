@@ -11,7 +11,7 @@ struct TextureSize {
 struct TextureInfo {
     bool from_file = GL_FALSE;
     union {
-        const char* file = nullptr;
+        const char* file_path = nullptr;
         TextureSize size;
     };
     GLenum dimensions = GL_TEXTURE_2D;
@@ -32,9 +32,10 @@ struct TextureSubimageInfo {
     void* pixels {};
 };
 
-struct Texture {
+class Texture {
+public:
     Texture() = default;
-    explicit Texture(TextureInfo* info);
+    explicit Texture(TextureInfo& info);
     ~Texture();
 
     Texture(const Texture&) = delete;
@@ -42,19 +43,30 @@ struct Texture {
     Texture(Texture&&) = default;
     Texture& operator=(Texture&&) = default;
 
-    void init(TextureInfo* info);
-    void sub_image(TextureSubimageInfo* info);
-    void bind(GLuint textureUnit);
+    void init(TextureInfo& info);
+    void sub_image(TextureSubimageInfo& info);
+    void bind(GLuint texture_unit);
 
-    [[nodiscard]] GLuint get_id() const noexcept { return m_id; }
+    [[nodiscard]] GLuint get_id() const noexcept;
 
 private:
     GLuint m_id {};
     GLenum m_dimensions {};
 
     void generate_mipmap();
-    void texture_storage(TextureSize* size, GLenum internal_format);
+    void texture_storage(TextureSize& size, GLenum internal_format);
     void from_file(const char* file);
 };
 
-} // namespace Mcq
+struct TextureStorage {
+    Texture m_tex;
+    std::string file_path;
+};
+
+struct TextureRef {
+    TextureStorage* m_tex;
+    u32 m_id;
+    const char* m_type;
+};
+
+} // namespace Renderer
