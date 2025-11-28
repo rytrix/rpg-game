@@ -62,7 +62,7 @@ void Camera::update_view()
 void Camera::update_aspect(float aspect_ratio)
 {
     this->m_aspect_ratio = aspect_ratio;
-    update();
+    update_proj();
 }
 
 void Camera::move(Movement direction, float delta_time)
