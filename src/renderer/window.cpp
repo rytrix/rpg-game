@@ -127,6 +127,11 @@ void Window::loop(const std::function<void()>& commands)
 //     }
 // }
 
+void Window::capture_mouse(bool value)
+{
+    SDL_CaptureMouse(value);
+}
+
 [[nodiscard]] SDL_Window* Window::get_window_ptr() const
 {
     return m_window;
@@ -146,6 +151,11 @@ void Window::loop(const std::function<void()>& commands)
 {
     auto size = get_size_f32();
     return size.first / size.second;
+}
+
+void Window::set_should_close()
+{
+    m_should_close = true;
 }
 
 } // namespace Renderer

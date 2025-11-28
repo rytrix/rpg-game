@@ -16,14 +16,20 @@ Mesh::Mesh(std::vector<Vertex>&& verticies,
 
 void Mesh::draw(ShaderProgram& shader)
 {
-    shader.bind();
+    // shader.bind();
 
     // TODO
     // Do something with textures
     // shader.set_int(const char *name, int value)
     // https://learnopengl.com/Model-Loading/Mesh
+    // shader.set_int("texture_specular_1", m_textures[0].m_id);
+    // m_textures[0].m_tex->m_tex.bind(0);
+    m_textures[0].m_tex->m_tex.bind(0);
+    shader.set_int("texture_diffuse1", 0);
 
     m_vao.bind();
+    m_vao.bind_vertex_buffer(0, m_vbo.get_id(), 0, sizeof(Vertex));
+    m_vao.bind_element_buffer(m_ebo.get_id());
     glDrawElements(GL_TRIANGLES, static_cast<GLsizei>(m_indicies.size()), GL_UNSIGNED_INT, nullptr);
 }
 

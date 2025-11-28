@@ -26,6 +26,7 @@
 #include <stdexcept>
 #include <vector>
 #include <utility>
+#include <deque>
 
 using usize = std::size_t;
 using u8 = uint8_t;
