@@ -1,4 +1,5 @@
-#include "SDL3/SDL_oldnames.h"
+#include "SDL3/SDL_events.h"
+#include "SDL3/SDL_keycode.h"
 #include "game_logic/character.hpp"
 #include "game_logic/gear.hpp"
 
@@ -15,6 +16,10 @@ int main()
 {
     try {
         Renderer::Window window("Test Window", 800, 600);
+        // SDL_SetWindowMouseGrab(window.get_window_ptr(), true);
+        SDL_WarpMouseInWindow(window.get_window_ptr(), 800 / 2, 600 / 2);
+        SDL_SetWindowRelativeMouseMode(window.get_window_ptr(), true);
+        // SDL_GetRelativeMouseState(window.get_window_ptr(), true);
 
         Renderer::Camera camera(90.0, 0.1, 100.0, window.get_aspect_ratio(), { 0.0, 0.0, 0.0 });
 
@@ -25,22 +30,49 @@ int main()
             if (event.type == SDL_EVENT_MOUSE_MOTION) {
                 // std::println("Mouse moved to {}, {}", event.motion.x, event.motion.y);
                 // std::println("Mouse moved relative {}, {}", event.motion.xrel, event.motion.yrel);
+                camera.rotate(event.motion.xrel, -event.motion.yrel);
+            }
+
+            if (event.type == SDL_EVENT_KEY_DOWN) {
+                if (event.key.key == SDLK_ESCAPE) {
+                    window.set_should_close();
+                }
             }
         });
 
+        auto window_keystate = [&]() {
+            const bool* keys = SDL_GetKeyboardState(nullptr);
+            if (keys[SDL_SCANCODE_W]) {
+                camera.move(Renderer::Camera::Movement::Forward, 0.1);
+            }
+            if (keys[SDL_SCANCODE_S]) {
+                camera.move(Renderer::Camera::Movement::Backward, 0.1);
+            }
+            if (keys[SDL_SCANCODE_A]) {
+                camera.move(Renderer::Camera::Movement::Left, 0.1);
+            }
+            if (keys[SDL_SCANCODE_D]) {
+                camera.move(Renderer::Camera::Movement::Right, 0.1);
+            }
+        };
+
         glEnable(GL_DEPTH_TEST);
+        glDepthFunc(GL_LESS);
+
+        glEnable(GL_CULL_FACE);
+        glCullFace(GL_BACK);
 
         std::array<Renderer::ShaderInfo, 2> shaders = {
+            Renderer::ShaderInfo {
+                .is_file = true,
+                .shader = "res/model.glsl.vs",
+                .type = GL_VERTEX_SHADER,
+            },
             Renderer::ShaderInfo {
                 .is_file = true,
                 .shader = "res/model.glsl.fs",
                 .type = GL_FRAGMENT_SHADER,
             },
-            Renderer::ShaderInfo {
-                .is_file = true,
-                .shader = "res/model.glsl.vs",
-                .type = GL_VERTEX_SHADER,
-            }
         };
 
         Renderer::ShaderProgram shader(shaders.data(), shaders.size());
@@ -48,8 +80,16 @@ int main()
         Renderer::Model model("res/backpack/backpack.obj");
 
         window.loop([&]() {
+            window_keystate();
+            camera.update();
+
             glClearColor(0.1f, 0.2f, 0.3f, 1.0f);
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+            shader.bind();
+            shader.set_mat4("proj", camera.get_proj());
+            shader.set_mat4("view", camera.get_view());
+            shader.set_mat4("model", glm::mat4 { 1.0 });
 
             model.draw(shader);
         });

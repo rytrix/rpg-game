@@ -63,12 +63,16 @@ namespace {
     [[nodiscard]] bool Shader::has_errors() const
     {
         int is_compiled = 0;
-        std::array<char, MAX_ERROR_LENGTH> info_log {};
         glGetShaderiv(m_id, GL_COMPILE_STATUS, &is_compiled);
 
         if (is_compiled == GL_FALSE) {
-            glGetShaderInfoLog(m_id, MAX_ERROR_LENGTH, nullptr, info_log.data());
-            std::print("shader failed to compile: {}\n", info_log.data());
+            GLint max_length = 0;
+            glGetShaderiv(m_id, GL_INFO_LOG_LENGTH, &max_length);
+
+            std::vector<GLchar> error_log(max_length);
+            glGetShaderInfoLog(m_id, max_length, &max_length, error_log.data());
+
+            std::print("shader failed to compile: {}\n", error_log.data());
             return true;
         }
 
@@ -130,6 +134,10 @@ void ShaderProgram::init(ShaderInfo* shader_info, std::size_t shader_count)
     glLinkProgram(m_id);
 
     m_errors = errors_internal();
+
+    if (m_errors) {
+        throw std::runtime_error("Shader program has errors");
+    }
 }
 
 void ShaderProgram::bind()
@@ -204,13 +212,18 @@ bool ShaderProgram::has_errors() const
 
 bool ShaderProgram::errors_internal() const
 {
-    int success = {};
-    std::array<char, MAX_ERROR_LENGTH> info_log {};
-    glGetProgramiv(m_id, GL_LINK_STATUS, &success);
+    int program_linked = 0;
 
-    if (success == GL_FALSE) {
-        glGetProgramInfoLog(m_id, MAX_ERROR_LENGTH, nullptr, info_log.data());
-        std::print("shader program failed to link: {}\n", info_log.data());
+    glGetProgramiv(m_id, GL_LINK_STATUS, &program_linked);
+
+    if (program_linked == GL_FALSE) {
+        GLint max_length = 0;
+        glGetProgramiv(m_id, GL_INFO_LOG_LENGTH, &max_length);
+
+        std::vector<GLchar> error_log(max_length);
+        glGetProgramInfoLog(m_id, max_length, &max_length, error_log.data());
+
+        std::print("shader program failed to link: {}\n", error_log.data());
         return true;
     }
 

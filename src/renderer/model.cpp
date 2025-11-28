@@ -25,19 +25,19 @@ void Model::draw(ShaderProgram& shader)
 
 void Model::process_node(aiNode* node, const aiScene* scene)
 {
-    std::println("node->mNumMeshes: {}", node->mNumMeshes);
+    // std::println("node->mNumMeshes: {}", node->mNumMeshes);
     for (u32 i = 0; i < node->mNumMeshes; i++) {
         aiMesh* mesh = scene->mMeshes[node->mMeshes[i]];
-        m_meshes.push_back(process_mesh(mesh, scene));
+        process_mesh(mesh, scene);
     }
 
-    std::println("node->mNumChildren: {}", node->mNumChildren);
+    // std::println("node->mNumChildren: {}", node->mNumChildren);
     for (u32 i = 0; i < node->mNumChildren; i++) {
         process_node(node->mChildren[i], scene);
     }
 }
 
-Mesh Model::process_mesh(aiMesh* mesh, const aiScene* scene)
+void Model::process_mesh(aiMesh* mesh, const aiScene* scene)
 {
     std::vector<Mesh::Vertex> vertices;
     std::vector<u32> indices;
@@ -79,7 +79,7 @@ Mesh Model::process_mesh(aiMesh* mesh, const aiScene* scene)
         textures.insert(textures.end(), specularMaps.begin(), specularMaps.end());
     }
 
-    return Mesh { std::move(vertices), std::move(indices), std::move(textures) };
+    m_meshes.emplace_back(std::move(vertices), std::move(indices), std::move(textures));
 }
 
 std::vector<TextureRef> Model::load_material_textures(aiMaterial* mat, aiTextureType type, const char* type_name)
@@ -97,7 +97,7 @@ std::vector<TextureRef> Model::load_material_textures(aiMaterial* mat, aiTexture
             if (m_textures[j].file_path == texture_path) {
                 textures.push_back(TextureRef { .m_tex = &m_textures[j], .m_id = j, .m_type = type_name });
                 skip = true;
-                std::println("Skipping {}", texture_path);
+                // std::println("Skipping {}", texture_path);
             }
         }
 
@@ -108,7 +108,8 @@ std::vector<TextureRef> Model::load_material_textures(aiMaterial* mat, aiTexture
 
             std::println("Loading {}", texture_path);
 
-            m_textures.emplace_back(Renderer::TextureStorage { .m_tex = Texture { texture_info }, .file_path = texture_path });
+            m_textures.emplace_back(Texture {}, texture_path);
+            m_textures.at(m_textures.size() - 1).m_tex.init(texture_info);
 
             texture.m_id = static_cast<u32>(m_textures.size()) - 1;
             texture.m_tex = &m_textures.at(texture.m_id);

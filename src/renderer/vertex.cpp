@@ -5,6 +5,7 @@ namespace Renderer {
 VertexArray::VertexArray()
     : m_id(0)
 {
+    // glGenVertexArrays(1, &m_id);
     glCreateVertexArrays(1, &m_id);
     glBindVertexArray(m_id);
 }

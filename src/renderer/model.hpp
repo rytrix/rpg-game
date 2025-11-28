@@ -21,12 +21,12 @@ public:
     void draw(ShaderProgram& shader);
 
 private:
-    std::vector<TextureStorage> m_textures;
-    std::vector<Mesh> m_meshes;
+    std::deque<TextureStorage> m_textures;
+    std::deque<Mesh> m_meshes;
     std::string m_directory;
 
     void process_node(aiNode* node, const aiScene* scene);
-    Mesh process_mesh(aiMesh* mesh, const aiScene* scene);
+    void process_mesh(aiMesh* mesh, const aiScene* scene);
     std::vector<TextureRef> load_material_textures(aiMaterial* mat, aiTextureType type, const char* type_name);
 };
 

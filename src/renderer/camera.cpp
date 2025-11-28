@@ -92,16 +92,19 @@ void Camera::move(Movement direction, float delta_time)
 
 void Camera::rotate(float x_pos, float y_pos)
 {
-    if (m_first_mouse) {
-        m_first_mouse = false;
-        m_last_x = x_pos;
-        m_last_y = y_pos;
-        return;
-    }
-    float xoffset = x_pos - m_last_x;
-    float yoffset = m_last_y - y_pos;
-    m_last_x = x_pos;
-    m_last_y = y_pos;
+    // if (m_first_mouse) {
+    //     m_first_mouse = false;
+    //     m_last_x = x_pos;
+    //     m_last_y = y_pos;
+    //     return;
+    // }
+    // float xoffset = x_pos - m_last_x;
+    // float yoffset = m_last_y - y_pos;
+    // m_last_x = x_pos;
+    // m_last_y = y_pos;
+
+    float xoffset = x_pos;
+    float yoffset = y_pos;
 
     xoffset *= m_sensitivity;
     yoffset *= m_sensitivity;

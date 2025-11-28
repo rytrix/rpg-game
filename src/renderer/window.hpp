@@ -15,10 +15,13 @@ public:
     void process_input_callback(const std::function<void(SDL_Event& event)>& commands);
     void loop(const std::function<void()>& commands);
 
+    static void capture_mouse(bool value);
+
     [[nodiscard]] SDL_Window* get_window_ptr() const;
     [[nodiscard]] std::pair<int, int> get_size() const;
     [[nodiscard]] std::pair<f32, f32> get_size_f32() const;
     [[nodiscard]] f32 get_aspect_ratio() const;
+    void set_should_close();
 
 private:
     int m_width;
