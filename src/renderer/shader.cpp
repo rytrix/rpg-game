@@ -62,11 +62,11 @@ namespace {
 
     [[nodiscard]] bool Shader::has_errors() const
     {
-        int success = 0;
+        int is_compiled = 0;
         std::array<char, MAX_ERROR_LENGTH> info_log {};
-        glGetShaderiv(m_id, GL_COMPILE_STATUS, &success);
+        glGetShaderiv(m_id, GL_COMPILE_STATUS, &is_compiled);
 
-        if (success != 0) {
+        if (is_compiled == GL_FALSE) {
             glGetShaderInfoLog(m_id, MAX_ERROR_LENGTH, nullptr, info_log.data());
             std::print("shader failed to compile: {}\n", info_log.data());
             return true;
@@ -208,7 +208,7 @@ bool ShaderProgram::errors_internal() const
     std::array<char, MAX_ERROR_LENGTH> info_log {};
     glGetProgramiv(m_id, GL_LINK_STATUS, &success);
 
-    if (success != 0) {
+    if (success == GL_FALSE) {
         glGetProgramInfoLog(m_id, MAX_ERROR_LENGTH, nullptr, info_log.data());
         std::print("shader program failed to link: {}\n", info_log.data());
         return true;

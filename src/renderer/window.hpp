@@ -16,7 +16,9 @@ public:
     void loop(const std::function<void()>& commands);
 
     [[nodiscard]] SDL_Window* get_window_ptr() const;
-    [[nodiscard]] std::pair<int, int> getSize() const;
+    [[nodiscard]] std::pair<int, int> get_size() const;
+    [[nodiscard]] std::pair<f32, f32> get_size_f32() const;
+    [[nodiscard]] f32 get_aspect_ratio() const;
 
 private:
     int m_width;

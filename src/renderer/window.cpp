@@ -132,9 +132,20 @@ void Window::loop(const std::function<void()>& commands)
     return m_window;
 }
 
-[[nodiscard]] std::pair<int, int> Window::getSize() const
+[[nodiscard]] std::pair<int, int> Window::get_size() const
 {
     return { m_width, m_height };
+}
+
+[[nodiscard]] std::pair<f32, f32> Window::get_size_f32() const
+{
+    return { static_cast<f32>(m_width), static_cast<f32>(m_height) };
+}
+
+[[nodiscard]] f32 Window::get_aspect_ratio() const
+{
+    auto size = get_size_f32();
+    return size.first / size.second;
 }
 
 } // namespace Renderer

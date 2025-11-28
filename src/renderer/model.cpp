@@ -30,6 +30,7 @@ void Model::process_node(aiNode* node, const aiScene* scene)
         m_meshes.push_back(process_mesh(mesh, scene));
     }
 
+    std::println("node->mNumChildren: {}", node->mNumChildren);
     for (u32 i = 0; i < node->mNumChildren; i++) {
         process_node(node->mChildren[i], scene);
     }
@@ -76,6 +77,8 @@ Mesh Model::process_mesh(aiMesh* mesh, const aiScene* scene)
             aiTextureType_SPECULAR, "texture_specular");
         textures.insert(textures.end(), specularMaps.begin(), specularMaps.end());
     }
+
+    return Mesh { std::move(vertices), std::move(indices), std::move(textures) };
 }
 
 std::vector<TextureRef> Model::load_material_textures(aiMaterial* mat, aiTextureType type, const char* type_name)

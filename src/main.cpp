@@ -1,7 +1,11 @@
+#include "SDL3/SDL_oldnames.h"
 #include "game_logic/character.hpp"
 #include "game_logic/gear.hpp"
 
+#include "pch.hpp"
 #include "renderer.hpp"
+#include "renderer/camera.hpp"
+#include "renderer/shader.hpp"
 
 namespace {
 
@@ -12,16 +16,42 @@ int main()
     try {
         Renderer::Window window("Test Window", 800, 600);
 
+        Renderer::Camera camera(90.0, 0.1, 100.0, window.get_aspect_ratio(), { 0.0, 0.0, 0.0 });
+
         window.process_input_callback([&](SDL_Event& event) {
+            if (event.type == SDL_EVENT_WINDOW_RESIZED) {
+                camera.update_aspect(window.get_aspect_ratio());
+            }
             if (event.type == SDL_EVENT_MOUSE_MOTION) {
                 // std::println("Mouse moved to {}, {}", event.motion.x, event.motion.y);
                 // std::println("Mouse moved relative {}, {}", event.motion.xrel, event.motion.yrel);
             }
         });
 
+        glEnable(GL_DEPTH_TEST);
+
+        std::array<Renderer::ShaderInfo, 2> shaders = {
+            Renderer::ShaderInfo {
+                .is_file = true,
+                .shader = "res/model.glsl.fs",
+                .type = GL_FRAGMENT_SHADER,
+            },
+            Renderer::ShaderInfo {
+                .is_file = true,
+                .shader = "res/model.glsl.vs",
+                .type = GL_VERTEX_SHADER,
+            }
+        };
+
+        Renderer::ShaderProgram shader(shaders.data(), shaders.size());
+
+        Renderer::Model model("res/backpack/backpack.obj");
+
         window.loop([&]() {
             glClearColor(0.1f, 0.2f, 0.3f, 1.0f);
-            glClear(GL_COLOR_BUFFER_BIT);
+            glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+            // model.draw(shader);
         });
     } catch (std::runtime_error& error) {
         std::println("Caught error: {}", error.what());
