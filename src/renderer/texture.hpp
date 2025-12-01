@@ -15,12 +15,13 @@ struct TextureInfo {
         TextureSize size;
     };
     GLenum dimensions = GL_TEXTURE_2D;
-    GLint min_filter = GL_LINEAR;
-    GLint mag_filter = GL_LINEAR;
+    GLint min_filter = GL_NEAREST;
+    GLint mag_filter = GL_NEAREST;
     GLint wrap_s = GL_REPEAT;
     GLint wrap_t = GL_REPEAT;
-    bool mipmaps = GL_FALSE;
+    bool mipmaps = GL_TRUE;
     GLenum internal_format = GL_RGBA8;
+    bool flip = true;
 };
 
 struct TextureSubimageInfo {
@@ -55,7 +56,7 @@ private:
 
     void generate_mipmap();
     void texture_storage(TextureSize& size, GLenum internal_format);
-    void from_file(const char* file);
+    void from_file(const char* file, bool flip);
 };
 
 struct TextureStorage {

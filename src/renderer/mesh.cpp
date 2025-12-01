@@ -24,12 +24,20 @@ void Mesh::draw(ShaderProgram& shader)
     // https://learnopengl.com/Model-Loading/Mesh
     // shader.set_int("texture_specular_1", m_textures[0].m_id);
     // m_textures[0].m_tex->m_tex.bind(0);
-    m_textures[0].m_tex->m_tex.bind(0);
-    shader.set_int("texture_diffuse1", 0);
+    for (int i = 0; i < m_textures.size(); i++) {
+        if (strcmp(m_textures[i].m_type, "texture_diffuse") == 0) {
+            m_textures[i].m_tex->m_tex.bind(0);
+            shader.set_int("texture_diffuse1", 0);
+
+        } else if (strcmp(m_textures[i].m_type, "texture_specular") == 0) {
+            m_textures[i].m_tex->m_tex.bind(1);
+            shader.set_int("texture_specular1", 1);
+        }
+    }
 
     m_vao.bind();
-    m_vao.bind_vertex_buffer(0, m_vbo.get_id(), 0, sizeof(Vertex));
-    m_vao.bind_element_buffer(m_ebo.get_id());
+    // m_vao.bind_vertex_buffer(0, m_vbo.get_id(), 0, sizeof(Vertex));
+    // m_vao.bind_element_buffer(m_ebo.get_id());
     glDrawElements(GL_TRIANGLES, static_cast<GLsizei>(m_indicies.size()), GL_UNSIGNED_INT, nullptr);
 }
 

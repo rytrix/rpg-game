@@ -1,5 +1,6 @@
 #include "SDL3/SDL_events.h"
 #include "SDL3/SDL_keycode.h"
+#include "SDL3/SDL_scancode.h"
 #include "game_logic/character.hpp"
 #include "game_logic/gear.hpp"
 
@@ -10,26 +11,37 @@
 
 namespace {
 
+struct Material {
+    glm::vec3 ambient;
+    glm::vec3 diffuse;
+    glm::vec3 specular;
+    float shininess;
+};
+
+struct Light {
+    glm::vec3 color;
+    glm::vec3 pos;
+    float ambient;
+    float diffuse;
+    float specular;
+};
+
 } // anonymous namespace
 
 int main()
 {
     try {
         Renderer::Window window("Test Window", 800, 600);
-        // SDL_SetWindowMouseGrab(window.get_window_ptr(), true);
-        SDL_WarpMouseInWindow(window.get_window_ptr(), 800 / 2, 600 / 2);
         SDL_SetWindowRelativeMouseMode(window.get_window_ptr(), true);
-        // SDL_GetRelativeMouseState(window.get_window_ptr(), true);
 
-        Renderer::Camera camera(90.0, 0.1, 100.0, window.get_aspect_ratio(), { 0.0, 0.0, 0.0 });
+        Renderer::Camera camera(90.0, 0.1, 1000.0, window.get_aspect_ratio(), { 0.0, 0.0, 0.0 });
+        camera.set_speed(1);
 
         window.process_input_callback([&](SDL_Event& event) {
             if (event.type == SDL_EVENT_WINDOW_RESIZED) {
                 camera.update_aspect(window.get_aspect_ratio());
             }
             if (event.type == SDL_EVENT_MOUSE_MOTION) {
-                // std::println("Mouse moved to {}, {}", event.motion.x, event.motion.y);
-                // std::println("Mouse moved relative {}, {}", event.motion.xrel, event.motion.yrel);
                 camera.rotate(event.motion.xrel, -event.motion.yrel);
             }
 
@@ -54,6 +66,12 @@ int main()
             if (keys[SDL_SCANCODE_D]) {
                 camera.move(Renderer::Camera::Movement::Right, 0.1);
             }
+            if (keys[SDL_SCANCODE_SPACE]) {
+                camera.move(Renderer::Camera::Movement::Up, 0.1);
+            }
+            if (keys[SDL_SCANCODE_LSHIFT]) {
+                camera.move(Renderer::Camera::Movement::Down, 0.1);
+            }
         };
 
         glEnable(GL_DEPTH_TEST);
@@ -61,6 +79,8 @@ int main()
 
         glEnable(GL_CULL_FACE);
         glCullFace(GL_BACK);
+
+        glEnable(GL_MULTISAMPLE);
 
         std::array<Renderer::ShaderInfo, 2> shaders = {
             Renderer::ShaderInfo {
@@ -77,7 +97,24 @@ int main()
 
         Renderer::ShaderProgram shader(shaders.data(), shaders.size());
 
-        Renderer::Model model("res/backpack/backpack.obj");
+        // Renderer::Model model("res/backpack/backpack.obj");
+        Renderer::Model model("res/Sponza/glTF/Sponza.gltf");
+        // Renderer::Model model("res/cube/Cube.obj");
+
+        Material material = {
+            .ambient = glm::vec3(1.0),
+            .diffuse = glm::vec3(1.0),
+            .specular = glm::vec3(1.0),
+            .shininess = 32.0,
+        };
+
+        Light light = {
+            .color = glm::vec3(1.0, 1.0, 0.268),
+            .pos = glm::vec3(8.0),
+            .ambient = 0.1,
+            .diffuse = 0.5,
+            .specular = 0.5,
+        };
 
         window.loop([&]() {
             window_keystate();
@@ -89,7 +126,19 @@ int main()
             shader.bind();
             shader.set_mat4("proj", camera.get_proj());
             shader.set_mat4("view", camera.get_view());
-            shader.set_mat4("model", glm::mat4 { 1.0 });
+            shader.set_mat4("model", glm::scale(glm::mat4 { 1.0 }, glm::vec3(0.1)));
+            shader.set_vec3("view_pos", camera.get_pos());
+
+            shader.set_vec3("material.ambient", material.ambient);
+            shader.set_vec3("material.diffuse", material.diffuse);
+            shader.set_vec3("material.specular", material.specular);
+            shader.set_float("material.shininess", material.shininess);
+
+            shader.set_vec3("light.color", light.color);
+            shader.set_vec3("light.pos", light.pos);
+            shader.set_float("light.ambient", light.ambient);
+            shader.set_float("light.diffuse", light.diffuse);
+            shader.set_float("light.specular", light.specular);
 
             model.draw(shader);
         });
