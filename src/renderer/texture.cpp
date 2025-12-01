@@ -23,7 +23,7 @@ void Texture::init(TextureInfo& info)
     glTextureParameteri(m_id, GL_TEXTURE_WRAP_T, info.wrap_t);
 
     if (info.from_file) {
-        from_file(info.file_path);
+        from_file(info.file_path, info.flip);
     } else {
         texture_storage(info.size, info.internal_format);
     }
@@ -106,13 +106,16 @@ void Texture::texture_storage(TextureSize& size, GLenum internal_format)
     }
 }
 
-void Texture::from_file(const char* file)
+void Texture::from_file(const char* file, bool flip)
 {
     if (m_dimensions != GL_TEXTURE_2D) {
-        throw std::runtime_error("currently only 2D textures are supported to be loaded from files");
+        throw std::runtime_error("currently only 2D textures are supported from files");
     }
 
-    stbi_set_flip_vertically_on_load(1);
+    if (flip) {
+        stbi_set_flip_vertically_on_load(1);
+    }
+
     TextureSize size {};
     int nr_channels {};
     unsigned char* data = stbi_load(file, &size.width, &size.height, &nr_channels, 0);
@@ -120,13 +123,20 @@ void Texture::from_file(const char* file)
         throw std::runtime_error(std::format("failed to load texture {}", file));
     }
 
-    texture_storage(size, GL_RGB8);
-
     TextureSubimageInfo info {};
-    info.format = GL_RGB;
     info.type = GL_UNSIGNED_BYTE;
     info.size = size;
     info.pixels = data;
+
+    if (nr_channels == 3) {
+        texture_storage(size, GL_RGB8);
+        info.format = GL_RGB;
+    } else if (nr_channels == 4) {
+        texture_storage(size, GL_RGBA8);
+        info.format = GL_RGBA;
+    } else {
+        throw std::runtime_error(std::format("Texture: invalid number of channels \"{}\"", nr_channels));
+    }
 
     sub_image(info);
 

@@ -85,6 +85,8 @@ void Model::process_mesh(aiMesh* mesh, const aiScene* scene)
 std::vector<TextureRef> Model::load_material_textures(aiMaterial* mat, aiTextureType type, const char* type_name)
 {
     std::vector<TextureRef> textures;
+
+    // std::println("{} Material texture count {}", type_name, mat->GetTextureCount(type));
     for (unsigned int i = 0; i < mat->GetTextureCount(type); i++) {
         aiString str;
         mat->GetTexture(type, i, &str);
@@ -105,6 +107,7 @@ std::vector<TextureRef> Model::load_material_textures(aiMaterial* mat, aiTexture
             TextureInfo texture_info;
             texture_info.from_file = GL_TRUE;
             texture_info.file_path = texture_path.c_str();
+            texture_info.flip = false;
 
             std::println("Loading {}", texture_path);
 
