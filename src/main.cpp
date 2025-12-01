@@ -4,6 +4,7 @@
 #include "game_logic/character.hpp"
 #include "game_logic/gear.hpp"
 
+#include "deltatime.hpp"
 #include "pch.hpp"
 #include "renderer.hpp"
 #include "renderer/camera.hpp"
@@ -35,7 +36,9 @@ int main()
         SDL_SetWindowRelativeMouseMode(window.get_window_ptr(), true);
 
         Renderer::Camera camera(90.0, 0.1, 1000.0, window.get_aspect_ratio(), { 0.0, 0.0, 0.0 });
-        camera.set_speed(1);
+        camera.set_speed(5);
+
+        DeltaTime clock;
 
         window.process_input_callback([&](SDL_Event& event) {
             if (event.type == SDL_EVENT_WINDOW_RESIZED) {
@@ -54,23 +57,25 @@ int main()
 
         auto window_keystate = [&]() {
             const bool* keys = SDL_GetKeyboardState(nullptr);
+            clock.update();
+            float delta_time = clock.delta_time();
             if (keys[SDL_SCANCODE_W]) {
-                camera.move(Renderer::Camera::Movement::Forward, 0.1);
+                camera.move(Renderer::Camera::Movement::Forward, delta_time);
             }
             if (keys[SDL_SCANCODE_S]) {
-                camera.move(Renderer::Camera::Movement::Backward, 0.1);
+                camera.move(Renderer::Camera::Movement::Backward, delta_time);
             }
             if (keys[SDL_SCANCODE_A]) {
-                camera.move(Renderer::Camera::Movement::Left, 0.1);
+                camera.move(Renderer::Camera::Movement::Left, delta_time);
             }
             if (keys[SDL_SCANCODE_D]) {
-                camera.move(Renderer::Camera::Movement::Right, 0.1);
+                camera.move(Renderer::Camera::Movement::Right, delta_time);
             }
             if (keys[SDL_SCANCODE_SPACE]) {
-                camera.move(Renderer::Camera::Movement::Up, 0.1);
+                camera.move(Renderer::Camera::Movement::Up, delta_time);
             }
             if (keys[SDL_SCANCODE_LSHIFT]) {
-                camera.move(Renderer::Camera::Movement::Down, 0.1);
+                camera.move(Renderer::Camera::Movement::Down, delta_time);
             }
         };
 
