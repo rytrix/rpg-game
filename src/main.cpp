@@ -35,7 +35,8 @@ int main()
         Renderer::Window window("Test Window", 800, 600);
         SDL_SetWindowRelativeMouseMode(window.get_window_ptr(), true);
 
-        Renderer::Camera camera(90.0, 0.1, 1000.0, window.get_aspect_ratio(), { 0.0, 0.0, 0.0 });
+        Renderer::Camera camera(90.0, 0.1, 1000.0, 
+            window.get_aspect_ratio(), { 0.0, 0.0, 0.0 });
         camera.set_speed(5);
 
         DeltaTime clock;
@@ -47,7 +48,6 @@ int main()
             if (event.type == SDL_EVENT_MOUSE_MOTION) {
                 camera.rotate(event.motion.xrel, -event.motion.yrel);
             }
-
             if (event.type == SDL_EVENT_KEY_DOWN) {
                 if (event.key.key == SDLK_ESCAPE) {
                     window.set_should_close();
@@ -57,7 +57,6 @@ int main()
 
         auto window_keystate = [&]() {
             const bool* keys = SDL_GetKeyboardState(nullptr);
-            clock.update();
             float delta_time = clock.delta_time();
             if (keys[SDL_SCANCODE_W]) {
                 camera.move(Renderer::Camera::Movement::Forward, delta_time);
@@ -114,7 +113,7 @@ int main()
         };
 
         Light light = {
-            .color = glm::vec3(1.0, 1.0, 0.268),
+            .color = glm::vec3(1.0, 1.0, 1.0),
             .pos = glm::vec3(8.0),
             .ambient = 0.1,
             .diffuse = 0.5,
@@ -122,6 +121,7 @@ int main()
         };
 
         window.loop([&]() {
+            clock.update();
             window_keystate();
             camera.update();
 
@@ -296,35 +296,4 @@ int main()
 //
 //     sqlite3_close(db);
 //     db = nullptr;
-// }
-
-// void raylib_test()
-// {
-//     const int screenWidth = 1600;
-//     const int screenHeight = 800;
-//
-//     InitWindow(screenWidth, screenHeight, "Dungeons");
-//
-//     SetTargetFPS(144);
-//
-//     // Main game loop
-//     while (!WindowShouldClose()) // Detect window close button or ESC key
-//     {
-//         BeginDrawing();
-//
-//         ClearBackground(BLACK);
-//
-//         DrawRectangle(0, 0, 60, 60, GRAY);
-//
-//         Vector2 mouse_position = GetMousePosition();
-//         if (mouse_position.x >= 0 && mouse_position.x <= 60 && mouse_position.y >= 0 && mouse_position.y <= 60) {
-//             DrawText("W", 30, 30, 10, BLACK);
-//         }
-//
-//         DrawText("Congrats! You created your first window!", 190, 200, 20, WHITE);
-//
-//         EndDrawing();
-//     }
-//
-//     CloseWindow(); // Close window and OpenGL context
 // }
