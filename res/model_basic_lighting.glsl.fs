@@ -6,11 +6,10 @@ in vec3 FragPos;
 in vec2 TexCoords;
 
 struct Light {
-    vec3 color;
     vec3 pos;
     float ambient;
-    float diffuse;
-    float specular;
+    vec3 diffuse;
+    vec3 specular;
 };
 uniform Light light;
 
@@ -34,23 +33,19 @@ uniform vec3 view_pos;
 
 void main()
 {    
-    vec3 material_ambient = material.ambient * light.ambient;
-    vec3 material_diffuse = material.diffuse * light.diffuse;
-    vec3 material_specular = material.specular * light.specular;
+    vec3 ambient = material.ambient * light.ambient;
 
     vec3 norm = normalize(Normal);
     vec3 light_dir = normalize(light.pos - FragPos);
 
     float diff = max(dot(norm, light_dir), 0.0);
-    vec3 diffuse = (diff * material_diffuse) * light.color;
+    vec3 diffuse = (diff * material.diffuse) * light.diffuse;
 
     vec3 view_dir = normalize(view_pos - FragPos);
     vec3 reflect_dir = reflect(-light_dir, norm);
 
     float spec = pow(max(dot(view_dir, reflect_dir), 0.0), material.shininess);
-    vec3 specular = (material_specular * spec) * light.color;
-
-    vec3 ambient = material_ambient * light.color;
+    vec3 specular = (material.specular * spec) * light.specular;
 
     vec4 color = texture(texture_diffuse1, TexCoords);
     color = vec4((ambient + diffuse + specular) * color.xyz, color.w);

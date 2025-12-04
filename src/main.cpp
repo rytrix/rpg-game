@@ -13,18 +13,19 @@
 namespace {
 
 struct Material {
-    glm::vec3 ambient;
-    glm::vec3 diffuse;
-    glm::vec3 specular;
     float shininess;
 };
 
 struct Light {
-    glm::vec3 color;
     glm::vec3 pos;
-    float ambient;
-    float diffuse;
-    float specular;
+    glm::vec3 ambient;
+    glm::vec3 diffuse;
+    glm::vec3 specular;
+
+    // https://wiki.ogre3d.org/tiki-index.php?page=-Point+Light+Attenuation
+    float constant;
+    float linear;
+    float quadratic;
 };
 
 } // anonymous namespace
@@ -35,9 +36,9 @@ int main()
         Renderer::Window window("Test Window", 800, 600);
         SDL_SetWindowRelativeMouseMode(window.get_window_ptr(), true);
 
-        Renderer::Camera camera(90.0, 0.1, 1000.0, 
+        Renderer::Camera camera(90.0, 0.1, 1000.0,
             window.get_aspect_ratio(), { 0.0, 0.0, 0.0 });
-        camera.set_speed(5);
+        camera.set_speed(1);
 
         DeltaTime clock;
 
@@ -94,7 +95,7 @@ int main()
             },
             Renderer::ShaderInfo {
                 .is_file = true,
-                .shader = "res/model.glsl.fs",
+                .shader = "res/model_light_map.glsl.fs",
                 .type = GL_FRAGMENT_SHADER,
             },
         };
@@ -102,22 +103,21 @@ int main()
         Renderer::ShaderProgram shader(shaders.data(), shaders.size());
 
         // Renderer::Model model("res/backpack/backpack.obj");
-        Renderer::Model model("res/Sponza/glTF/Sponza.gltf");
-        // Renderer::Model model("res/cube/Cube.obj");
+        // Renderer::Model model("res/Sponza/glTF/Sponza.gltf");
+        Renderer::Model model("res/cube_texture_mapping/Cube.obj");
 
         Material material = {
-            .ambient = glm::vec3(1.0),
-            .diffuse = glm::vec3(1.0),
-            .specular = glm::vec3(1.0),
             .shininess = 32.0,
         };
 
         Light light = {
-            .color = glm::vec3(1.0, 1.0, 1.0),
             .pos = glm::vec3(8.0),
-            .ambient = 0.1,
-            .diffuse = 0.5,
-            .specular = 0.5,
+            .ambient = glm::vec3(0.1),
+            .diffuse = glm::vec3(0.5),
+            .specular = glm::vec3(0.5),
+            .constant = 1.0F,
+            .linear = 0.022F,
+            .quadratic = 0.0019F,
         };
 
         window.loop([&]() {
@@ -131,19 +131,19 @@ int main()
             shader.bind();
             shader.set_mat4("proj", camera.get_proj());
             shader.set_mat4("view", camera.get_view());
-            shader.set_mat4("model", glm::scale(glm::mat4 { 1.0 }, glm::vec3(0.1)));
+            shader.set_mat4("model", glm::scale(glm::mat4 { 1.0 }, glm::vec3(1.0)));
             shader.set_vec3("view_pos", camera.get_pos());
 
-            shader.set_vec3("material.ambient", material.ambient);
-            shader.set_vec3("material.diffuse", material.diffuse);
-            shader.set_vec3("material.specular", material.specular);
             shader.set_float("material.shininess", material.shininess);
 
-            shader.set_vec3("light.color", light.color);
             shader.set_vec3("light.pos", light.pos);
-            shader.set_float("light.ambient", light.ambient);
-            shader.set_float("light.diffuse", light.diffuse);
-            shader.set_float("light.specular", light.specular);
+            shader.set_vec3("light.ambient", light.ambient);
+            shader.set_vec3("light.diffuse", light.diffuse);
+            shader.set_vec3("light.specular", light.specular);
+
+            shader.set_float("light.constant", light.constant);
+            shader.set_float("light.linear", light.linear);
+            shader.set_float("light.quadratic", light.quadratic);
 
             model.draw(shader);
         });

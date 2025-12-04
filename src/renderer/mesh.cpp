@@ -27,11 +27,11 @@ void Mesh::draw(ShaderProgram& shader)
     for (int i = 0; i < m_textures.size(); i++) {
         if (strcmp(m_textures[i].m_type, "texture_diffuse") == 0) {
             m_textures[i].m_tex->m_tex.bind(0);
-            shader.set_int("texture_diffuse1", 0);
+            shader.set_int("material.diffuse", 0);
 
         } else if (strcmp(m_textures[i].m_type, "texture_specular") == 0) {
             m_textures[i].m_tex->m_tex.bind(1);
-            shader.set_int("texture_specular1", 1);
+            shader.set_int("material.specular", 1);
         }
     }
 
