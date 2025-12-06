@@ -19,6 +19,7 @@ add_executable(${PROJECT_NAME}
 	src/renderer/texture.cpp
 	src/renderer/camera.cpp
     src/renderer/framebuffer.cpp
+    src/renderer/renderbuffer.cpp
 	src/renderer/mesh.cpp
 	src/renderer/model.cpp
 )
