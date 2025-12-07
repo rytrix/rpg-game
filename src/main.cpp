@@ -178,7 +178,8 @@ public:
     GBuffer(GBuffer&&) = default;
     GBuffer& operator=(GBuffer&&) = default;
 
-    void init();
+    void init(int screen_width, int screen_height);
+    void reinit(int screen_width, int screen_height);
     void bind();
     void unbind();
 
@@ -194,10 +195,10 @@ private:
     Renderer::Renderbuffer m_depth;
 };
 
-void GBuffer::init()
+void GBuffer::init(int screen_width, int screen_height)
 {
     Renderer::TextureInfo texture_info;
-    texture_info.size = Renderer::TextureSize { .width = SCREEN_WIDTH, .height = SCREEN_HEIGHT, .depth = 0 };
+    texture_info.size = Renderer::TextureSize { .width = screen_width, .height = screen_height, .depth = 0 };
     texture_info.internal_format = GL_RGBA16F;
     texture_info.mipmaps = GL_FALSE;
     m_position.init(texture_info);
@@ -210,12 +211,19 @@ void GBuffer::init()
     m_albedo.init(texture_info);
     m_buffer.bind_texture(GL_COLOR_ATTACHMENT2, m_albedo.get_id(), 0);
 
-    m_depth.buffer_storage(GL_DEPTH_COMPONENT24, SCREEN_WIDTH, SCREEN_HEIGHT);
+    m_depth.init();
+    m_depth.buffer_storage(GL_DEPTH_COMPONENT24, screen_width, screen_height);
 
     m_buffer.bind_renderbuffer(GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, m_depth.get_id());
 
     std::array<u32, 3> attachments = { GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1, GL_COLOR_ATTACHMENT2 };
     m_buffer.bind_draw_buffers(attachments.size(), attachments.data());
+}
+
+void GBuffer::reinit(int screen_width, int screen_height)
+{
+    this->~GBuffer();
+    init(screen_width, screen_height);
 }
 
 void GBuffer::bind()
@@ -294,9 +302,13 @@ int main()
 
         DeltaTime clock;
 
+        GBuffer gpass;
+        gpass.init(window.get_width(), window.get_height());
+
         window.process_input_callback([&](SDL_Event& event) {
             if (event.type == SDL_EVENT_WINDOW_RESIZED) {
                 camera.update_aspect(window.get_aspect_ratio());
+                gpass.reinit(window.get_width(), window.get_height());
             }
             if (event.type == SDL_EVENT_MOUSE_MOTION) {
                 camera.rotate(event.motion.xrel, -event.motion.yrel);
@@ -360,9 +372,6 @@ int main()
 
         // auto shadowmap_info = Light::get_shadowpass_shader_info();
         // Renderer::ShaderProgram shadowmap_shader(shadowmap_info.data(), shadowmap_info.size());
-
-        GBuffer gpass;
-        gpass.init();
 
         shader_info = {
             Renderer::ShaderInfo {

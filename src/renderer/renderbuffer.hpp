@@ -4,13 +4,15 @@ namespace Renderer {
 
 class Renderbuffer {
 public:
-    Renderbuffer();
+    Renderbuffer() = default;
     ~Renderbuffer();
 
     Renderbuffer(const Renderbuffer&) = delete;
     Renderbuffer& operator=(const Renderbuffer&) = delete;
     Renderbuffer(Renderbuffer&&) = default;
     Renderbuffer& operator=(Renderbuffer&&) = default;
+
+    void init();
 
     [[nodiscard]] u32 get_id() const;
 

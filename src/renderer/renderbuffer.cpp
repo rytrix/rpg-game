@@ -2,14 +2,14 @@
 
 namespace Renderer {
 
-Renderbuffer::Renderbuffer()
-{
-    glCreateRenderbuffers(1, &m_id);
-}
-
 Renderbuffer::~Renderbuffer()
 {
     glDeleteRenderbuffers(1, &m_id);
+}
+
+void Renderbuffer::init()
+{
+    glCreateRenderbuffers(1, &m_id);
 }
 
 [[nodiscard]] u32 Renderbuffer::get_id() const
