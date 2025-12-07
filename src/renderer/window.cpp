@@ -103,7 +103,6 @@ void Window::process_input_internal()
         }
         if (event.type == SDL_EVENT_WINDOW_RESIZED) {
             SDL_GetWindowSize(m_window, &m_width, &m_height);
-            glViewport(0, 0, m_width, m_height);
         }
 
         m_process_input_fn(event);
@@ -149,6 +148,16 @@ void Window::set_relative_mode(bool value)
 [[nodiscard]] std::pair<int, int> Window::get_size() const
 {
     return { m_width, m_height };
+}
+
+[[nodiscard]] int Window::get_width() const
+{
+    return m_width;
+}
+
+[[nodiscard]] int Window::get_height() const
+{
+    return m_height;
 }
 
 [[nodiscard]] std::pair<f32, f32> Window::get_size_f32() const

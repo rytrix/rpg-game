@@ -12,13 +12,13 @@ struct Buffer {
     Buffer& operator=(Buffer&&) = default;
 
     void buffer_data(GLsizeiptr size, const void* data, GLenum usage);
-	void buffer_storage(GLsizeiptr size, const void* data, GLbitfield flags);
-	void buffer_sub_data(GLsizeiptr offset, GLsizeiptr size, const void* data);
+    void buffer_storage(GLsizeiptr size, const void* data, GLbitfield flags);
+    void buffer_sub_data(GLsizeiptr offset, GLsizeiptr size, const void* data);
 
     [[nodiscard]] GLuint get_id() const;
 
 private:
-    GLuint m_id;
+    GLuint m_id {};
 };
 
 } // namespace Renderer

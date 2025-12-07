@@ -24,7 +24,7 @@ public:
     [[nodiscard]] GLuint get_id() const;
 
 private:
-    GLuint m_id;
+    GLuint m_id {};
 };
 
 } // namespace Renderer

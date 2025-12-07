@@ -23,6 +23,8 @@ physics engine, probably https://github.com/jrouwe/JoltPhysics
 
 lighting system
 
+move all of the renderer objects to an init() system rather than automatically initalizing.. for c++ reasons...
+
 # Done
 resistances/damage reduction
  -make armor scale off of max hp, 
