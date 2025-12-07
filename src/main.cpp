@@ -8,6 +8,7 @@
 #include "pch.hpp"
 #include "renderer.hpp"
 #include "renderer/shader.hpp"
+#include "renderer/vertex.hpp"
 
 namespace {
 
@@ -164,8 +165,8 @@ namespace Light {
 
 } // namespace Light
 
-constexpr i32 SCREEN_HEIGHT = 800;
-constexpr i32 SCREEN_WIDTH = 600;
+constexpr i32 SCREEN_WIDTH = 1920;
+constexpr i32 SCREEN_HEIGHT = 1080;
 
 class GBuffer {
 public:
@@ -180,6 +181,8 @@ public:
     void init();
     void bind();
     void unbind();
+
+    void set_uniforms(Renderer::ShaderProgram& shader);
 
 private:
     Renderer::Framebuffer m_buffer;
@@ -196,6 +199,7 @@ void GBuffer::init()
     Renderer::TextureInfo texture_info;
     texture_info.size = Renderer::TextureSize { .width = SCREEN_WIDTH, .height = SCREEN_HEIGHT, .depth = 0 };
     texture_info.internal_format = GL_RGBA16F;
+    texture_info.mipmaps = GL_FALSE;
     m_position.init(texture_info);
     m_buffer.bind_texture(GL_COLOR_ATTACHMENT0, m_position.get_id(), 0);
 
@@ -219,9 +223,61 @@ void GBuffer::bind()
     m_buffer.bind();
 }
 
+void GBuffer::set_uniforms(Renderer::ShaderProgram& shader)
+{
+    m_position.bind(0);
+    shader.set_int("gPosition", 0);
+
+    m_normal.bind(1);
+    shader.set_int("gNormal", 1);
+
+    m_albedo.bind(2);
+    shader.set_int("gAlbedoSpec", 2);
+}
+
 void GBuffer::unbind()
 {
     m_buffer.unbind();
+}
+
+class Quad {
+public:
+    Quad();
+
+    void init();
+    void draw();
+
+private:
+    Renderer::VertexArray m_vao;
+    Renderer::Buffer m_vbo;
+};
+
+Quad::Quad()
+{
+    init();
+}
+
+void Quad::init()
+{
+    m_vao.vertex_attrib(0, 0, 3, GL_FLOAT, 0);
+    m_vao.vertex_attrib(1, 0, 2, GL_FLOAT, 3 * sizeof(float));
+    // clang-format off
+    std::array<float, 20> quad_vertices = {
+        // positions        // texture Coords
+        -1.0f,  1.0f, 0.0f, 0.0f, 1.0f,
+        -1.0f, -1.0f, 0.0f, 0.0f, 0.0f,
+        1.0f,  1.0f, 0.0f, 1.0f, 1.0f,
+        1.0f, -1.0f, 0.0f, 1.0f, 0.0f,
+    };
+    // clang-format on 
+    m_vbo.buffer_data(quad_vertices.size() * sizeof(float), quad_vertices.data(), GL_STATIC_DRAW);
+    m_vao.bind_vertex_buffer(0, m_vbo.get_id(), 0, 5 * sizeof(float));
+}
+
+void Quad::draw()
+{
+    m_vao.bind();
+    glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
 }
 
 } // anonymous namespace
@@ -230,10 +286,10 @@ int main()
 {
     try {
         Renderer::Window window("Test Window", 800, 600);
-        SDL_SetWindowRelativeMouseMode(window.get_window_ptr(), true);
+        window.set_relative_mode(true);
 
         Renderer::Camera camera(90.0F, 0.1F, 1000.0F,
-            window.get_aspect_ratio(), { 0.0, 0.0, 0.0 });
+            window.get_aspect_ratio(), { -2.0F, 1.5F, 4.0F });
         camera.set_speed(5.0F);
 
         DeltaTime clock;
@@ -285,7 +341,7 @@ int main()
         glEnable(GL_CULL_FACE);
         glCullFace(GL_BACK);
 
-        glEnable(GL_MULTISAMPLE);
+        // glEnable(GL_MULTISAMPLE);
 
         std::array<Renderer::ShaderInfo, 2> shader_info = {
             Renderer::ShaderInfo {
@@ -322,9 +378,27 @@ int main()
         };
         Renderer::ShaderProgram gpass_shader(shader_info.data(), shader_info.size());
 
+        Quad lpass;
+        lpass.init();
+        shader_info = {
+            Renderer::ShaderInfo {
+                .is_file = true,
+                .shader = "res/deferred_shading/l_pass.glsl.vs",
+                .type = GL_VERTEX_SHADER,
+            },
+            Renderer::ShaderInfo {
+                .is_file = true,
+                .shader = "res/deferred_shading/l_pass.glsl.fs",
+                .type = GL_FRAGMENT_SHADER,
+            },
+        };
+        Renderer::ShaderProgram lpass_shader(shader_info.data(), shader_info.size());
+
         // Renderer::Model model("res/backpack/backpack.obj");
-        // Renderer::Model model("res/Sponza/glTF/Sponza.gltf");
-        Renderer::Model model("res/cube_texture_mapping/Cube.obj");
+        Renderer::Model model("res/Sponza/glTF/Sponza.gltf");
+        glm::mat4 u_model = glm::scale(glm::mat4 { 1.0 }, glm::vec3(0.1));
+        // Renderer::Model model("res/cube_texture_mapping/Cube.obj");
+        // glm::mat4 u_model = glm::scale(glm::mat4 { 1.0 }, glm::vec3(1.0));
 
         Material material = {
             .shininess = 32.0F,
@@ -359,38 +433,71 @@ int main()
             }
         };
 
+        bool forward_pass = false;
         window.loop([&]() {
             clock.update();
             fps_printer();
             window_keystate();
             camera.update();
 
-            glViewport(0, 0, window.get_size().first, window.get_size().second);
-            glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
-            glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+            if (forward_pass) {
 
-            model_shader.bind();
-            model_shader.set_mat4("proj", camera.get_proj());
-            model_shader.set_mat4("view", camera.get_view());
-            model_shader.set_mat4("model", glm::scale(glm::mat4 { 1.0 }, glm::vec3(1.0)));
-            model_shader.set_vec3("view_pos", camera.get_pos());
+                glViewport(0, 0, window.get_size().first, window.get_size().second);
+                glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+                glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-            model_shader.set_float("material.shininess", material.shininess);
+                model_shader.bind();
+                model_shader.set_mat4("proj", camera.get_proj());
+                model_shader.set_mat4("view", camera.get_view());
+                model_shader.set_mat4("model", u_model);
+                model_shader.set_vec3("view_pos", camera.get_pos());
 
-            // shader.set_vec3("u_directional_light.direction", directional_light.direction);
-            // shader.set_vec3("u_directional_light.ambient", directional_light.ambient);
-            // shader.set_vec3("u_directional_light.diffuse", directional_light.diffuse);
-            // shader.set_vec3("u_directional_light.specular", directional_light.specular);
+                model_shader.set_float("material.shininess", material.shininess);
 
-            model_shader.set_vec3("u_point_light.pos", point_light.pos);
-            model_shader.set_vec3("u_point_light.ambient", point_light.ambient);
-            model_shader.set_vec3("u_point_light.diffuse", point_light.diffuse);
-            model_shader.set_vec3("u_point_light.specular", point_light.specular);
-            model_shader.set_float("u_point_light.constant", point_light.constant);
-            model_shader.set_float("u_point_light.linear", point_light.linear);
-            model_shader.set_float("u_point_light.quadratic", point_light.quadratic);
+                // shader.set_vec3("u_directional_light.direction", directional_light.direction);
+                // shader.set_vec3("u_directional_light.ambient", directional_light.ambient);
+                // shader.set_vec3("u_directional_light.diffuse", directional_light.diffuse);
+                // shader.set_vec3("u_directional_light.specular", directional_light.specular);
 
-            model.draw(model_shader);
+                model_shader.set_vec3("u_point_light.pos", point_light.pos);
+                model_shader.set_vec3("u_point_light.ambient", point_light.ambient);
+                model_shader.set_vec3("u_point_light.diffuse", point_light.diffuse);
+                model_shader.set_vec3("u_point_light.specular", point_light.specular);
+                model_shader.set_float("u_point_light.constant", point_light.constant);
+                model_shader.set_float("u_point_light.linear", point_light.linear);
+                model_shader.set_float("u_point_light.quadratic", point_light.quadratic);
+
+                model.draw(model_shader);
+            } else {
+                glViewport(0, 0, window.get_size().first, window.get_size().second);
+                glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+
+                // Geometry pass
+                gpass.bind();
+                glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+                gpass_shader.bind();
+                gpass_shader.set_mat4("proj", camera.get_proj());
+                gpass_shader.set_mat4("view", camera.get_view());
+                gpass_shader.set_mat4("model", u_model);
+
+                model.draw(gpass_shader);
+
+                gpass.unbind();
+
+                // Lighting pass
+                glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+                lpass_shader.bind();
+
+                gpass.set_uniforms(lpass_shader);
+                lpass_shader.set_vec3("view_position", camera.get_pos());
+
+                lpass_shader.set_vec3("u_directional_light.direction", glm::vec3(-0.2F, -1.0F, 0.3F));
+                lpass_shader.set_vec3("u_directional_light.ambient", glm::vec3(0.1));
+                lpass_shader.set_vec3("u_directional_light.diffuse", glm::vec3(0.5));
+                lpass_shader.set_vec3("u_directional_light.specular", glm::vec3(0.5));
+                lpass.draw();
+            }
         });
     } catch (std::runtime_error& error) {
         std::println("Caught error: {}", error.what());
