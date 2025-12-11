@@ -5,10 +5,19 @@ namespace Renderer {
 Framebuffer::Framebuffer()
     : m_id(0)
 {
+}
+
+Framebuffer::~Framebuffer()
+{
+    glDeleteFramebuffers(1, &m_id);
+}
+
+void Framebuffer::init()
+{
     glCreateFramebuffers(1, &m_id);
 }
 
-GLenum Framebuffer::check_status(GLenum target) const
+[[nodiscard]] GLenum Framebuffer::check_status(GLenum target) const
 {
     return glCheckNamedFramebufferStatus(m_id, target);
 }
