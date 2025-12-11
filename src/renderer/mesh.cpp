@@ -11,6 +11,7 @@ Mesh::Mesh(std::vector<Vertex>&& verticies,
     , m_indicies(std::move(indicies))
     , m_textures(std::move(textures))
 {
+    setup_mesh();
 }
 
 void Mesh::init(std::vector<Vertex>&& verticies,

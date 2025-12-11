@@ -2,11 +2,6 @@
 
 namespace Renderer {
 
-Buffer::Buffer()
-    : m_id(0)
-{
-}
-
 void Buffer::init()
 {
     glCreateBuffers(1, &m_id);

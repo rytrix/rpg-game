@@ -166,9 +166,6 @@ namespace Light {
 
 } // namespace Light
 
-constexpr i32 SCREEN_WIDTH = 1920;
-constexpr i32 SCREEN_HEIGHT = 1080;
-
 class GBuffer {
 public:
     GBuffer() = default;
@@ -371,7 +368,6 @@ int main()
                 .type = GL_FRAGMENT_SHADER,
             },
         };
-
         Renderer::ShaderProgram model_shader(shader_info.data(), shader_info.size());
 
         // auto shadowmap_info = Light::get_shadowpass_shader_info();
@@ -393,6 +389,7 @@ int main()
 
         Quad lpass;
         lpass.init();
+
         shader_info = {
             Renderer::ShaderInfo {
                 .is_file = true,
@@ -454,7 +451,6 @@ int main()
             camera.update();
 
             if (forward_pass) {
-
                 glViewport(0, 0, window.get_size().first, window.get_size().second);
                 glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
                 glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);

@@ -2,11 +2,6 @@
 
 namespace Renderer {
 
-Framebuffer::Framebuffer()
-    : m_id(0)
-{
-}
-
 Framebuffer::~Framebuffer()
 {
     glDeleteFramebuffers(1, &m_id);
