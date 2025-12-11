@@ -4,7 +4,7 @@ namespace Renderer {
 
 class Framebuffer {
 public:
-    Framebuffer();
+    Framebuffer() = default;
     ~Framebuffer();
 
     Framebuffer(const Framebuffer&) = delete;

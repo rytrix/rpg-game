@@ -3,7 +3,7 @@
 namespace Renderer {
 
 struct Buffer {
-    Buffer();
+    Buffer() = default;
     ~Buffer();
 
     Buffer(const Buffer&) = delete;
