@@ -77,6 +77,7 @@ namespace Light {
         shadowmap_info.internal_format = GL_DEPTH_COMPONENT24;
         m_texture.init(shadowmap_info);
 
+        m_framebuffer.init();
         m_framebuffer.bind_texture(GL_DEPTH_ATTACHMENT, m_texture.get_id(), 0);
         m_framebuffer.bind();
         glDrawBuffer(GL_NONE);
@@ -197,6 +198,8 @@ private:
 
 void GBuffer::init(int screen_width, int screen_height)
 {
+    m_buffer.init();
+
     Renderer::TextureInfo texture_info;
     texture_info.size = Renderer::TextureSize { .width = screen_width, .height = screen_height, .depth = 0 };
     texture_info.internal_format = GL_RGBA16F;
@@ -278,6 +281,7 @@ void Quad::init()
         1.0f, -1.0f, 0.0f, 1.0f, 0.0f,
     };
     // clang-format on 
+    m_vbo.init();
     m_vbo.buffer_data(quad_vertices.size() * sizeof(float), quad_vertices.data(), GL_STATIC_DRAW);
     m_vao.bind_vertex_buffer(0, m_vbo.get_id(), 0, 5 * sizeof(float));
 }
@@ -358,12 +362,12 @@ int main()
         std::array<Renderer::ShaderInfo, 2> shader_info = {
             Renderer::ShaderInfo {
                 .is_file = true,
-                .shader = "res/forward_pass/model.glsl.vs",
+                .shader = "res/forward_pass/model.glsl.vert",
                 .type = GL_VERTEX_SHADER,
             },
             Renderer::ShaderInfo {
                 .is_file = true,
-                .shader = "res/forward_pass/model_light_map.glsl.fs",
+                .shader = "res/forward_pass/model_light_map.glsl.frag",
                 .type = GL_FRAGMENT_SHADER,
             },
         };
@@ -376,12 +380,12 @@ int main()
         shader_info = {
             Renderer::ShaderInfo {
                 .is_file = true,
-                .shader = "res/deferred_shading/g_pass.glsl.vs",
+                .shader = "res/deferred_shading/g_pass.glsl.vert",
                 .type = GL_VERTEX_SHADER,
             },
             Renderer::ShaderInfo {
                 .is_file = true,
-                .shader = "res/deferred_shading/g_pass.glsl.fs",
+                .shader = "res/deferred_shading/g_pass.glsl.frag",
                 .type = GL_FRAGMENT_SHADER,
             },
         };
@@ -392,12 +396,12 @@ int main()
         shader_info = {
             Renderer::ShaderInfo {
                 .is_file = true,
-                .shader = "res/deferred_shading/l_pass.glsl.vs",
+                .shader = "res/deferred_shading/l_pass.glsl.vert",
                 .type = GL_VERTEX_SHADER,
             },
             Renderer::ShaderInfo {
                 .is_file = true,
-                .shader = "res/deferred_shading/l_pass.glsl.fs",
+                .shader = "res/deferred_shading/l_pass.glsl.frag",
                 .type = GL_FRAGMENT_SHADER,
             },
         };

@@ -74,10 +74,6 @@ Window::Window(const char* name, int width, int height)
 #endif
 
     glViewport(0, 0, width, height);
-    // glfwSetFramebufferSizeCallback(window, framebufferSizeCallback);
-    //
-    // glfwSetCursorPosCallback(window, windowMouseCallback);
-    // glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 
     currentWindowPtr = this;
 }

@@ -2,8 +2,8 @@
 
 #include "buffer.hpp"
 #include "shader.hpp"
-#include "vertex.hpp"
 #include "texture.hpp"
+#include "vertex.hpp"
 
 namespace Renderer {
 
@@ -24,6 +24,7 @@ public:
     //     std::string m_path;
     // };
 
+    Mesh() = default;
     Mesh(std::vector<Vertex>&& verticies,
         std::vector<u32>&& indicies,
         std::vector<TextureRef>&& textures);
@@ -33,6 +34,10 @@ public:
     Mesh& operator=(const Mesh&) = delete;
     Mesh(Mesh&&) = default;
     Mesh& operator=(Mesh&&) = default;
+
+    void init(std::vector<Vertex>&& verticies,
+        std::vector<u32>&& indicies,
+        std::vector<TextureRef>&& textures);
 
     void draw(ShaderProgram& shader);
 

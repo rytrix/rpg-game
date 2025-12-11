@@ -11,6 +11,8 @@ struct Buffer {
     Buffer(Buffer&&) = default;
     Buffer& operator=(Buffer&&) = default;
 
+    void init();
+
     void buffer_data(GLsizeiptr size, const void* data, GLenum usage);
     void buffer_storage(GLsizeiptr size, const void* data, GLbitfield flags);
     void buffer_sub_data(GLsizeiptr offset, GLsizeiptr size, const void* data);

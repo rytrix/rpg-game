@@ -11,19 +11,22 @@ Mesh::Mesh(std::vector<Vertex>&& verticies,
     , m_indicies(std::move(indicies))
     , m_textures(std::move(textures))
 {
+}
+
+void Mesh::init(std::vector<Vertex>&& verticies,
+    std::vector<u32>&& indicies,
+    std::vector<TextureRef>&& textures)
+{
+    m_verticies = std::move(verticies);
+    m_indicies = std::move(indicies);
+    m_textures = std::move(textures);
     setup_mesh();
 }
 
 void Mesh::draw(ShaderProgram& shader)
 {
     // shader.bind();
-
-    // TODO
-    // Do something with textures
-    // shader.set_int(const char *name, int value)
     // https://learnopengl.com/Model-Loading/Mesh
-    // shader.set_int("texture_specular_1", m_textures[0].m_id);
-    // m_textures[0].m_tex->m_tex.bind(0);
     for (int i = 0; i < m_textures.size(); i++) {
         if (strcmp(m_textures[i].m_type, "texture_diffuse") == 0) {
             m_textures[i].m_tex->m_tex.bind(0);
@@ -43,6 +46,9 @@ void Mesh::draw(ShaderProgram& shader)
 
 void Mesh::setup_mesh()
 {
+    m_vbo.init();
+    m_ebo.init();
+
     m_vao.bind();
 
     m_vbo.buffer_data(static_cast<i64>(m_verticies.size() * sizeof(Vertex)), &m_verticies.at(0), GL_STATIC_DRAW);

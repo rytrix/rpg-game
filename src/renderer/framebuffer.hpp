@@ -5,17 +5,19 @@ namespace Renderer {
 class Framebuffer {
 public:
     Framebuffer();
-    ~Framebuffer() = default;
+    ~Framebuffer();
 
     Framebuffer(const Framebuffer&) = delete;
     Framebuffer& operator=(const Framebuffer&) = delete;
     Framebuffer(Framebuffer&&) = default;
     Framebuffer& operator=(Framebuffer&&) = default;
 
+    void init();
+
     void bind() const;
     static void unbind();
 
-    GLenum check_status(GLenum target) const;
+    [[nodiscard]] GLenum check_status(GLenum target) const;
 
     void bind_texture(GLenum attachment, GLuint texture, GLint level) const;
     void bind_renderbuffer(GLenum attachment, GLenum renderbuffer_target, GLuint renderbuffer) const;
