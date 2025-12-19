@@ -22,6 +22,9 @@ add_executable(${PROJECT_NAME}
     src/renderer/renderbuffer.cpp
 	src/renderer/mesh.cpp
 	src/renderer/model.cpp
+    src/renderer/gbuffer.cpp
+    src/renderer/shadowmap.cpp
+    src/renderer/quad.cpp
 )
 
 target_precompile_headers(${PROJECT_NAME} PUBLIC src/pch.hpp)
