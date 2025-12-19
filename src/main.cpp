@@ -7,7 +7,10 @@
 #include "deltatime.hpp"
 #include "pch.hpp"
 #include "renderer.hpp"
+#include "renderer/gbuffer.hpp"
 #include "renderer/shader.hpp"
+#include "renderer/shadowmap.hpp"
+#include "renderer/quad.hpp"
 #include "renderer/vertex.hpp"
 
 namespace {
@@ -54,47 +57,6 @@ namespace Light {
         };
     }
 
-    class ShadowMap {
-    public:
-        ShadowMap() = default;
-        void init();
-
-        void bind();
-        void unbind();
-
-        static constexpr i32 SHADOW_WIDTH = 1024;
-        static constexpr i32 SHADOW_HEIGHT = 1024;
-
-    private:
-        Renderer::Texture m_texture;
-        Renderer::Framebuffer m_framebuffer;
-    };
-
-    void ShadowMap::init()
-    {
-        Renderer::TextureInfo shadowmap_info;
-        shadowmap_info.size = Renderer::TextureSize { .width = SHADOW_WIDTH, .height = SHADOW_HEIGHT, .depth = 0 };
-        shadowmap_info.internal_format = GL_DEPTH_COMPONENT24;
-        m_texture.init(shadowmap_info);
-
-        m_framebuffer.init();
-        m_framebuffer.bind_texture(GL_DEPTH_ATTACHMENT, m_texture.get_id(), 0);
-        m_framebuffer.bind();
-        glDrawBuffer(GL_NONE);
-        glReadBuffer(GL_NONE);
-        m_framebuffer.unbind();
-    }
-
-    void ShadowMap::bind()
-    {
-        m_framebuffer.bind();
-    }
-
-    void ShadowMap::unbind()
-    {
-        m_framebuffer.unbind();
-    }
-
     class Directional {
     public:
         void init(glm::vec3 direction, glm::vec3 ambient, glm::vec3 diffuse, glm::vec3 specular);
@@ -110,7 +72,7 @@ namespace Light {
 
     private:
         glm::mat4 m_light_space_matrix;
-        ShadowMap m_shadowmap;
+        Renderer::ShadowMap m_shadowmap;
     };
 
     void Directional::init(glm::vec3 direction, glm::vec3 ambient, glm::vec3 diffuse, glm::vec3 specular)
@@ -133,7 +95,7 @@ namespace Light {
 
     void Directional::shadowmap_draw(Renderer::ShaderProgram shader, glm::mat4& model, std::function<void()>& draw_function)
     {
-        glViewport(0, 0, ShadowMap::SHADOW_WIDTH, ShadowMap::SHADOW_HEIGHT);
+        glViewport(0, 0, m_shadowmap.get_width(), m_shadowmap.get_height());
         m_shadowmap.bind();
 
         glClear(GL_DEPTH_BUFFER_BIT);
@@ -166,129 +128,6 @@ namespace Light {
 
 } // namespace Light
 
-class GBuffer {
-public:
-    GBuffer() = default;
-    ~GBuffer() = default;
-
-    GBuffer(const GBuffer&) = delete;
-    GBuffer& operator=(const GBuffer&) = delete;
-    GBuffer(GBuffer&&) = default;
-    GBuffer& operator=(GBuffer&&) = default;
-
-    void init(int screen_width, int screen_height);
-    void reinit(int screen_width, int screen_height);
-    void bind();
-    void unbind();
-
-    void set_uniforms(Renderer::ShaderProgram& shader);
-
-private:
-    Renderer::Framebuffer m_buffer;
-
-    Renderer::Texture m_position;
-    Renderer::Texture m_normal;
-    Renderer::Texture m_albedo;
-
-    Renderer::Renderbuffer m_depth;
-};
-
-void GBuffer::init(int screen_width, int screen_height)
-{
-    m_buffer.init();
-
-    Renderer::TextureInfo texture_info;
-    texture_info.size = Renderer::TextureSize { .width = screen_width, .height = screen_height, .depth = 0 };
-    texture_info.internal_format = GL_RGBA16F;
-    texture_info.mipmaps = GL_FALSE;
-    m_position.init(texture_info);
-    m_buffer.bind_texture(GL_COLOR_ATTACHMENT0, m_position.get_id(), 0);
-
-    m_normal.init(texture_info);
-    m_buffer.bind_texture(GL_COLOR_ATTACHMENT1, m_normal.get_id(), 0);
-
-    texture_info.internal_format = GL_RGBA16F;
-    m_albedo.init(texture_info);
-    m_buffer.bind_texture(GL_COLOR_ATTACHMENT2, m_albedo.get_id(), 0);
-
-    m_depth.init();
-    m_depth.buffer_storage(GL_DEPTH_COMPONENT24, screen_width, screen_height);
-
-    m_buffer.bind_renderbuffer(GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, m_depth.get_id());
-
-    std::array<u32, 3> attachments = { GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1, GL_COLOR_ATTACHMENT2 };
-    m_buffer.bind_draw_buffers(attachments.size(), attachments.data());
-}
-
-void GBuffer::reinit(int screen_width, int screen_height)
-{
-    this->~GBuffer();
-    init(screen_width, screen_height);
-}
-
-void GBuffer::bind()
-{
-    m_buffer.bind();
-}
-
-void GBuffer::set_uniforms(Renderer::ShaderProgram& shader)
-{
-    m_position.bind(0);
-    shader.set_int("gPosition", 0);
-
-    m_normal.bind(1);
-    shader.set_int("gNormal", 1);
-
-    m_albedo.bind(2);
-    shader.set_int("gAlbedoSpec", 2);
-}
-
-void GBuffer::unbind()
-{
-    m_buffer.unbind();
-}
-
-class Quad {
-public:
-    Quad();
-
-    void init();
-    void draw();
-
-private:
-    Renderer::VertexArray m_vao;
-    Renderer::Buffer m_vbo;
-};
-
-Quad::Quad()
-{
-    init();
-}
-
-void Quad::init()
-{
-    m_vao.vertex_attrib(0, 0, 3, GL_FLOAT, 0);
-    m_vao.vertex_attrib(1, 0, 2, GL_FLOAT, 3 * sizeof(float));
-    // clang-format off
-    std::array<float, 20> quad_vertices = {
-        // positions        // texture Coords
-        -1.0f,  1.0f, 0.0f, 0.0f, 1.0f,
-        -1.0f, -1.0f, 0.0f, 0.0f, 0.0f,
-        1.0f,  1.0f, 0.0f, 1.0f, 1.0f,
-        1.0f, -1.0f, 0.0f, 1.0f, 0.0f,
-    };
-    // clang-format on 
-    m_vbo.init();
-    m_vbo.buffer_data(quad_vertices.size() * sizeof(float), quad_vertices.data(), GL_STATIC_DRAW);
-    m_vao.bind_vertex_buffer(0, m_vbo.get_id(), 0, 5 * sizeof(float));
-}
-
-void Quad::draw()
-{
-    m_vao.bind();
-    glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
-}
-
 } // anonymous namespace
 
 int main()
@@ -303,7 +142,7 @@ int main()
 
         DeltaTime clock;
 
-        GBuffer gpass;
+        Renderer::GBuffer gpass;
         gpass.init(window.get_width(), window.get_height());
 
         window.process_input_callback([&](SDL_Event& event) {
@@ -387,7 +226,7 @@ int main()
         };
         Renderer::ShaderProgram gpass_shader(shader_info.data(), shader_info.size());
 
-        Quad lpass;
+        Renderer::Quad lpass;
         lpass.init();
 
         shader_info = {
