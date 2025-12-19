@@ -4,6 +4,9 @@ namespace Renderer {
 
 void GBuffer::init(int screen_width, int screen_height)
 {
+    m_buffer_width = screen_width;
+    m_buffer_height = screen_height;
+
     m_buffer.init();
 
     Renderer::TextureInfo texture_info;
@@ -55,6 +58,11 @@ void GBuffer::set_uniforms(Renderer::ShaderProgram& shader)
 void GBuffer::unbind()
 {
     m_buffer.unbind();
+}
+
+void GBuffer::blit_depth_buffer()
+{
+    glBlitNamedFramebuffer(m_buffer.get_id(), 0, 0, 0, m_buffer_width, m_buffer_height, 0, 0, m_buffer_width, m_buffer_height, GL_DEPTH_BUFFER_BIT, GL_NEAREST);
 }
 
 } // namespace Renderer

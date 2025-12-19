@@ -22,6 +22,8 @@ public:
     void bind();
     void unbind();
 
+    void blit_depth_buffer();
+
     void set_uniforms(Renderer::ShaderProgram& shader);
 
 private:
@@ -32,6 +34,9 @@ private:
     Renderer::Texture m_albedo;
 
     Renderer::Renderbuffer m_depth;
+    
+    i32 m_buffer_width;
+    i32 m_buffer_height;
 };
 
 } // namespace Renderer

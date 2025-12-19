@@ -8,10 +8,9 @@
 #include "pch.hpp"
 #include "renderer.hpp"
 #include "renderer/gbuffer.hpp"
+#include "renderer/quad.hpp"
 #include "renderer/shader.hpp"
 #include "renderer/shadowmap.hpp"
-#include "renderer/quad.hpp"
-#include "renderer/vertex.hpp"
 
 namespace {
 
@@ -21,37 +20,17 @@ struct Material {
 
 namespace Light {
 
-    const char* const SHADOWMAP_VERTEX_SHADER = R"(
-    #version 460 core
-    layout (location = 0) in vec3 aPos;
-
-    uniform mat4 light_space_matrix;
-    uniform mat4 model;
-
-    void main()
-    {
-        gl_Position = light_space_matrix * model * vec4(aPos, 1.0);
-    }
-    )";
-
-    const char* const SHADOWMAP_FRAG_SHADER = R"(
-    #version 460 core
-    void main()
-    {
-    }
-    )";
-
     std::array<Renderer::ShaderInfo, 2> get_shadowpass_shader_info()
     {
         return std::array<Renderer::ShaderInfo, 2> {
             Renderer::ShaderInfo {
                 .is_file = false,
-                .shader = SHADOWMAP_VERTEX_SHADER,
+                .shader = Renderer::ShadowMap::get_vertex_shader(),
                 .type = GL_VERTEX_SHADER,
             },
             Renderer::ShaderInfo {
                 .is_file = false,
-                .shader = SHADOWMAP_FRAG_SHADER,
+                .shader = Renderer::ShadowMap::get_frag_shader(),
                 .type = GL_FRAGMENT_SHADER,
             },
         };
@@ -167,23 +146,24 @@ int main()
         auto window_keystate = [&]() {
             const bool* keys = SDL_GetKeyboardState(nullptr);
             float delta_time = clock.delta_time();
+            using Dir = Renderer::Camera::Movement;
             if (keys[SDL_SCANCODE_W]) {
-                camera.move(Renderer::Camera::Movement::Forward, delta_time);
+                camera.move(Dir::Forward, delta_time);
             }
             if (keys[SDL_SCANCODE_S]) {
-                camera.move(Renderer::Camera::Movement::Backward, delta_time);
+                camera.move(Dir::Backward, delta_time);
             }
             if (keys[SDL_SCANCODE_A]) {
-                camera.move(Renderer::Camera::Movement::Left, delta_time);
+                camera.move(Dir::Left, delta_time);
             }
             if (keys[SDL_SCANCODE_D]) {
-                camera.move(Renderer::Camera::Movement::Right, delta_time);
+                camera.move(Dir::Right, delta_time);
             }
             if (keys[SDL_SCANCODE_SPACE]) {
-                camera.move(Renderer::Camera::Movement::Up, delta_time);
+                camera.move(Dir::Up, delta_time);
             }
             if (keys[SDL_SCANCODE_LSHIFT]) {
-                camera.move(Renderer::Camera::Movement::Down, delta_time);
+                camera.move(Dir::Down, delta_time);
             }
         };
 
@@ -330,6 +310,8 @@ int main()
                 gpass_shader.set_mat4("model", u_model);
 
                 model.draw(gpass_shader);
+
+                gpass.blit_depth_buffer();
 
                 gpass.unbind();
 
