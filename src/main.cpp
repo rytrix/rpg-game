@@ -20,22 +20,6 @@ struct Material {
 
 namespace Light {
 
-    std::array<Renderer::ShaderInfo, 2> get_shadowpass_shader_info()
-    {
-        return std::array<Renderer::ShaderInfo, 2> {
-            Renderer::ShaderInfo {
-                .is_file = false,
-                .shader = Renderer::ShadowMap::get_vertex_shader(),
-                .type = GL_VERTEX_SHADER,
-            },
-            Renderer::ShaderInfo {
-                .is_file = false,
-                .shader = Renderer::ShadowMap::get_frag_shader(),
-                .type = GL_FRAGMENT_SHADER,
-            },
-        };
-    }
-
     class Directional {
     public:
         void init(glm::vec3 direction, glm::vec3 ambient, glm::vec3 diffuse, glm::vec3 specular);
@@ -189,7 +173,7 @@ int main()
         };
         Renderer::ShaderProgram model_shader(shader_info.data(), shader_info.size());
 
-        // auto shadowmap_info = Light::get_shadowpass_shader_info();
+        // auto shadowmap_info = Renderer::ShadowMap::get_shader_info();
         // Renderer::ShaderProgram shadowmap_shader(shadowmap_info.data(), shadowmap_info.size());
 
         shader_info = {
@@ -228,10 +212,6 @@ int main()
         glm::mat4 u_model = glm::scale(glm::mat4 { 1.0 }, glm::vec3(0.1));
         // Renderer::Model model("res/cube_texture_mapping/Cube.obj");
         // glm::mat4 u_model = glm::scale(glm::mat4 { 1.0 }, glm::vec3(1.0));
-
-        Material material = {
-            .shininess = 32.0F,
-        };
 
         Light::Point point_light = {
             .pos = glm::vec3(12.0F, 11.0F, 14.6F),
@@ -280,7 +260,7 @@ int main()
                 model_shader.set_mat4("model", u_model);
                 model_shader.set_vec3("view_pos", camera.get_pos());
 
-                model_shader.set_float("material.shininess", material.shininess);
+                model_shader.set_float("material.shininess", 32.0F);
 
                 // shader.set_vec3("u_directional_light.direction", directional_light.direction);
                 // shader.set_vec3("u_directional_light.ambient", directional_light.ambient);

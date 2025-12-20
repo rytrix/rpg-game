@@ -23,10 +23,8 @@ void ShadowMap::init_internal()
 
     m_framebuffer.init();
     m_framebuffer.bind_texture(GL_DEPTH_ATTACHMENT, m_texture.get_id(), 0);
-    m_framebuffer.bind();
-    glDrawBuffer(GL_NONE);
-    glReadBuffer(GL_NONE);
-    m_framebuffer.unbind();
+    m_framebuffer.bind_draw_buffer(GL_NONE);
+    m_framebuffer.bind_read_buffer(GL_NONE);
 }
 
 void ShadowMap::bind()
@@ -39,12 +37,12 @@ void ShadowMap::unbind()
     m_framebuffer.unbind();
 }
 
-i32 ShadowMap::get_width()
+[[nodiscard]] i32 ShadowMap::get_width() const
 {
     return m_shadow_width;
 }
 
-i32 ShadowMap::get_height()
+[[nodiscard]] i32 ShadowMap::get_height() const
 {
     return m_shadow_height;
 }
