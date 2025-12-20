@@ -31,9 +31,19 @@ void Framebuffer::bind_texture(GLenum attachment, GLuint texture, GLint level) c
     }
 }
 
+void Framebuffer::bind_draw_buffer(const GLenum buff) const
+{
+    glNamedFramebufferDrawBuffer(m_id, buff);
+}
+
 void Framebuffer::bind_draw_buffers(GLsizei count, const GLenum* buffs) const
 {
     glNamedFramebufferDrawBuffers(m_id, count, buffs);
+}
+
+void Framebuffer::bind_read_buffer(const GLenum buff) const
+{
+    glNamedFramebufferReadBuffer(m_id, buff);
 }
 
 void Framebuffer::bind() const

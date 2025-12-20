@@ -2,6 +2,7 @@
 
 #include "framebuffer.hpp"
 #include "texture.hpp"
+#include "shader.hpp"
 
 namespace Renderer {
 
@@ -14,9 +15,26 @@ public:
     void bind();
     void unbind();
 
-    i32 get_width();
-    i32 get_height();
+    [[nodiscard]] i32 get_width() const;
+    [[nodiscard]] i32 get_height() const;
 
+    static consteval std::array<Renderer::ShaderInfo, 2> get_shader_info()
+    {
+        return std::array<Renderer::ShaderInfo, 2> {
+            Renderer::ShaderInfo {
+                .is_file = false,
+                .shader = get_vertex_shader(),
+                .type = GL_VERTEX_SHADER,
+            },
+            Renderer::ShaderInfo {
+                .is_file = false,
+                .shader = get_frag_shader(),
+                .type = GL_FRAGMENT_SHADER,
+            },
+        };
+    }
+
+private:
     static consteval const char* get_vertex_shader()
     {
         return R"(
@@ -43,7 +61,6 @@ public:
         )";
     }
 
-private:
     static constexpr i32 DEFAULT_SHADOW_WIDTH = 1024;
     static constexpr i32 DEFAULT_SHADOW_HEIGHT = 1024;
 
