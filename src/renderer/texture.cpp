@@ -21,6 +21,7 @@ void Texture::init(TextureInfo& info)
     glTextureParameteri(m_id, GL_TEXTURE_MAG_FILTER, info.mag_filter);
     glTextureParameteri(m_id, GL_TEXTURE_WRAP_S, info.wrap_s);
     glTextureParameteri(m_id, GL_TEXTURE_WRAP_T, info.wrap_t);
+    glTextureParameterfv(m_id, GL_TEXTURE_BORDER_COLOR, info.border_color.data());
 
     if (info.from_file) {
         from_file(info.file_path, info.flip);
