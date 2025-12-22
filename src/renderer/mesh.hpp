@@ -39,6 +39,7 @@ public:
         std::vector<u32>&& indicies,
         std::vector<TextureRef>&& textures);
 
+    void draw();
     void draw(ShaderProgram& shader);
 
     std::vector<Vertex> m_verticies;

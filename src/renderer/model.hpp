@@ -1,8 +1,8 @@
 #pragma once
 
+#include "mesh.hpp"
 #include "shader.hpp"
 #include "texture.hpp"
-#include "mesh.hpp"
 
 #include <assimp/scene.h>
 
@@ -18,6 +18,7 @@ public:
     Model(Model&&) = default;
     Model& operator=(Model&&) = default;
 
+    void draw();
     void draw(ShaderProgram& shader);
 
 private:

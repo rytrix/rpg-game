@@ -16,6 +16,13 @@ Model::Model(const char* file_path)
     process_node(scene->mRootNode, scene);
 }
 
+void Model::draw()
+{
+    for (auto& mesh : m_meshes) {
+        mesh.draw();
+    }
+}
+
 void Model::draw(ShaderProgram& shader)
 {
     for (auto& mesh : m_meshes) {
