@@ -24,6 +24,12 @@ void Mesh::init(std::vector<Vertex>&& verticies,
     setup_mesh();
 }
 
+void Mesh::draw()
+{
+    m_vao.bind();
+    glDrawElements(GL_TRIANGLES, static_cast<GLsizei>(m_indicies.size()), GL_UNSIGNED_INT, nullptr);
+}
+
 void Mesh::draw(ShaderProgram& shader)
 {
     // shader.bind();
