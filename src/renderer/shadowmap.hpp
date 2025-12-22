@@ -1,8 +1,8 @@
 #pragma once
 
 #include "framebuffer.hpp"
-#include "texture.hpp"
 #include "shader.hpp"
+#include "texture.hpp"
 
 namespace Renderer {
 
@@ -17,6 +17,7 @@ public:
 
     [[nodiscard]] i32 get_width() const;
     [[nodiscard]] i32 get_height() const;
+    [[nodiscard]] Texture& get_texture();
 
     static consteval std::array<Renderer::ShaderInfo, 2> get_shader_info()
     {
@@ -46,7 +47,7 @@ private:
 
             void main()
             {
-            gl_Position = light_space_matrix * model * vec4(aPos, 1.0);
+                gl_Position = light_space_matrix * model * vec4(aPos, 1.0);
             }
         )";
     }

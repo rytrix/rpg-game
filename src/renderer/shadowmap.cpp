@@ -19,6 +19,8 @@ void ShadowMap::init_internal()
     Renderer::TextureInfo shadowmap_info;
     shadowmap_info.size = Renderer::TextureSize { .width = m_shadow_width, .height = m_shadow_height, .depth = 0 };
     shadowmap_info.internal_format = GL_DEPTH_COMPONENT24;
+    shadowmap_info.wrap_s = GL_CLAMP_TO_BORDER;
+    shadowmap_info.wrap_t = GL_CLAMP_TO_BORDER;
     m_texture.init(shadowmap_info);
 
     m_framebuffer.init();
@@ -45,6 +47,11 @@ void ShadowMap::unbind()
 [[nodiscard]] i32 ShadowMap::get_height() const
 {
     return m_shadow_height;
+}
+
+[[nodiscard]] Texture& ShadowMap::get_texture()
+{
+    return m_texture;
 }
 
 } // namespace Renderer
