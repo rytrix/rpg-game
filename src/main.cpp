@@ -24,9 +24,9 @@ namespace Light {
     public:
         void init(glm::vec3 direction, glm::vec3 ambient, glm::vec3 diffuse, glm::vec3 specular);
 
-        void shadowmap_draw(Renderer::ShaderProgram shader, glm::mat4& model, std::function<void()>& draw_function);
+        void shadowmap_draw(Renderer::ShaderProgram& shader, glm::mat4& model, const std::function<void()>& draw_function);
 
-        void set_uniforms(Renderer::ShaderProgram shader, const char* light_name) const;
+        void set_uniforms(Renderer::ShaderProgram& shader, const char* light_name);
 
         glm::vec3 m_direction;
         glm::vec3 m_ambient;
@@ -45,10 +45,10 @@ namespace Light {
         m_diffuse = diffuse;
         m_specular = specular;
 
-        glm::mat4 light_projection = glm::ortho(-10.0F, 10.0F, -10.F, 10.0F, 1.0F, 7.5F);
+        glm::mat4 light_projection = glm::ortho(-10.0F, 10.0F, -10.F, 10.0F, 1.0F, 20.0F);
         glm::mat4 light_view = glm::lookAt(
-            glm::vec3(-2.0f, 4.0f, -1.0f),
-            glm::vec3(0.0f, 0.0f, 0.0f), // TODO supposed to be direction??
+            glm::vec3(-4.0f, 6.0f, 4.0f),
+            m_direction, // TODO supposed to be direction??
             glm::vec3(0.0f, 1.0f, 0.0f));
 
         m_light_space_matrix = light_projection * light_view;
@@ -56,12 +56,13 @@ namespace Light {
         m_shadowmap.init();
     }
 
-    void Directional::shadowmap_draw(Renderer::ShaderProgram shader, glm::mat4& model, std::function<void()>& draw_function)
+    void Directional::shadowmap_draw(Renderer::ShaderProgram& shader, glm::mat4& model, const std::function<void()>& draw_function)
     {
         glViewport(0, 0, m_shadowmap.get_width(), m_shadowmap.get_height());
         m_shadowmap.bind();
 
         glClear(GL_DEPTH_BUFFER_BIT);
+        shader.bind();
         shader.set_mat4("light_space_matrix", m_light_space_matrix);
         shader.set_mat4("model", model);
         draw_function();
@@ -69,12 +70,15 @@ namespace Light {
         m_shadowmap.unbind();
     }
 
-    void Directional::set_uniforms(Renderer::ShaderProgram shader, const char* light_name) const
+    void Directional::set_uniforms(Renderer::ShaderProgram& shader, const char* light_name)
     {
         shader.set_vec3(std::format("{}.direction", light_name).c_str(), m_direction);
         shader.set_vec3(std::format("{}.ambient", light_name).c_str(), m_ambient);
         shader.set_vec3(std::format("{}.diffuse", light_name).c_str(), m_diffuse);
         shader.set_vec3(std::format("{}.specular", light_name).c_str(), m_specular);
+        shader.set_mat4(std::format("{}.light_space_matrix", light_name).c_str(), m_light_space_matrix);
+        m_shadowmap.get_texture().bind(4);
+        shader.set_int(std::format("{}.shadow_map", light_name).c_str(), 4);
     }
 
     struct Point {
@@ -99,8 +103,7 @@ int main()
         Renderer::Window window("Test Window", 800, 600);
         window.set_relative_mode(true);
 
-        Renderer::Camera camera(90.0F, 0.1F, 1000.0F,
-            window.get_aspect_ratio(), { -2.0F, 1.5F, 4.0F });
+        Renderer::Camera camera(90.0F, 0.1F, 1000.0F, window.get_aspect_ratio(), { -2.0F, 1.5F, 4.0F });
         camera.set_speed(5.0F);
 
         DeltaTime clock;
@@ -173,8 +176,8 @@ int main()
         };
         Renderer::ShaderProgram model_shader(shader_info.data(), shader_info.size());
 
-        // auto shadowmap_info = Renderer::ShadowMap::get_shader_info();
-        // Renderer::ShaderProgram shadowmap_shader(shadowmap_info.data(), shadowmap_info.size());
+        auto shadowmap_info = Renderer::ShadowMap::get_shader_info();
+        Renderer::ShaderProgram shadowmap_shader(shadowmap_info.data(), shadowmap_info.size());
 
         shader_info = {
             Renderer::ShaderInfo {
@@ -208,10 +211,10 @@ int main()
         Renderer::ShaderProgram lpass_shader(shader_info.data(), shader_info.size());
 
         // Renderer::Model model("res/backpack/backpack.obj");
-        Renderer::Model model("res/Sponza/glTF/Sponza.gltf");
-        glm::mat4 u_model = glm::scale(glm::mat4 { 1.0 }, glm::vec3(0.1));
-        // Renderer::Model model("res/cube_texture_mapping/Cube.obj");
-        // glm::mat4 u_model = glm::scale(glm::mat4 { 1.0 }, glm::vec3(1.0));
+        // Renderer::Model model("res/Sponza/glTF/Sponza.gltf");
+        // glm::mat4 u_model = glm::scale(glm::mat4 { 1.0 }, glm::vec3(0.1));
+        Renderer::Model model("res/cube_texture_mapping/Cube.obj");
+        glm::mat4 u_model = glm::scale(glm::mat4 { 1.0 }, glm::vec3(1.0));
 
         Light::Point point_light = {
             .pos = glm::vec3(12.0F, 11.0F, 14.6F),
@@ -222,6 +225,13 @@ int main()
             .linear = 0.022F,
             .quadratic = 0.0019F,
         };
+
+        Light::Directional directional_light;
+        directional_light.init(
+            glm::vec3(-0.2F, -1.0F, 0.3F),
+            glm::vec3(0.01),
+            glm::vec3(0.5),
+            glm::vec3(0.5));
 
         // DirectionalLight directional_light = {
         //     .direction = glm::vec3(-0.2F, -1.0F, 0.3F),
@@ -280,8 +290,16 @@ int main()
                 glViewport(0, 0, window.get_size().first, window.get_size().second);
                 glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
 
+                // Shadowmap pass
+                glCullFace(GL_FRONT);
+                directional_light.shadowmap_draw(shadowmap_shader, u_model, [&]() {
+                    model.draw();
+                });
+
                 // Geometry pass
+                glCullFace(GL_BACK);
                 gpass.bind();
+                glViewport(0, 0, window.get_width(), window.get_height());
                 glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
                 gpass_shader.bind();
@@ -296,16 +314,13 @@ int main()
                 gpass.unbind();
 
                 // Lighting pass
-                glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+                glClear(GL_COLOR_BUFFER_BIT);
                 lpass_shader.bind();
 
                 gpass.set_uniforms(lpass_shader);
                 lpass_shader.set_vec3("view_position", camera.get_pos());
 
-                lpass_shader.set_vec3("u_directional_light.direction", glm::vec3(-0.2F, -1.0F, 0.3F));
-                lpass_shader.set_vec3("u_directional_light.ambient", glm::vec3(0.1));
-                lpass_shader.set_vec3("u_directional_light.diffuse", glm::vec3(0.5));
-                lpass_shader.set_vec3("u_directional_light.specular", glm::vec3(0.5));
+                directional_light.set_uniforms(lpass_shader, "u_directional_light");
                 lpass.draw();
             }
         });
