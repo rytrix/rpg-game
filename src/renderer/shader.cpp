@@ -83,7 +83,7 @@ namespace {
     {
         std::ifstream file(path, std::ios::in | std::ios::binary);
         if (!file) {
-            std::println("Could not open file \"{}\"", path);
+            std::println("Shader: Could not open file \"{}\"", path);
             return {};
         }
 
