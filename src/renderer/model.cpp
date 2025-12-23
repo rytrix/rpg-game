@@ -9,10 +9,16 @@ namespace Renderer {
 Model::Model(const char* file_path)
     : m_directory(file_path)
 {
+    if (!std::filesystem::exists(file_path)) {
+        throw std::runtime_error(std::format("Model \"{}\" is an invalid path", file_path));
+    }
     Assimp::Importer importer;
     const aiScene* scene = importer.ReadFile(file_path, aiProcess_Triangulate | aiProcess_FlipUVs);
     m_directory = m_directory.substr(0, m_directory.find_last_of('/'));
 
+    if (scene->mRootNode == nullptr) {
+        throw std::runtime_error("Model::Model: Root node is nullptr");
+    }
     process_node(scene->mRootNode, scene);
 }
 
