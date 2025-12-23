@@ -15,12 +15,14 @@ Texture::~Texture()
 void Texture::init(TextureInfo& info)
 {
     m_dimensions = info.dimensions;
+
     glCreateTextures(m_dimensions, 1, &m_id);
 
     glTextureParameteri(m_id, GL_TEXTURE_MIN_FILTER, info.min_filter);
     glTextureParameteri(m_id, GL_TEXTURE_MAG_FILTER, info.mag_filter);
     glTextureParameteri(m_id, GL_TEXTURE_WRAP_S, info.wrap_s);
     glTextureParameteri(m_id, GL_TEXTURE_WRAP_T, info.wrap_t);
+    glTextureParameteri(m_id, GL_TEXTURE_WRAP_R, info.wrap_r);
     glTextureParameterfv(m_id, GL_TEXTURE_BORDER_COLOR, info.border_color.data());
 
     if (info.from_file) {
@@ -76,7 +78,7 @@ void Texture::sub_image(TextureSubimageInfo& info)
                 info.pixels);
             break;
         default:
-            throw std::runtime_error(std::format("invalid texture dimensions {}\n", m_dimensions));
+            throw std::runtime_error(std::format("Texture::sub_image: invalid texture dimensions {}\n", m_dimensions));
     }
 }
 
@@ -102,8 +104,11 @@ void Texture::texture_storage(TextureSize& size, GLenum internal_format)
         case GL_TEXTURE_3D:
             glTextureStorage3D(m_id, 1, internal_format, size.width, size.height, size.depth);
             break;
+        case GL_TEXTURE_CUBE_MAP:
+            glTextureStorage2D(m_id, 1, internal_format, size.width, size.height);
+            break;
         default:
-            throw std::runtime_error(std::format("invalid texture dimensions {}\n", m_dimensions));
+            throw std::runtime_error(std::format("Texture::texture_storage: invalid texture dimensions {}\n", m_dimensions));
     }
 }
 

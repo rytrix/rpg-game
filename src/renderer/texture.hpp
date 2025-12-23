@@ -19,6 +19,7 @@ struct TextureInfo {
     GLint mag_filter = GL_NEAREST;
     GLint wrap_s = GL_REPEAT;
     GLint wrap_t = GL_REPEAT;
+    GLint wrap_r = GL_REPEAT;
     std::array<float, 4> border_color = { 1.0F, 1.0F, 1.0F, 1.0F };
     bool mipmaps = GL_TRUE;
     GLenum internal_format = GL_RGBA8;

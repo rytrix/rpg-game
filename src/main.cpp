@@ -110,17 +110,124 @@ namespace Light {
         }
     }
 
-    struct Point {
-        glm::vec3 pos;
-        glm::vec3 ambient;
-        glm::vec3 diffuse;
-        glm::vec3 specular;
+    class Point {
+    public:
+        Point() = default;
+        ~Point();
+
+        Point(const Point&) = delete;
+        Point& operator=(const Point&) = delete;
+        Point(Point&&) = default;
+        Point& operator=(Point&&) = default;
+
+        void init(bool shadowmap, glm::vec3 position, glm::vec3 ambient, glm::vec3 diffuse, glm::vec3 specular, float constant, float linear, float quadratic);
+
+        void shadowmap_draw(Renderer::ShaderProgram& shader, glm::mat4& model, const std::function<void()>& draw_function);
+
+        void set_uniforms(Renderer::ShaderProgram& shader, const char* light_name);
+
+        glm::vec3 m_pos {};
+        glm::vec3 m_ambient {};
+        glm::vec3 m_diffuse {};
+        glm::vec3 m_specular {};
 
         // https://wiki.ogre3d.org/tiki-index.php?page=-Point+Light+Attenuation
-        float constant;
-        float linear;
-        float quadratic;
+        float m_constant {};
+        float m_linear {};
+        float m_quadratic {};
+
+    private:
+        bool m_shadowmap_enabled {};
+        struct ShadowMap_Internal {
+            std::array<glm::mat4, 6> m_light_space_matrix {};
+            Renderer::ShadowMap m_shadowmap;
+            float m_far;
+        };
+        ShadowMap_Internal* m_shadowmap_internal = nullptr;
     };
+
+    Point::~Point()
+    {
+        if (m_shadowmap_enabled) {
+            delete m_shadowmap_internal;
+        }
+    }
+
+    void Point::init(bool shadowmap,
+        glm::vec3 position, glm::vec3 ambient, glm::vec3 diffuse, glm::vec3 specular,
+        float constant, float linear, float quadratic)
+    {
+
+        m_pos = position;
+        m_ambient = ambient;
+        m_diffuse = diffuse;
+        m_specular = specular;
+
+        m_constant = constant;
+        m_linear = linear;
+        m_quadratic = quadratic;
+
+        if (shadowmap) {
+            m_shadowmap_enabled = true;
+
+            m_shadowmap_internal = new ShadowMap_Internal();
+            m_shadowmap_internal->m_shadowmap.init_cubemap();
+
+            float aspect = m_shadowmap_internal->m_shadowmap.get_width() / m_shadowmap_internal->m_shadowmap.get_height();
+            float near = 1.0F;
+            float far = 25.0F;
+
+            glm::mat4 light_projection = glm::perspective(glm::radians(90.0F), aspect, near, far);
+            m_shadowmap_internal->m_light_space_matrix.at(0) = light_projection * glm::lookAt(m_pos, m_pos + glm::vec3(1.0, 0.0, 0.0), glm::vec3(0.0, -1.0, 0.0));
+            m_shadowmap_internal->m_light_space_matrix.at(1) = light_projection * glm::lookAt(m_pos, m_pos + glm::vec3(-1.0, 0.0, 0.0), glm::vec3(0.0, -1.0, 0.0));
+            m_shadowmap_internal->m_light_space_matrix.at(2) = light_projection * glm::lookAt(m_pos, m_pos + glm::vec3(0.0, 1.0, 0.0), glm::vec3(0.0, 0.0, 1.0));
+            m_shadowmap_internal->m_light_space_matrix.at(3) = light_projection * glm::lookAt(m_pos, m_pos + glm::vec3(1.0, -1.0, 0.0), glm::vec3(0.0, 0.0, -1.0));
+            m_shadowmap_internal->m_light_space_matrix.at(4) = light_projection * glm::lookAt(m_pos, m_pos + glm::vec3(1.0, 0.0, 1.0), glm::vec3(0.0, -1.0, 0.0));
+            m_shadowmap_internal->m_light_space_matrix.at(5) = light_projection * glm::lookAt(m_pos, m_pos + glm::vec3(1.0, 0.0, -1.0), glm::vec3(0.0, -1.0, 0.0));
+            m_shadowmap_internal->m_far = far;
+        }
+    }
+
+    void Point::shadowmap_draw(Renderer::ShaderProgram& shader, glm::mat4& model, const std::function<void()>& draw_function)
+    {
+        if (m_shadowmap_enabled) {
+            glViewport(0, 0, m_shadowmap_internal->m_shadowmap.get_width(), m_shadowmap_internal->m_shadowmap.get_height());
+            m_shadowmap_internal->m_shadowmap.bind();
+
+            glClear(GL_DEPTH_BUFFER_BIT);
+            shader.bind();
+            shader.set_mat4("light_space_matrices[0]", m_shadowmap_internal->m_light_space_matrix[0]);
+            shader.set_mat4("light_space_matrices[1]", m_shadowmap_internal->m_light_space_matrix[1]);
+            shader.set_mat4("light_space_matrices[2]", m_shadowmap_internal->m_light_space_matrix[2]);
+            shader.set_mat4("light_space_matrices[3]", m_shadowmap_internal->m_light_space_matrix[3]);
+            shader.set_mat4("light_space_matrices[4]", m_shadowmap_internal->m_light_space_matrix[4]);
+            shader.set_mat4("light_space_matrices[5]", m_shadowmap_internal->m_light_space_matrix[5]);
+            shader.set_mat4("model", model);
+            shader.set_float("far_plane", m_shadowmap_internal->m_far);
+            shader.set_vec3("light_pos", m_pos);
+            draw_function();
+
+            m_shadowmap_internal->m_shadowmap.unbind();
+        } else {
+            throw std::runtime_error("Trying to call shadowmap_draw on a point light without a shadowmap enabled");
+        }
+    }
+
+    void Point::set_uniforms(Renderer::ShaderProgram& shader, const char* light_name)
+    {
+        shader.set_vec3(std::format("{}.pos", light_name).c_str(), m_pos);
+        shader.set_vec3(std::format("{}.ambient", light_name).c_str(), m_ambient);
+        shader.set_vec3(std::format("{}.diffuse", light_name).c_str(), m_diffuse);
+        shader.set_vec3(std::format("{}.specular", light_name).c_str(), m_specular);
+        shader.set_float(std::format("{}.constant", light_name).c_str(), m_constant);
+        shader.set_float(std::format("{}.linear", light_name).c_str(), m_linear);
+        shader.set_float(std::format("{}.quadratic", light_name).c_str(), m_quadratic);
+        if (m_shadowmap_enabled) {
+            shader.set_float(std::format("{}.far_plane", light_name).c_str(), m_shadowmap_internal->m_far);
+            m_shadowmap_internal->m_shadowmap.get_texture().bind(5);
+            shader.set_int(std::format("{}.shadow_map", light_name).c_str(), 5);
+        }
+    }
 
 } // namespace Light
 
@@ -191,24 +298,13 @@ int main()
 
         // glEnable(GL_MULTISAMPLE);
 
-        std::array<Renderer::ShaderInfo, 2> shader_info = {
-            Renderer::ShaderInfo {
-                .is_file = true,
-                .shader = "res/forward_pass/model.glsl.vert",
-                .type = GL_VERTEX_SHADER,
-            },
-            Renderer::ShaderInfo {
-                .is_file = true,
-                .shader = "res/forward_pass/model_light_map.glsl.frag",
-                .type = GL_FRAGMENT_SHADER,
-            },
-        };
-        Renderer::ShaderProgram model_shader(shader_info.data(), shader_info.size());
-
         auto shadowmap_info = Renderer::ShadowMap::get_shader_info();
         Renderer::ShaderProgram shadowmap_shader(shadowmap_info.data(), shadowmap_info.size());
 
-        shader_info = {
+        auto shadowmap_cubemap_info = Renderer::ShadowMap::get_shader_info_cubemap();
+        Renderer::ShaderProgram shadowmap_cubemap_shader(shadowmap_cubemap_info.data(), shadowmap_cubemap_info.size());
+
+        std::array<Renderer::ShaderInfo, 2> shader_info = {
             Renderer::ShaderInfo {
                 .is_file = true,
                 .shader = "res/deferred_shading/g_pass.glsl.vert",
@@ -245,30 +341,23 @@ int main()
         Renderer::Model model("res/cube_texture_mapping/Cube.obj");
         glm::mat4 u_model = glm::scale(glm::mat4 { 1.0 }, glm::vec3(1.0));
 
-        Light::Point point_light = {
-            .pos = glm::vec3(12.0F, 11.0F, 14.6F),
-            .ambient = glm::vec3(0.1F),
-            .diffuse = glm::vec3(0.5F),
-            .specular = glm::vec3(0.5F),
-            .constant = 1.0F,
-            .linear = 0.022F,
-            .quadratic = 0.0019F,
-        };
-
         Light::Directional directional_light;
         directional_light.init(
             true,
             glm::vec3(-0.2F, -1.0F, 0.3F),
-            glm::vec3(0.01),
+            glm::vec3(0.1),
             glm::vec3(0.5),
             glm::vec3(0.5));
 
-        // DirectionalLight directional_light = {
-        //     .direction = glm::vec3(-0.2F, -1.0F, 0.3F),
-        //     .ambient = glm::vec3(0.01),
-        //     .diffuse = glm::vec3(0.5),
-        //     .specular = glm::vec3(0.5),
-        // };
+        Light::Point point_light;
+        point_light.init(true,
+            glm::vec3(2.0F, 2.0F, 2.0F),
+            glm::vec3(0.05F),
+            glm::vec3(0.5F),
+            glm::vec3(0.5F),
+            1.0F,
+            0.022F,
+            0.0019F);
 
         float time_passed = 0.0F;
         u32 frames = 0;
@@ -282,76 +371,51 @@ int main()
             }
         };
 
-        bool forward_pass = false;
         window.loop([&]() {
             clock.update();
             fps_printer();
             window_keystate();
             camera.update();
 
-            if (forward_pass) {
-                glViewport(0, 0, window.get_size().first, window.get_size().second);
-                glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
-                glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+            glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
 
-                model_shader.bind();
-                model_shader.set_mat4("proj", camera.get_proj());
-                model_shader.set_mat4("view", camera.get_view());
-                model_shader.set_mat4("model", u_model);
-                model_shader.set_vec3("view_pos", camera.get_pos());
+            // Shadowmap pass
+            glCullFace(GL_FRONT);
+            directional_light.shadowmap_draw(shadowmap_shader, u_model, [&]() {
+                model.draw();
+            });
 
-                model_shader.set_float("material.shininess", 32.0F);
+            point_light.shadowmap_draw(shadowmap_cubemap_shader, u_model, [&]() {
+                model.draw();
+            });
 
-                // shader.set_vec3("u_directional_light.direction", directional_light.direction);
-                // shader.set_vec3("u_directional_light.ambient", directional_light.ambient);
-                // shader.set_vec3("u_directional_light.diffuse", directional_light.diffuse);
-                // shader.set_vec3("u_directional_light.specular", directional_light.specular);
+            // Geometry pass
+            glCullFace(GL_BACK);
+            gpass.bind();
+            glViewport(0, 0, window.get_width(), window.get_height());
+            glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-                model_shader.set_vec3("u_point_light.pos", point_light.pos);
-                model_shader.set_vec3("u_point_light.ambient", point_light.ambient);
-                model_shader.set_vec3("u_point_light.diffuse", point_light.diffuse);
-                model_shader.set_vec3("u_point_light.specular", point_light.specular);
-                model_shader.set_float("u_point_light.constant", point_light.constant);
-                model_shader.set_float("u_point_light.linear", point_light.linear);
-                model_shader.set_float("u_point_light.quadratic", point_light.quadratic);
+            gpass_shader.bind();
+            gpass_shader.set_mat4("proj", camera.get_proj());
+            gpass_shader.set_mat4("view", camera.get_view());
+            gpass_shader.set_mat4("model", u_model);
 
-                model.draw(model_shader);
-            } else {
-                glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+            model.draw(gpass_shader);
 
-                // Shadowmap pass
-                glCullFace(GL_FRONT);
-                directional_light.shadowmap_draw(shadowmap_shader, u_model, [&]() {
-                    model.draw();
-                });
+            gpass.blit_depth_buffer();
 
-                // Geometry pass
-                glCullFace(GL_BACK);
-                gpass.bind();
-                glViewport(0, 0, window.get_width(), window.get_height());
-                glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+            gpass.unbind();
 
-                gpass_shader.bind();
-                gpass_shader.set_mat4("proj", camera.get_proj());
-                gpass_shader.set_mat4("view", camera.get_view());
-                gpass_shader.set_mat4("model", u_model);
+            // Lighting pass
+            glClear(GL_COLOR_BUFFER_BIT);
+            lpass_shader.bind();
 
-                model.draw(gpass_shader);
+            gpass.set_uniforms(lpass_shader);
+            lpass_shader.set_vec3("view_position", camera.get_pos());
 
-                gpass.blit_depth_buffer();
-
-                gpass.unbind();
-
-                // Lighting pass
-                glClear(GL_COLOR_BUFFER_BIT);
-                lpass_shader.bind();
-
-                gpass.set_uniforms(lpass_shader);
-                lpass_shader.set_vec3("view_position", camera.get_pos());
-
-                directional_light.set_uniforms(lpass_shader, "u_directional_light");
-                lpass.draw();
-            }
+            directional_light.set_uniforms(lpass_shader, "u_directional_light");
+            point_light.set_uniforms(lpass_shader, "u_point_light");
+            lpass.draw();
         });
     } catch (std::runtime_error& error) {
         std::println("Caught error: {}", error.what());
