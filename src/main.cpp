@@ -181,9 +181,9 @@ namespace Light {
             m_shadowmap_internal->m_light_space_matrix.at(0) = light_projection * glm::lookAt(m_pos, m_pos + glm::vec3(1.0, 0.0, 0.0), glm::vec3(0.0, -1.0, 0.0));
             m_shadowmap_internal->m_light_space_matrix.at(1) = light_projection * glm::lookAt(m_pos, m_pos + glm::vec3(-1.0, 0.0, 0.0), glm::vec3(0.0, -1.0, 0.0));
             m_shadowmap_internal->m_light_space_matrix.at(2) = light_projection * glm::lookAt(m_pos, m_pos + glm::vec3(0.0, 1.0, 0.0), glm::vec3(0.0, 0.0, 1.0));
-            m_shadowmap_internal->m_light_space_matrix.at(3) = light_projection * glm::lookAt(m_pos, m_pos + glm::vec3(1.0, -1.0, 0.0), glm::vec3(0.0, 0.0, -1.0));
-            m_shadowmap_internal->m_light_space_matrix.at(4) = light_projection * glm::lookAt(m_pos, m_pos + glm::vec3(1.0, 0.0, 1.0), glm::vec3(0.0, -1.0, 0.0));
-            m_shadowmap_internal->m_light_space_matrix.at(5) = light_projection * glm::lookAt(m_pos, m_pos + glm::vec3(1.0, 0.0, -1.0), glm::vec3(0.0, -1.0, 0.0));
+            m_shadowmap_internal->m_light_space_matrix.at(3) = light_projection * glm::lookAt(m_pos, m_pos + glm::vec3(0.0, -1.0, 0.0), glm::vec3(0.0, 0.0, -1.0));
+            m_shadowmap_internal->m_light_space_matrix.at(4) = light_projection * glm::lookAt(m_pos, m_pos + glm::vec3(0.0, 0.0, 1.0), glm::vec3(0.0, -1.0, 0.0));
+            m_shadowmap_internal->m_light_space_matrix.at(5) = light_projection * glm::lookAt(m_pos, m_pos + glm::vec3(0.0, 0.0, -1.0), glm::vec3(0.0, -1.0, 0.0));
             m_shadowmap_internal->m_far = far;
         }
     }
@@ -336,10 +336,10 @@ int main()
         Renderer::ShaderProgram lpass_shader(shader_info.data(), shader_info.size());
 
         // Renderer::Model model("res/backpack/backpack.obj");
-        // Renderer::Model model("res/Sponza/glTF/Sponza.gltf");
-        // glm::mat4 u_model = glm::scale(glm::mat4 { 1.0 }, glm::vec3(0.1));
-        Renderer::Model model("res/cube_texture_mapping/Cube.obj");
-        glm::mat4 u_model = glm::scale(glm::mat4 { 1.0 }, glm::vec3(1.0));
+        Renderer::Model model("res/Sponza/glTF/Sponza.gltf");
+        glm::mat4 u_model = glm::scale(glm::mat4 { 1.0 }, glm::vec3(0.1));
+        // Renderer::Model model("res/cube_texture_mapping/Cube.obj");
+        // glm::mat4 u_model = glm::scale(glm::mat4 { 1.0 }, glm::vec3(1.0));
 
         Light::Directional directional_light;
         directional_light.init(
