@@ -2,14 +2,21 @@
 
 namespace Renderer {
 
-Framebuffer::~Framebuffer()
-{
-    glDeleteFramebuffers(1, &m_id);
-}
-
 void Framebuffer::init()
 {
+    if (initialized) {
+        throw std::runtime_error("Framebuffer::init() attempting to reinitialize an opengl framebuffer");
+    }
     glCreateFramebuffers(1, &m_id);
+    initialized = true;
+}
+
+Framebuffer::~Framebuffer()
+{
+    if (initialized) {
+        glDeleteFramebuffers(1, &m_id);
+        initialized = false;
+    }
 }
 
 [[nodiscard]] GLenum Framebuffer::check_status(GLenum target) const

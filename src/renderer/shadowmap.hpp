@@ -9,6 +9,13 @@ namespace Renderer {
 class ShadowMap {
 public:
     ShadowMap() = default;
+    ~ShadowMap();
+
+    ShadowMap(const ShadowMap&) = delete;
+    ShadowMap& operator=(const ShadowMap&) = delete;
+    ShadowMap(ShadowMap&&) = default;
+    ShadowMap& operator=(ShadowMap&&) = default;
+
     void init();
     void init(i32 width, i32 height);
     void init_cubemap();
@@ -151,6 +158,8 @@ private:
 
     static constexpr i32 DEFAULT_SHADOW_WIDTH = 1024;
     static constexpr i32 DEFAULT_SHADOW_HEIGHT = 1024;
+
+    bool initialized = false;
 
     i32 m_shadow_width = DEFAULT_SHADOW_WIDTH;
     i32 m_shadow_height = DEFAULT_SHADOW_HEIGHT;

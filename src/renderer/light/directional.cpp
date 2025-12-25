@@ -4,13 +4,20 @@ namespace Renderer::Light {
 
 Directional::~Directional()
 {
-    if (m_shadowmap_enabled) {
-        delete m_shadowmap_internal;
+    if (initialized) {
+        if (m_shadowmap_enabled) {
+            delete m_shadowmap_internal;
+        }
+        initialized = false;
     }
 }
 
 void Directional::init(bool shadowmap, glm::vec3 direction, glm::vec3 ambient, glm::vec3 diffuse, glm::vec3 specular)
 {
+    if (initialized) {
+        throw std::runtime_error("Directional::init() attempting to reinit directional light");
+    }
+
     m_direction = direction;
     m_ambient = ambient;
     m_diffuse = diffuse;
@@ -29,6 +36,8 @@ void Directional::init(bool shadowmap, glm::vec3 direction, glm::vec3 ambient, g
         m_shadowmap_internal->m_light_space_matrix = light_projection * light_view;
         m_shadowmap_internal->m_shadowmap.init();
     }
+
+    initialized = true;
 }
 
 void Directional::shadowmap_draw(Renderer::ShaderProgram& shader, glm::mat4& model, const std::function<void()>& draw_function)

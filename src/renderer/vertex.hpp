@@ -4,8 +4,10 @@ namespace Renderer {
 
 class VertexArray {
 public:
-    VertexArray();
+    VertexArray() = default;
     ~VertexArray();
+
+    void init();
 
     VertexArray(const VertexArray&) = delete;
     VertexArray& operator=(const VertexArray&) = delete;
@@ -23,7 +25,9 @@ public:
     [[nodiscard]] GLuint get_id() const;
 
 private:
-    GLuint m_id;
+    bool initialized = false;
+
+    GLuint m_id {};
 };
 
 } // namespace Renderer

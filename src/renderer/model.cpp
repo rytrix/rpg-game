@@ -7,8 +7,18 @@
 namespace Renderer {
 
 Model::Model(const char* file_path)
-    : m_directory(file_path)
 {
+    init(file_path);
+}
+
+void Model::init(const char* file_path)
+{
+    if (initialized) {
+        throw std::runtime_error("Model::init() attempting to reinitialize model");
+    }
+
+    m_directory = file_path;
+
     if (!std::filesystem::exists(file_path)) {
         throw std::runtime_error(std::format("Model \"{}\" is an invalid path", file_path));
     }
@@ -20,6 +30,13 @@ Model::Model(const char* file_path)
         throw std::runtime_error("Model::Model: Root node is nullptr");
     }
     process_node(scene->mRootNode, scene);
+
+    initialized = true;
+}
+
+Model::~Model()
+{
+    initialized = false;
 }
 
 void Model::draw()

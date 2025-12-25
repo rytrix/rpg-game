@@ -1,16 +1,16 @@
 #pragma once
 
 #include "framebuffer.hpp"
-#include "texture.hpp"
 #include "renderbuffer.hpp"
 #include "shader.hpp"
+#include "texture.hpp"
 
 namespace Renderer {
 
 class GBuffer {
 public:
     GBuffer() = default;
-    ~GBuffer() = default;
+    ~GBuffer();
 
     GBuffer(const GBuffer&) = delete;
     GBuffer& operator=(const GBuffer&) = delete;
@@ -27,6 +27,8 @@ public:
     void set_uniforms(Renderer::ShaderProgram& shader);
 
 private:
+    bool initialized = false;
+
     Renderer::Framebuffer m_buffer;
 
     Renderer::Texture m_position;
@@ -34,7 +36,7 @@ private:
     Renderer::Texture m_albedo;
 
     Renderer::Renderbuffer m_depth;
-    
+
     i32 m_buffer_width;
     i32 m_buffer_height;
 };

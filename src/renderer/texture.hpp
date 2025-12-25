@@ -53,6 +53,8 @@ public:
     [[nodiscard]] GLuint get_id() const noexcept;
 
 private:
+    bool initialized = false;
+
     GLuint m_id {};
     GLenum m_dimensions {};
 

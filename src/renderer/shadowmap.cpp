@@ -2,6 +2,11 @@
 
 namespace Renderer {
 
+ShadowMap::~ShadowMap()
+{
+    initialized = false;
+}
+
 void ShadowMap::init()
 {
     init_internal(false);
@@ -28,6 +33,10 @@ void ShadowMap::init_cubemap(i32 width, i32 height)
 
 void ShadowMap::init_internal(bool cubemap)
 {
+    if (initialized) {
+        throw std::runtime_error("ShadowMap::init_internal() attempting to reinit shadowmap");
+    }
+
     Renderer::TextureInfo shadowmap_info;
     if (cubemap) {
         shadowmap_info.dimensions = GL_TEXTURE_CUBE_MAP;
@@ -45,6 +54,8 @@ void ShadowMap::init_internal(bool cubemap)
     m_framebuffer.bind_texture(GL_DEPTH_ATTACHMENT, m_texture.get_id(), 0);
     m_framebuffer.bind_draw_buffer(GL_NONE);
     m_framebuffer.bind_read_buffer(GL_NONE);
+
+    initialized = true;
 }
 
 void ShadowMap::bind()

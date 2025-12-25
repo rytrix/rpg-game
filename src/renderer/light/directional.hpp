@@ -27,6 +27,8 @@ public:
     glm::vec3 m_specular {};
 
 private:
+    bool initialized = false;
+
     bool m_shadowmap_enabled {};
     struct ShadowMap_Internal {
         glm::mat4 m_light_space_matrix {};

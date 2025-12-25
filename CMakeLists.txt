@@ -7,7 +7,9 @@ endif()
 project(rpg)
 add_executable(${PROJECT_NAME} 
     src/main.cpp 
-	src/deltatime.cpp
+    src/app.cpp 
+    
+	src/utils/deltatime.cpp
 
     src/game_logic/gear.cpp 
     src/game_logic/character.cpp

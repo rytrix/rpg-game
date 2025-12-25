@@ -4,12 +4,19 @@ namespace Renderer {
 
 void Buffer::init()
 {
+    if (initialized) {
+        throw std::runtime_error("Buffer::init() Attempting to reinitialize opengl buffer");
+    }
     glCreateBuffers(1, &m_id);
+    initialized = true;
 }
 
 Buffer::~Buffer()
 {
-    glDeleteBuffers(1, &m_id);
+    if (initialized) {
+        glDeleteBuffers(1, &m_id);
+        initialized = false;
+    }
 }
 
 void Buffer::buffer_data(GLsizeiptr size, const void* data, GLenum usage)

@@ -13,18 +13,23 @@ namespace defaults {
 }
 
 Camera::Camera(float fov, float near, float far, float aspect_ratio, glm::vec3 pos)
-    : m_fov(glm::radians(fov))
-    , m_near(near)
-    , m_far(far)
-    , m_aspect_ratio(aspect_ratio)
-    , m_speed(defaults::speed)
-    , m_sensitivity(defaults::sensitivity)
-    , m_yaw(defaults::yaw)
-    , m_pitch(defaults::pitch)
-    , m_pos(pos)
-    , m_front(defaults::world_front)
-    , m_up(defaults::world_up)
 {
+    init(fov, near, far, aspect_ratio, pos);
+}
+
+void Camera::init(float fov, float near, float far, float aspect_ratio, glm::vec3 pos)
+{
+    m_fov = glm::radians(fov);
+    m_near = near;
+    m_far = far;
+    m_aspect_ratio = aspect_ratio;
+    m_speed = defaults::speed;
+    m_sensitivity = defaults::sensitivity;
+    m_yaw = defaults::yaw;
+    m_pitch = defaults::pitch;
+    m_pos = pos;
+    m_front = defaults::world_front;
+    m_up = defaults::world_up;
     m_right = glm::normalize(glm::cross(m_front, m_up));
 
     update();
@@ -200,11 +205,6 @@ float Camera::get_aspect() const
 float Camera::get_fov() const
 {
     return m_fov;
-}
-
-void Camera::set_first_mouse()
-{
-    m_first_mouse = true;
 }
 
 void Camera::set_speed(float speed)

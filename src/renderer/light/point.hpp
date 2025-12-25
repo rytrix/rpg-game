@@ -32,6 +32,8 @@ public:
     float m_quadratic {};
 
 private:
+    bool initialized = false;
+
     bool m_shadowmap_enabled {};
     struct ShadowMap_Internal {
         std::array<glm::mat4, 6> m_light_space_matrix {};

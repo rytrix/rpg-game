@@ -28,6 +28,7 @@ public:
     [[nodiscard]] GLuint get_id() const;
 
 private:
+    bool initialized = false;
     GLuint m_id {};
 };
 
