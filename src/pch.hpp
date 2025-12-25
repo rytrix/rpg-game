@@ -12,6 +12,8 @@
 #include <SDL3/SDL.h>
 #include <SDL3/SDL_video.h>
 
+#include "Jolt/Jolt.h"
+
 #include <algorithm>
 #include <chrono>
 #include <cstdlib>
@@ -21,12 +23,12 @@
 #include <array>
 #include <cmath>
 #include <cstdint>
+#include <deque>
 #include <numbers>
 #include <random>
 #include <stdexcept>
-#include <vector>
 #include <utility>
-#include <deque>
+#include <vector>
 
 using usize = std::size_t;
 using u8 = uint8_t;
