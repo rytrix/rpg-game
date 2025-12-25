@@ -15,7 +15,7 @@ public:
 
     Model(const Model&) = delete;
     Model& operator=(const Model&) = delete;
-    Model(Model&&) = default;
+    Model(Model&&) noexcept = default;
     Model& operator=(Model&&) = default;
 
     void draw();
