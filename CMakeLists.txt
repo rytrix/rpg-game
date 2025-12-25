@@ -40,6 +40,9 @@ set(SDL_TEST_LIBRARY OFF CACHE BOOL "Not testing SDL3")
 add_subdirectory(dep/sdl3)
 set(ASSIMP_WARNINGS_AS_ERRORS OFF CACHE BOOL "Enable compiling with extra warnings" FORCE)
 add_subdirectory(dep/assimp)
+set(ENABLE_ALL_WARNINGS OFF CACHE BOOL "Stop warnings as errors for JoltPhysics" FORCE)
+set(BUILD_SHARED_LIBS OFF CACHE BOOL "Build static libs for JoltPhysics" FORCE)
+add_subdirectory(dep/JoltPhysics/Build)
 
 target_link_libraries(${PROJECT_NAME} 
     sqlite 
@@ -47,6 +50,7 @@ target_link_libraries(${PROJECT_NAME}
 	stb_image
 	SDL3::SDL3
     assimp
+	Jolt::Jolt
 )
 
 target_include_directories(${PROJECT_NAME} 
@@ -58,4 +62,5 @@ target_include_directories(${PROJECT_NAME}
 	PUBLIC dep/glm/
     PUBLIC dep/assimp/include
     PUBLIC ${CMAKE_CURRENT_BINARY_DIR}/dep/assimp/include
+    PUBLIC dep/JoltPhysics
 )
