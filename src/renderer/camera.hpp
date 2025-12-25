@@ -4,8 +4,12 @@ namespace Renderer {
 
 class Camera {
 public:
-    enum class Movement;
+    enum class Movement : u8;
+    Camera() = default;
     Camera(float fov, float near, float far, float aspect_ratio, glm::vec3 pos);
+
+    void init(float fov, float near, float far, float aspect_ratio, glm::vec3 pos);
+
     void update_proj();
     void update_view();
     void update_aspect(float aspect_ratio);
@@ -32,7 +36,7 @@ public:
     [[nodiscard]] float get_aspect() const;
     [[nodiscard]] float get_fov() const;
 
-    enum class Movement {
+    enum class Movement : u8 {
         Forward,
         Backward,
         Left,
@@ -49,8 +53,6 @@ public:
     void set_speed(float speed);
 
 private:
-    bool m_first_mouse = true;
-
     float m_fov {};
     float m_near {};
     float m_far {};

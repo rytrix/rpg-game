@@ -9,11 +9,18 @@ Texture::Texture(TextureInfo& info)
 
 Texture::~Texture()
 {
-    glDeleteTextures(1, &m_id);
+    if (initialized) {
+        glDeleteTextures(1, &m_id);
+        initialized = false;
+    }
 }
 
 void Texture::init(TextureInfo& info)
 {
+    if (initialized) {
+        throw std::runtime_error("Texture::init() attempting to reinit texture");
+    }
+
     m_dimensions = info.dimensions;
 
     glCreateTextures(m_dimensions, 1, &m_id);
@@ -34,6 +41,8 @@ void Texture::init(TextureInfo& info)
     if (info.mipmaps) {
         generate_mipmap();
     }
+
+    initialized = true;
 }
 
 void Texture::generate_mipmap()

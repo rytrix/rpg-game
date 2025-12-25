@@ -11,17 +11,30 @@ Mesh::Mesh(std::vector<Vertex>&& verticies,
     , m_indicies(std::move(indicies))
     , m_textures(std::move(textures))
 {
+    if (initialized) {
+        throw std::runtime_error("Mesh::Mesh() attempting to reinitialize mesh");
+    }
     setup_mesh();
+    initialized = true;
 }
 
 void Mesh::init(std::vector<Vertex>&& verticies,
     std::vector<u32>&& indicies,
     std::vector<TextureRef>&& textures)
 {
+    if (initialized) {
+        throw std::runtime_error("Mesh::init() attempting to reinitialize mesh");
+    }
     m_verticies = std::move(verticies);
     m_indicies = std::move(indicies);
     m_textures = std::move(textures);
     setup_mesh();
+    initialized = true;
+}
+
+Mesh::~Mesh()
+{
+    initialized = false;
 }
 
 void Mesh::draw()
@@ -53,6 +66,7 @@ void Mesh::draw(ShaderProgram& shader)
 
 void Mesh::setup_mesh()
 {
+    m_vao.init();
     m_vbo.init();
     m_ebo.init();
 

@@ -38,6 +38,8 @@ public:
     [[nodiscard]] bool has_errors() const;
 
 private:
+    bool initialized = false;
+
     GLuint m_id {};
     bool m_errors = true;
 

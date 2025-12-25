@@ -109,13 +109,20 @@ ShaderProgram::ShaderProgram(ShaderInfo* shader_info, std::size_t shader_count)
 
 ShaderProgram::~ShaderProgram()
 {
-    if (!m_errors) {
-        glDeleteProgram(m_id);
+    if (initialized) {
+        if (!m_errors) {
+            glDeleteProgram(m_id);
+        }
+        initialized = false;
     }
 }
 
 void ShaderProgram::init(ShaderInfo* shader_info, std::size_t shader_count)
 {
+    if (initialized) {
+        throw std::runtime_error("ShaderProgram::init() attempting to reinit shader program");
+    }
+
     static constexpr size_t MAX_SHADER_COUNT = 5;
     if (shader_count > MAX_SHADER_COUNT) {
         std::print("shader programs do not currently support more than 5 shaders\n");
@@ -138,6 +145,8 @@ void ShaderProgram::init(ShaderInfo* shader_info, std::size_t shader_count)
     if (m_errors) {
         throw std::runtime_error("Shader program has errors");
     }
+
+    initialized = true;
 }
 
 void ShaderProgram::bind()

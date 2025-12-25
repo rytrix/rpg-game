@@ -20,7 +20,9 @@ public:
     void buffer_storage_multisample(GLsizei samples, GLenum internal_format, GLsizei width, GLsizei height);
 
 private:
-    u32 m_id;
+    bool initialized = false;
+
+    u32 m_id {};
 };
 
 }

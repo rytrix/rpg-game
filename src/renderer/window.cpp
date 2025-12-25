@@ -21,14 +21,21 @@ namespace {
     }
 #endif
 
-    Window* currentWindowPtr = nullptr;
-
 } // anonymous namespace
 
 Window::Window(const char* name, int width, int height)
-    : m_width(width)
-    , m_height(height)
 {
+    init(name, width, height);
+}
+
+void Window::init(const char* name, int width, int height)
+{
+    if (initialized) {
+        throw std::runtime_error("Window::init() attempting to reinit SDL3 window");
+    }
+
+    m_width = width;
+    m_height = height;
 
     if (!SDL_Init(SDL_INIT_VIDEO)) {
         throw std::runtime_error(std::format("Could not initialize SDL: {}", SDL_GetError()));
@@ -75,14 +82,20 @@ Window::Window(const char* name, int width, int height)
 
     glViewport(0, 0, width, height);
 
-    currentWindowPtr = this;
+    initialized = true;
 }
 
 Window::~Window()
 {
-    SDL_GL_DestroyContext(m_context);
-    SDL_DestroyWindow(m_window);
-    SDL_Quit();
+    if (initialized) {
+        if (m_window != nullptr) {
+            SDL_GL_DestroyContext(m_context);
+            SDL_DestroyWindow(m_window);
+            SDL_Quit();
+            m_window = nullptr;
+        }
+        initialized = false;
+    }
 }
 
 void Window::process_input_callback(const std::function<void(SDL_Event& event)>& commands)

@@ -4,6 +4,9 @@ namespace Renderer {
 
 void GBuffer::init(int screen_width, int screen_height)
 {
+    if (initialized) {
+        throw std::runtime_error("GBuffer::init() attempting to reinitialize gbuffer");
+    }
     m_buffer_width = screen_width;
     m_buffer_height = screen_height;
 
@@ -30,6 +33,13 @@ void GBuffer::init(int screen_width, int screen_height)
 
     std::array<u32, 3> attachments = { GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1, GL_COLOR_ATTACHMENT2 };
     m_buffer.bind_draw_buffers(attachments.size(), attachments.data());
+
+    initialized = true;
+}
+
+GBuffer::~GBuffer()
+{
+    initialized = false;
 }
 
 void GBuffer::reinit(int screen_width, int screen_height)

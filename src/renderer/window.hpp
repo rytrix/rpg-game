@@ -4,8 +4,11 @@ namespace Renderer {
 
 class Window {
 public:
+    Window() = default;
     Window(const char* name, int width, int height);
     ~Window();
+
+    void init(const char* name, int width, int height);
 
     Window(const Window&) = delete;
     Window& operator=(const Window&) = delete;
@@ -27,8 +30,10 @@ public:
     void set_should_close();
 
 private:
-    int m_width;
-    int m_height;
+    bool initialized = false;
+
+    int m_width {};
+    int m_height {};
     SDL_GLContext m_context {};
     SDL_Window* m_window = nullptr;
     bool m_should_close = false;

@@ -4,12 +4,19 @@ namespace Renderer {
 
 Renderbuffer::~Renderbuffer()
 {
-    glDeleteRenderbuffers(1, &m_id);
+    if (initialized) {
+        glDeleteRenderbuffers(1, &m_id);
+        initialized = false;
+    }
 }
 
 void Renderbuffer::init()
 {
+    if (initialized) {
+        throw std::runtime_error("Renderbuffer::init() tried to reinitialize opengl renderbuffer");
+    }
     glCreateRenderbuffers(1, &m_id);
+    initialized = true;
 }
 
 [[nodiscard]] u32 Renderbuffer::get_id() const

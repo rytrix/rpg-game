@@ -4,8 +4,11 @@ namespace Renderer::Light {
 
 Point::~Point()
 {
-    if (m_shadowmap_enabled) {
-        delete m_shadowmap_internal;
+    if (initialized) {
+        if (m_shadowmap_enabled) {
+            delete m_shadowmap_internal;
+        }
+        initialized = false;
     }
 }
 
@@ -13,6 +16,9 @@ void Point::init(bool shadowmap,
     glm::vec3 position, glm::vec3 ambient, glm::vec3 diffuse, glm::vec3 specular,
     float constant, float linear, float quadratic)
 {
+    if (initialized) {
+        throw std::runtime_error("Point::init() attempting to reinit point light");
+    }
 
     m_pos = position;
     m_ambient = ambient;
@@ -42,6 +48,8 @@ void Point::init(bool shadowmap,
         m_shadowmap_internal->m_light_space_matrix.at(5) = light_projection * glm::lookAt(m_pos, m_pos + glm::vec3(0.0, 0.0, -1.0), glm::vec3(0.0, -1.0, 0.0));
         m_shadowmap_internal->m_far = far;
     }
+
+    initialized = true;
 }
 
 void Point::shadowmap_draw(Renderer::ShaderProgram& shader, glm::mat4& model, const std::function<void()>& draw_function)

@@ -2,17 +2,24 @@
 
 namespace Renderer {
 
-VertexArray::VertexArray()
-    : m_id(0)
+void VertexArray::init()
 {
-    // glGenVertexArrays(1, &m_id);
+    if (initialized) {
+        throw std::runtime_error("VertexArray::init() attempting to reinitialize opengl vertex array object");
+    }
+
     glCreateVertexArrays(1, &m_id);
     glBindVertexArray(m_id);
+
+    initialized = true;
 }
 
 VertexArray::~VertexArray()
 {
-    glDeleteVertexArrays(1, &m_id);
+    if (initialized) {
+        glDeleteVertexArrays(1, &m_id);
+        initialized = false;
+    }
 }
 
 void VertexArray::vertex_attrib(GLuint attrib_index, GLuint binding_index, GLint values_per_vertex, GLenum data_type, GLuint relative_offset_in_bytes)

@@ -1,5 +1,7 @@
 #pragma once
 
+namespace Utils {
+
 class DeltaTime {
 public:
     DeltaTime();
@@ -19,3 +21,5 @@ private:
     std::chrono::system_clock::time_point m_current_time;
     float m_delta_time {};
 };
+
+} // namespace Utils

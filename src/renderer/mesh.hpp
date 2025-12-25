@@ -7,9 +7,6 @@
 
 namespace Renderer {
 
-// class Model;
-// class Model::TextureRef;
-
 class Mesh {
 public:
     struct Vertex {
@@ -18,17 +15,11 @@ public:
         glm::vec2 m_tex;
     };
 
-    // struct Texture {
-    //     uint32_t m_id;
-    //     std::string m_type;
-    //     std::string m_path;
-    // };
-
     Mesh() = default;
     Mesh(std::vector<Vertex>&& verticies,
         std::vector<u32>&& indicies,
         std::vector<TextureRef>&& textures);
-    ~Mesh() = default;
+    ~Mesh();
 
     Mesh(const Mesh&) = delete;
     Mesh& operator=(const Mesh&) = delete;
@@ -48,6 +39,8 @@ public:
 
 private:
     void setup_mesh();
+
+    bool initialized = false;
 
     VertexArray m_vao;
     Buffer m_vbo;

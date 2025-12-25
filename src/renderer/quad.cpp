@@ -2,13 +2,18 @@
 
 namespace Renderer {
 
-Quad::Quad()
+Quad::~Quad()
 {
-    init();
+    initialized = false;
 }
 
 void Quad::init()
 {
+    if (initialized) {
+        throw std::runtime_error("Quad::init() attempting to reinit fullscreen quad");
+    }
+
+    m_vao.init();
     m_vao.vertex_attrib(0, 0, 3, GL_FLOAT, 0);
     m_vao.vertex_attrib(1, 0, 2, GL_FLOAT, 3 * sizeof(float));
     // clang-format off
@@ -23,6 +28,8 @@ void Quad::init()
     m_vbo.init();
     m_vbo.buffer_data(quad_vertices.size() * sizeof(float), quad_vertices.data(), GL_STATIC_DRAW);
     m_vao.bind_vertex_buffer(0, m_vbo.get_id(), 0, 5 * sizeof(float));
+
+    initialized = true;
 }
 
 void Quad::draw()

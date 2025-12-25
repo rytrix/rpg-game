@@ -10,18 +10,23 @@ namespace Renderer {
 
 class Model {
 public:
+    Model() = default;
     explicit Model(const char* path);
-    ~Model() = default;
+    ~Model();
 
     Model(const Model&) = delete;
     Model& operator=(const Model&) = delete;
     Model(Model&&) noexcept = default;
     Model& operator=(Model&&) = default;
 
+    void init(const char* path);
+
     void draw();
     void draw(ShaderProgram& shader);
 
 private:
+    bool initialized = false;
+
     std::deque<TextureStorage> m_textures;
     std::deque<Mesh> m_meshes;
     std::string m_directory;
