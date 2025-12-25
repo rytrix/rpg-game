@@ -68,33 +68,35 @@ float shadow_calculation(DirectionalLight light, vec3 frag_pos, float bias)
     return shadow;
 }
 
+vec3 sample_offset_directions[20] = vec3[]
+(
+    vec3( 1,  1,  1), vec3( 1, -1,  1), vec3(-1, -1,  1), vec3(-1,  1,  1), 
+    vec3( 1,  1, -1), vec3( 1, -1, -1), vec3(-1, -1, -1), vec3(-1,  1, -1),
+    vec3( 1,  1,  0), vec3( 1, -1,  0), vec3(-1, -1,  0), vec3(-1,  1,  0),
+    vec3( 1,  0,  1), vec3(-1,  0,  1), vec3( 1,  0, -1), vec3(-1,  0, -1),
+    vec3( 0,  1,  1), vec3( 0, -1,  1), vec3( 0, -1, -1), vec3( 0,  1, -1)
+);
+
 float shadow_calculation_cubemap(PointLight light, vec3 frag_pos, float bias)
 {
     vec3 frag_to_light = frag_pos - light.pos;
     float current_depth = length(frag_to_light);
 
-    // float closest_depth = texture(light.shadow_map, frag_to_light).r;
-    // closest_depth *= light.far_plane; // undo mapping [0;1]
-    // float shadow = current_depth - bias > closest_depth ? 1.0 : 0.0;
+    // pcf 2
+    float shadow = 0.0;
+    // float bias   = 0.15;
+    int samples  = 20;
+    float view_distance = length(light.pos - frag_pos);
+    float disk_radius = (1.0 + (view_distance / light.far_plane)) / 25.0;  
 
-    float shadow  = 0.0;
-    // float bias    = 0.05; 
-    float samples = 4.0;
-    float offset  = 0.1;
-    for (float x = -offset; x < offset; x += offset / (samples * 0.5))
+    for(int i = 0; i < samples; ++i)
     {
-        for (float y = -offset; y < offset; y += offset / (samples * 0.5))
-        {
-            for (float z = -offset; z < offset; z += offset / (samples * 0.5))
-            {
-                float closest_depth = texture(light.shadow_map, frag_to_light + vec3(x, y, z)).r; 
-                closest_depth *= light.far_plane;   // undo mapping [0;1]
-                if (current_depth - bias > closest_depth)
-                    shadow += 1.0;
-            }
-        }
+        float closest_depth = texture(light.shadow_map, frag_to_light + sample_offset_directions[i] * disk_radius).r;
+        closest_depth *= light.far_plane;   // undo mapping [0;1]
+        if(current_depth - bias > closest_depth)
+            shadow += 1.0;
     }
-    shadow /= (samples * samples * samples);
+    shadow /= float(samples);  
 
     return shadow;
 }
@@ -155,7 +157,8 @@ void main()
     vec3 Albedo = texture(gAlbedoSpec, TexCoords).rgb;
     float Specular = texture(gAlbedoSpec, TexCoords).a;
 
-    FragColor = vec4(directional_light(u_directional_light, Albedo, Specular, Normal, view_position, FragPos, 32.0), 1.0);
+    FragColor = vec4(0.0);
+    FragColor += vec4(directional_light(u_directional_light, Albedo, Specular, Normal, view_position, FragPos, 32.0), 1.0);
     FragColor += vec4(point_light(u_point_light, Albedo, Specular, Normal, view_position, FragPos, 32.0), 1.0);
 
     // FragColor = vec4(Albedo, 1.0);
