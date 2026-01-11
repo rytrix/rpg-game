@@ -1,5 +1,8 @@
 *.db
 
+res/models
+.cache
+
 # Build directories and binary files
 build/
 out/
