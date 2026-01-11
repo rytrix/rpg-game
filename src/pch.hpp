@@ -9,13 +9,16 @@
 
 #include <glad/glad.h>
 
-#include <SDL3/SDL.h>
-#include <SDL3/SDL_video.h>
 #include "SDL3/SDL_events.h"
 #include "SDL3/SDL_keycode.h"
 #include "SDL3/SDL_scancode.h"
+#include <SDL3/SDL.h>
+#include <SDL3/SDL_video.h>
 
-#include "Jolt/Jolt.h"
+#include <Jolt/Jolt.h>
+
+#include "utils/assert.hpp"
+#include "utils/log.hpp"
 
 #include <algorithm>
 #include <chrono>

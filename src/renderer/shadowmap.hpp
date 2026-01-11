@@ -82,6 +82,16 @@ private:
         )";
     }
 
+    static consteval const char* get_frag_shader()
+    {
+        return R"(
+            #version 460 core
+            void main()
+            {
+            }
+        )";
+    }
+
     static consteval const char* get_vertex_shader_cubemap()
     {
         return R"(
@@ -122,16 +132,6 @@ private:
                 EndPrimitive();
             }
         }  
-        )";
-    }
-
-    static consteval const char* get_frag_shader()
-    {
-        return R"(
-            #version 460 core
-            void main()
-            {
-            }
         )";
     }
 

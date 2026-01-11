@@ -18,7 +18,7 @@ public:
     void process_input_callback(const std::function<void(SDL_Event& event)>& commands);
     void loop(const std::function<void()>& commands);
 
-    static void set_capture_mouse(bool value);
+    void set_capture_mouse(bool value);
     void set_relative_mode(bool value);
 
     [[nodiscard]] SDL_Window* get_window_ptr() const;

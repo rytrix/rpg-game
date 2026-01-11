@@ -14,9 +14,7 @@ Directional::~Directional()
 
 void Directional::init(bool shadowmap, glm::vec3 direction, glm::vec3 ambient, glm::vec3 diffuse, glm::vec3 specular)
 {
-    if (initialized) {
-        throw std::runtime_error("Directional::init() attempting to reinit directional light");
-    }
+    util_assert(initialized == false, "Directional::init() has already been initialized");
 
     m_direction = direction;
     m_ambient = ambient;
@@ -42,24 +40,25 @@ void Directional::init(bool shadowmap, glm::vec3 direction, glm::vec3 ambient, g
 
 void Directional::shadowmap_draw(Renderer::ShaderProgram& shader, glm::mat4& model, const std::function<void()>& draw_function)
 {
-    if (m_shadowmap_enabled) {
-        glViewport(0, 0, m_shadowmap_internal->m_shadowmap.get_width(), m_shadowmap_internal->m_shadowmap.get_height());
-        m_shadowmap_internal->m_shadowmap.bind();
+    util_assert(initialized == true, "Light::Directional has not been initialized");
+    util_assert(m_shadowmap_enabled == true, "Trying to call shadowmap_draw on a directional light without a shadowmap enabled");
 
-        glClear(GL_DEPTH_BUFFER_BIT);
-        shader.bind();
-        shader.set_mat4("light_space_matrix", m_shadowmap_internal->m_light_space_matrix);
-        shader.set_mat4("model", model);
-        draw_function();
+    glViewport(0, 0, m_shadowmap_internal->m_shadowmap.get_width(), m_shadowmap_internal->m_shadowmap.get_height());
+    m_shadowmap_internal->m_shadowmap.bind();
 
-        m_shadowmap_internal->m_shadowmap.unbind();
-    } else {
-        throw std::runtime_error("Trying to call shadowmap_draw on a directional light without a shadowmap enabled");
-    }
+    glClear(GL_DEPTH_BUFFER_BIT);
+    shader.bind();
+    shader.set_mat4("light_space_matrix", m_shadowmap_internal->m_light_space_matrix);
+    shader.set_mat4("model", model);
+    draw_function();
+
+    m_shadowmap_internal->m_shadowmap.unbind();
 }
 
 void Directional::set_uniforms(Renderer::ShaderProgram& shader, const char* light_name)
 {
+    util_assert(initialized == true, "Light::Directional has not been initialized");
+
     shader.set_vec3(std::format("{}.direction", light_name).c_str(), m_direction);
     shader.set_vec3(std::format("{}.ambient", light_name).c_str(), m_ambient);
     shader.set_vec3(std::format("{}.diffuse", light_name).c_str(), m_diffuse);
