@@ -4,6 +4,7 @@ App::App()
 {
     m_window.init("Test Window", 1000, 800);
     m_window.set_relative_mode(true);
+    LOG_TRACE("Created window \"Test Window\"");
 
     m_camera.init(90.0F, 0.1F, 1000.0F, m_window.get_aspect_ratio(), { -2.0F, 1.5F, 4.0F });
     m_camera.set_speed(5.0F);
@@ -45,10 +46,10 @@ App::App()
     auto shadowmap_cubemap_info = Renderer::ShadowMap::get_shader_info_cubemap();
     m_shadowmap_cubemap_shader.init(shadowmap_cubemap_info.data(), shadowmap_cubemap_info.size());
 
-    // m_model("res/backpack/backpack.obj");
-    // m_model("res/Sponza/glTF/Sponza.gltf");
+    // m_model("res/models/backpack/backpack.obj");
+    // m_model("res/models/Sponza/glTF/Sponza.gltf");
     // u_model = glm::scale(glm::mat4 { 1.0 }, glm::vec3(0.1));
-    m_model.init("res/cube_texture_mapping/Cube.obj");
+    m_model.init("res/models/cube_texture_mapping/Cube.obj");
     u_model = glm::scale(glm::mat4 { 1.0 }, glm::vec3(1.0));
 
     m_directional_light.init(
