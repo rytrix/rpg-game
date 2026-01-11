@@ -33,7 +33,7 @@ private:
     Renderer::ShaderProgram m_shadowmap_cubemap_shader;
 
     Renderer::Model m_model;
-    glm::mat4 u_model;
+    glm::mat4 u_model {};
 
     Renderer::Light::Directional m_directional_light;
     Renderer::Light::Point m_point_light;
