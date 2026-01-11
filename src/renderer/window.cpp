@@ -30,9 +30,7 @@ Window::Window(const char* name, int width, int height)
 
 void Window::init(const char* name, int width, int height)
 {
-    if (initialized) {
-        throw std::runtime_error("Window::init() attempting to reinit SDL3 window");
-    }
+    util_assert(initialized == false, "Window::init() attempting to reinit SDL3 window");
 
     m_width = width;
     m_height = height;
@@ -87,6 +85,7 @@ void Window::init(const char* name, int width, int height)
 
 Window::~Window()
 {
+    // util_assert(initialized == true, "Attempting to call destructor with uninitialized data");
     if (initialized) {
         if (m_window != nullptr) {
             SDL_GL_DestroyContext(m_context);
@@ -100,11 +99,13 @@ Window::~Window()
 
 void Window::process_input_callback(const std::function<void(SDL_Event& event)>& commands)
 {
+    util_assert(initialized == true, "Renderer::Window has not been initialized");
     m_process_input_fn = commands;
 }
 
 void Window::process_input_internal()
 {
+    util_assert(initialized == true, "Renderer::Window has not been initialized");
     SDL_Event event;
     while (SDL_PollEvent(&event)) {
         if (event.type == SDL_EVENT_QUIT) {
@@ -120,6 +121,7 @@ void Window::process_input_internal()
 
 void Window::loop(const std::function<void()>& commands)
 {
+    util_assert(initialized == true, "Renderer::Window has not been initialized");
     while (!m_should_close) {
         process_input_internal();
         if (m_should_close) {
@@ -141,47 +143,56 @@ void Window::loop(const std::function<void()>& commands)
 
 void Window::set_capture_mouse(bool value)
 {
+    util_assert(initialized == true, "Renderer::Window has not been initialized");
     SDL_CaptureMouse(value);
 }
 
 void Window::set_relative_mode(bool value)
 {
+    util_assert(initialized == true, "Renderer::Window has not been initialized");
     SDL_SetWindowRelativeMouseMode(m_window, value);
 }
 
 [[nodiscard]] SDL_Window* Window::get_window_ptr() const
 {
+    util_assert(initialized == true, "Renderer::Window has not been initialized");
     return m_window;
 }
 
 [[nodiscard]] std::pair<int, int> Window::get_size() const
 {
+    util_assert(initialized == true, "Renderer::Window has not been initialized");
     return { m_width, m_height };
 }
 
 [[nodiscard]] int Window::get_width() const
 {
+    util_assert(initialized == true, "Renderer::Window has not been initialized");
     return m_width;
 }
 
 [[nodiscard]] int Window::get_height() const
 {
+    util_assert(initialized == true, "Renderer::Window has not been initialized");
     return m_height;
 }
 
 [[nodiscard]] std::pair<f32, f32> Window::get_size_f32() const
 {
+    util_assert(initialized == true, "Renderer::Window has not been initialized");
     return { static_cast<f32>(m_width), static_cast<f32>(m_height) };
 }
 
 [[nodiscard]] f32 Window::get_aspect_ratio() const
 {
+    util_assert(initialized == true, "Renderer::Window has not been initialized");
     auto size = get_size_f32();
     return size.first / size.second;
 }
 
 void Window::set_should_close()
 {
+    util_assert(initialized == true, "Renderer::Window has not been initialized");
     m_should_close = true;
 }
 

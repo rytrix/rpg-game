@@ -13,6 +13,7 @@ Model::Model(const char* file_path)
 
 void Model::init(const char* file_path)
 {
+    util_assert(initialized == false, "Model::init() has already been initialized");
     if (initialized) {
         throw std::runtime_error("Model::init() attempting to reinitialize model");
     }
@@ -41,6 +42,7 @@ Model::~Model()
 
 void Model::draw()
 {
+    util_assert(initialized == true, "Model has not been initialized");
     for (auto& mesh : m_meshes) {
         mesh.draw();
     }
@@ -48,6 +50,7 @@ void Model::draw()
 
 void Model::draw(ShaderProgram& shader)
 {
+    util_assert(initialized == true, "Model has not been initialized");
     for (auto& mesh : m_meshes) {
         mesh.draw(shader);
     }

@@ -9,9 +9,7 @@ Quad::~Quad()
 
 void Quad::init()
 {
-    if (initialized) {
-        throw std::runtime_error("Quad::init() attempting to reinit fullscreen quad");
-    }
+    util_assert(initialized == false, "Quad::init() has already been initialized");
 
     m_vao.init();
     m_vao.vertex_attrib(0, 0, 3, GL_FLOAT, 0);
@@ -34,6 +32,7 @@ void Quad::init()
 
 void Quad::draw()
 {
+    util_assert(initialized == true, "Quad has not been initialized");
     m_vao.bind();
     glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
 }

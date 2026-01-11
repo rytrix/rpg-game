@@ -11,9 +11,8 @@ Mesh::Mesh(std::vector<Vertex>&& verticies,
     , m_indicies(std::move(indicies))
     , m_textures(std::move(textures))
 {
-    if (initialized) {
-        throw std::runtime_error("Mesh::Mesh() attempting to reinitialize mesh");
-    }
+    util_assert(initialized == false, "Mesh::Mesh() has already been initialized");
+
     setup_mesh();
     initialized = true;
 }
@@ -22,9 +21,8 @@ void Mesh::init(std::vector<Vertex>&& verticies,
     std::vector<u32>&& indicies,
     std::vector<TextureRef>&& textures)
 {
-    if (initialized) {
-        throw std::runtime_error("Mesh::init() attempting to reinitialize mesh");
-    }
+    util_assert(initialized == false, "Mesh::init() has already been initialized");
+
     m_verticies = std::move(verticies);
     m_indicies = std::move(indicies);
     m_textures = std::move(textures);
@@ -39,12 +37,16 @@ Mesh::~Mesh()
 
 void Mesh::draw()
 {
+    util_assert(initialized == true, "Mesh has not been initialized");
+
     m_vao.bind();
     glDrawElements(GL_TRIANGLES, static_cast<GLsizei>(m_indicies.size()), GL_UNSIGNED_INT, nullptr);
 }
 
 void Mesh::draw(ShaderProgram& shader)
 {
+    util_assert(initialized == true, "Mesh has not been initialized");
+
     // shader.bind();
     // https://learnopengl.com/Model-Loading/Mesh
     for (int i = 0; i < m_textures.size(); i++) {

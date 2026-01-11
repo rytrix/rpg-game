@@ -9,6 +9,7 @@ Texture::Texture(TextureInfo& info)
 
 Texture::~Texture()
 {
+    // util_assert(initialized == true, "Texture::~Texture() has not been initialized");
     if (initialized) {
         glDeleteTextures(1, &m_id);
         initialized = false;
@@ -17,9 +18,7 @@ Texture::~Texture()
 
 void Texture::init(TextureInfo& info)
 {
-    if (initialized) {
-        throw std::runtime_error("Texture::init() attempting to reinit texture");
-    }
+    util_assert(initialized == false, "Texture::Init() has already been initialized");
 
     m_dimensions = info.dimensions;
 
@@ -32,6 +31,8 @@ void Texture::init(TextureInfo& info)
     glTextureParameteri(m_id, GL_TEXTURE_WRAP_R, info.wrap_r);
     glTextureParameterfv(m_id, GL_TEXTURE_BORDER_COLOR, info.border_color.data());
 
+    initialized = true;
+
     if (info.from_file) {
         from_file(info.file_path, info.flip);
     } else {
@@ -41,17 +42,17 @@ void Texture::init(TextureInfo& info)
     if (info.mipmaps) {
         generate_mipmap();
     }
-
-    initialized = true;
 }
 
 void Texture::generate_mipmap()
 {
+    util_assert(initialized == true, "Texture has not been initialized");
     glGenerateTextureMipmap(m_id);
 }
 
 void Texture::sub_image(TextureSubimageInfo& info)
 {
+    util_assert(initialized == true, "Texture has not been initialized");
     switch (m_dimensions) {
         case GL_TEXTURE_1D:
             glTextureSubImage1D(m_id,
@@ -93,16 +94,19 @@ void Texture::sub_image(TextureSubimageInfo& info)
 
 void Texture::bind(GLuint texture_unit)
 {
+    util_assert(initialized == true, "Texture has not been initialized");
     glBindTextureUnit(texture_unit, m_id);
 }
 
 [[nodiscard]] GLuint Texture::get_id() const noexcept
 {
+    util_assert(initialized == true, "Texture has not been initialized");
     return m_id;
 }
 
 void Texture::texture_storage(TextureSize& size, GLenum internal_format)
 {
+    util_assert(initialized == true, "Texture has not been initialized");
     switch (m_dimensions) {
         case GL_TEXTURE_1D:
             glTextureStorage1D(m_id, 1, internal_format, size.width);
@@ -123,6 +127,8 @@ void Texture::texture_storage(TextureSize& size, GLenum internal_format)
 
 void Texture::from_file(const char* file, bool flip)
 {
+    util_assert(initialized == true, "Texture::from_file has not been initialized");
+
     if (m_dimensions != GL_TEXTURE_2D) {
         throw std::runtime_error("currently only 2D textures are supported from files");
     }

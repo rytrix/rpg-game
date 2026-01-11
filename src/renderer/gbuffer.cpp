@@ -4,9 +4,8 @@ namespace Renderer {
 
 void GBuffer::init(int screen_width, int screen_height)
 {
-    if (initialized) {
-        throw std::runtime_error("GBuffer::init() attempting to reinitialize gbuffer");
-    }
+    util_assert(initialized == false, "GBuffer::init() has already been initialized");
+
     m_buffer_width = screen_width;
     m_buffer_height = screen_height;
 
@@ -50,11 +49,13 @@ void GBuffer::reinit(int screen_width, int screen_height)
 
 void GBuffer::bind()
 {
+    util_assert(initialized == true, "GBuffer has not been initialized");
     m_buffer.bind();
 }
 
 void GBuffer::set_uniforms(Renderer::ShaderProgram& shader)
 {
+    util_assert(initialized == true, "GBuffer has not been initialized");
     m_position.bind(0);
     shader.set_int("gPosition", 0);
 
@@ -67,11 +68,13 @@ void GBuffer::set_uniforms(Renderer::ShaderProgram& shader)
 
 void GBuffer::unbind()
 {
+    util_assert(initialized == true, "GBuffer has not been initialized");
     m_buffer.unbind();
 }
 
 void GBuffer::blit_depth_buffer()
 {
+    util_assert(initialized == true, "GBuffer has not been initialized");
     glBlitNamedFramebuffer(m_buffer.get_id(), 0, 0, 0, m_buffer_width, m_buffer_height, 0, 0, m_buffer_width, m_buffer_height, GL_DEPTH_BUFFER_BIT, GL_NEAREST);
 }
 
