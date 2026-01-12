@@ -6,7 +6,7 @@
 class App {
 public:
     App();
-    ~App() = default;
+    ~App();
 
     App(const App&) = delete;
     App& operator=(const App&) = delete;
@@ -32,9 +32,17 @@ private:
     Renderer::ShaderProgram m_shadowmap_shader;
     Renderer::ShaderProgram m_shadowmap_cubemap_shader;
 
-    Renderer::Model m_model;
-    glm::mat4 u_model {};
+    // Renderer::Model m_model;
+    // glm::mat4 u_model {};
+
+    Renderer::Model m_plane;
+    glm::mat4 u_plane {};
+
+    Renderer::Model m_cube;
+    glm::mat4 u_cube {};
 
     Renderer::Light::Directional m_directional_light;
     Renderer::Light::Point m_point_light;
+
+
 };
