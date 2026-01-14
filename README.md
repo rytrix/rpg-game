@@ -14,16 +14,16 @@ copied the clang-tidy file from lefticus's cmake preset github page
 clang format is based off of webkit, with a few personal preference modifications
 
 # Todo
-gameplay loop
+real gameplay
 
 spell system needs to be ironed out
-  -be specific ffs
+  -lets wait till we can test gameplay
 
-physics engine, probably https://github.com/jrouwe/JoltPhysics
+physics engine, make the interface better to use
 
-lighting system
+lighting system, spot lights
 
-move all of the renderer objects to an init() system rather than automatically initalizing.. for c++ reasons...
+texture unit ring buffer or something
 
 # Done
 resistances/damage reduction
