@@ -3,6 +3,7 @@
 #include <assimp/Importer.hpp>
 #include <assimp/postprocess.h>
 #include <assimp/scene.h>
+#include <filesystem>
 
 namespace Renderer {
 
@@ -14,22 +15,16 @@ Model::Model(const char* file_path)
 void Model::init(const char* file_path)
 {
     util_assert(initialized == false, "Model::init() has already been initialized");
-    if (initialized) {
-        throw std::runtime_error("Model::init() attempting to reinitialize model");
-    }
 
     m_directory = file_path;
 
-    if (!std::filesystem::exists(file_path)) {
-        throw std::runtime_error(std::format("Model \"{}\" is an invalid path", file_path));
-    }
+    util_assert(std::filesystem::exists(file_path), std::format("Model \"{}\" is an invalid path", file_path));
+
     Assimp::Importer importer;
     const aiScene* scene = importer.ReadFile(file_path, aiProcess_Triangulate | aiProcess_FlipUVs);
     m_directory = m_directory.substr(0, m_directory.find_last_of('/'));
 
-    if (scene->mRootNode == nullptr) {
-        throw std::runtime_error("Model::Model: Root node is nullptr");
-    }
+    util_assert(scene->mRootNode != nullptr, "Model::Model: Root node is nullptr");
     process_node(scene->mRootNode, scene);
 
     initialized = true;
@@ -142,7 +137,7 @@ std::vector<TextureRef> Model::load_material_textures(aiMaterial* mat, aiTexture
             texture_info.file_path = texture_path.c_str();
             texture_info.flip = false;
 
-            std::println("Loading {}", texture_path);
+            LOG_INFO(std::format("Loading {}", texture_path));
 
             m_textures.emplace_back(Texture {}, texture_path);
             m_textures.at(m_textures.size() - 1).m_tex.init(texture_info);
