@@ -1,7 +1,10 @@
 #pragma once
 
-#include "renderer.hpp"
 #include "utils/deltatime.hpp"
+
+#include "physics/engine.hpp"
+
+#include "renderer.hpp"
 
 class App {
 public:
@@ -21,6 +24,9 @@ private:
     void keyboard_input();
 
     Utils::DeltaTime m_clock;
+
+    PhysicsEngine* m_physics_engine = nullptr;
+
     Renderer::Window m_window;
     Renderer::Camera m_camera;
 
@@ -43,6 +49,4 @@ private:
 
     Renderer::Light::Directional m_directional_light;
     Renderer::Light::Point m_point_light;
-
-
 };
