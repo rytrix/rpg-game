@@ -8,6 +8,8 @@ project(rpg)
 add_executable(${PROJECT_NAME} 
     src/main.cpp 
     src/app.cpp 
+
+    src/physics/engine.cpp
     
 	src/utils/deltatime.cpp
 
@@ -41,6 +43,7 @@ set(SDL_STATIC ON CACHE BOOL "Prefer building static" FORCE)
 set(SDL_TEST_LIBRARY OFF CACHE BOOL "Not testing SDL3")
 add_subdirectory(dep/sdl3)
 set(ASSIMP_WARNINGS_AS_ERRORS OFF CACHE BOOL "Enable compiling with extra warnings" FORCE)
+set(ASSIMP_BUILD_TESTS OFF CACHE BOOL "Disable building assimp tests" FORCE)
 add_subdirectory(dep/assimp)
 set(ENABLE_ALL_WARNINGS OFF CACHE BOOL "Stop warnings as errors for JoltPhysics" FORCE)
 set(BUILD_SHARED_LIBS OFF CACHE BOOL "Build static libs for JoltPhysics" FORCE)
