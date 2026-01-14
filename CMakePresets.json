@@ -42,14 +42,14 @@
             "name": "clang",
             "description": "clang configuration",
             "cacheVariables": {
-                "CMAKE_CXX_FLAGS": "-Wall -Wextra -Wshadow -Wnon-virtual-dtor -Wold-style-cast -Wcast-align -Wunused -Woverloaded-virtual  -Wpedantic -Wconversion -Wsign-conversion -Wnull-dereference -Wdouble-promotion -Wformat=2 -Wimplicit-fallthrough"
+                "CMAKE_CXX_FLAGS": "-Wall -Wextra -Wshadow -Wnon-virtual-dtor -Wold-style-cast -Wcast-align -Wunused -Woverloaded-virtual -Wpedantic -Wsign-conversion -Wnull-dereference -Wdouble-promotion -Wformat=2 -Wimplicit-fallthrough"
             }
         },
         {
             "name": "gcc",
             "description": "gcc configuration",
             "cacheVariables": {
-                "CMAKE_CXX_FLAGS": "-Wall -Wextra -Wshadow -Wnon-virtual-dtor -Wold-style-cast -Wcast-align -Wunused -Woverloaded-virtual  -Wpedantic -Wconversion -Wsign-conversion -Wnull-dereference -Wdouble-promotion -Wformat=2 -Wimplicit-fallthrough -Wmisleading-indentation -Wduplicated-cond  -Wduplicated-branches -Wlogical-op -Wuseless-cast -Wsuggest-override"
+                "CMAKE_CXX_FLAGS": "-Wall -Wextra -Wshadow -Wnon-virtual-dtor -Wold-style-cast -Wcast-align -Wunused -Woverloaded-virtual -Wpedantic -Wsign-conversion -Wnull-dereference -Wdouble-promotion -Wformat=2 -Wimplicit-fallthrough -Wmisleading-indentation -Wduplicated-cond  -Wduplicated-branches -Wlogical-op -Wuseless-cast -Wsuggest-override"
             }
         },
         {
