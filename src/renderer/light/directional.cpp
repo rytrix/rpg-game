@@ -70,4 +70,10 @@ void Directional::set_uniforms(Renderer::ShaderProgram& shader, const char* ligh
     }
 }
 
+bool Directional::has_shadowmap()
+{
+    util_assert(initialized == true, "Light::Directional has not been initialized");
+    return m_shadowmap_enabled;
+}
+
 } // namespace Renderer::Light

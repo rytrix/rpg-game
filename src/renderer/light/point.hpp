@@ -21,6 +21,8 @@ public:
 
     void set_uniforms(Renderer::ShaderProgram& shader, const char* light_name);
 
+    bool has_shadowmap();
+
     glm::vec3 m_pos {};
     glm::vec3 m_ambient {};
     glm::vec3 m_diffuse {};
