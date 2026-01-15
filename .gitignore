@@ -1,6 +1,10 @@
 *.db
 
-res/models
+res/models/backpack
+res/models/Sponza
+res/models/cube
+res/models/cube_texture_mapping
+
 .cache
 
 # Build directories and binary files
