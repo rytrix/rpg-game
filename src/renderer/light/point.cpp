@@ -50,7 +50,7 @@ void Point::init(bool shadowmap,
     initialized = true;
 }
 
-void Point::shadowmap_draw(Renderer::ShaderProgram& shader, glm::mat4& model, const std::function<void()>& draw_function)
+void Point::shadowmap_draw(Renderer::ShaderProgram& shader, const std::function<void()>& draw_function)
 {
     util_assert(initialized == true, "Light::Point has not been initialized");
     util_assert(m_shadowmap_enabled == true, "Trying to call shadowmap_draw on a point light without a shadowmap enabled");
@@ -66,7 +66,6 @@ void Point::shadowmap_draw(Renderer::ShaderProgram& shader, glm::mat4& model, co
     shader.set_mat4("light_space_matrices[3]", m_shadowmap_internal->m_light_space_matrix[3]);
     shader.set_mat4("light_space_matrices[4]", m_shadowmap_internal->m_light_space_matrix[4]);
     shader.set_mat4("light_space_matrices[5]", m_shadowmap_internal->m_light_space_matrix[5]);
-    shader.set_mat4("model", model);
     shader.set_float("far_plane", m_shadowmap_internal->m_far);
     shader.set_vec3("light_pos", m_pos);
     draw_function();

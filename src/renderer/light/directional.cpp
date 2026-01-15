@@ -38,7 +38,7 @@ void Directional::init(bool shadowmap, glm::vec3 direction, glm::vec3 ambient, g
     initialized = true;
 }
 
-void Directional::shadowmap_draw(Renderer::ShaderProgram& shader, glm::mat4& model, const std::function<void()>& draw_function)
+void Directional::shadowmap_draw(Renderer::ShaderProgram& shader, const std::function<void()>& draw_function)
 {
     util_assert(initialized == true, "Light::Directional has not been initialized");
     util_assert(m_shadowmap_enabled == true, "Trying to call shadowmap_draw on a directional light without a shadowmap enabled");
@@ -49,7 +49,6 @@ void Directional::shadowmap_draw(Renderer::ShaderProgram& shader, glm::mat4& mod
     glClear(GL_DEPTH_BUFFER_BIT);
     shader.bind();
     shader.set_mat4("light_space_matrix", m_shadowmap_internal->m_light_space_matrix);
-    shader.set_mat4("model", model);
     draw_function();
 
     m_shadowmap_internal->m_shadowmap.unbind();
