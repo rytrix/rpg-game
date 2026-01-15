@@ -92,4 +92,10 @@ void Point::set_uniforms(Renderer::ShaderProgram& shader, const char* light_name
     }
 }
 
+bool Point::has_shadowmap()
+{
+    util_assert(initialized == true, "Point has not been initialized");
+    return m_shadowmap_enabled;
+}
+
 } // namespace Renderer::Light
