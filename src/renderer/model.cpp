@@ -51,6 +51,12 @@ void Model::draw(ShaderProgram& shader)
     }
 }
 
+const std::deque<Mesh>* Model::get_meshes()
+{
+    util_assert(initialized == true, "Model has not been initialized");
+    return &m_meshes;
+}
+
 void Model::process_node(aiNode* node, const aiScene* scene)
 {
     // std::println("node->mNumMeshes: {}", node->mNumMeshes);

@@ -24,6 +24,8 @@ public:
     void draw();
     void draw(ShaderProgram& shader);
 
+    const std::deque<Mesh>* get_meshes();
+
 private:
     bool initialized = false;
 
