@@ -57,6 +57,11 @@ App::App()
 
     m_plane.init("res/models/physics_plane/plane.obj");
     u_plane = glm::scale(glm::mat4 { 1.0 }, glm::vec3(1.0));
+    {
+        const auto* meshes = m_plane.get_meshes();
+        JPH::BodyID plane_id = m_physics_engine->create_mesh_body(meshes);
+        m_physics_engine->bodies.push_back(plane_id);
+    }
 
     m_cube.init("res/models/physics_cube/cube.obj");
     u_cube = glm::scale(glm::mat4 { 1.0 }, glm::vec3(1.0));
@@ -188,12 +193,12 @@ void App::run()
         m_directional_light.shadowmap_draw(m_shadowmap_shader, u_plane, [&]() {
             m_plane.draw();
         });
-        m_point_light.shadowmap_draw(m_shadowmap_cubemap_shader, u_plane, [&]() {
-            m_plane.draw();
-        });
-
         m_directional_light.shadowmap_draw(m_shadowmap_shader, u_cube, [&]() {
             m_cube.draw();
+        });
+
+        m_point_light.shadowmap_draw(m_shadowmap_cubemap_shader, u_plane, [&]() {
+            m_plane.draw();
         });
         m_point_light.shadowmap_draw(m_shadowmap_cubemap_shader, u_cube, [&]() {
             m_cube.draw();

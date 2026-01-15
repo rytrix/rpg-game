@@ -1,5 +1,7 @@
 #pragma once
 
+#include "../renderer/mesh.hpp"
+
 #include <Jolt/Core/Factory.h>
 #include <Jolt/Core/JobSystemThreadPool.h>
 #include <Jolt/Core/TempAllocator.h>
@@ -37,9 +39,11 @@ public:
 };
 
 namespace BroadPhaseLayers {
+
 static constexpr JPH::BroadPhaseLayer NON_MOVING(0);
 static constexpr JPH::BroadPhaseLayer MOVING(1);
 static constexpr uint NUM_LAYERS(2);
+
 };
 
 class BPLayerInterfaceImpl final : public JPH::BroadPhaseLayerInterface {
@@ -109,6 +113,8 @@ public:
     PhysicsEngine& operator=(PhysicsEngine&&) = delete;
 
     void update(float delta_time);
+
+    JPH::BodyID create_mesh_body(const std::deque<Renderer::Mesh>* meshes);
 
     void optimize();
 
