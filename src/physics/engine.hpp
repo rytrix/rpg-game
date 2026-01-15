@@ -5,9 +5,11 @@
 #include <Jolt/Core/Factory.h>
 #include <Jolt/Core/JobSystemThreadPool.h>
 #include <Jolt/Core/TempAllocator.h>
+#include <Jolt/Geometry/Triangle.h>
 #include <Jolt/Physics/Body/BodyActivationListener.h>
 #include <Jolt/Physics/Body/BodyCreationSettings.h>
 #include <Jolt/Physics/Collision/Shape/BoxShape.h>
+#include <Jolt/Physics/Collision/Shape/MeshShape.h>
 #include <Jolt/Physics/Collision/Shape/SphereShape.h>
 #include <Jolt/Physics/PhysicsSettings.h>
 #include <Jolt/Physics/PhysicsSystem.h>
@@ -114,26 +116,26 @@ public:
 
     void update(float delta_time);
 
-    JPH::BodyID create_mesh_body(const std::deque<Renderer::Mesh>* meshes);
+    static void create_mesh_triangle_list(JPH::TriangleList& triangles, const std::deque<Renderer::Mesh>* meshes);
 
     void optimize();
 
-    JPH::BodyInterface* body_interface = nullptr;
+    JPH::BodyInterface* m_body_interface = nullptr;
     // Deletion list
-    std::vector<JPH::BodyID> bodies;
+    std::vector<JPH::BodyID> m_bodies;
 
 private:
-    JPH::TempAllocatorMalloc temp_allocator;
-    JPH::JobSystemThreadPool* job_system;
+    JPH::TempAllocatorMalloc m_temp_allocator;
+    JPH::JobSystemThreadPool* m_job_system;
 
     const uint cMaxBodies = 1024;
     const uint cNumBodyMutexes = 0;
     const uint cMaxBodyPairs = 1024;
     const uint cMaxContactConstraints = 1024;
 
-    BPLayerInterfaceImpl broad_phase_layer_interface;
-    ObjectVsBroadPhaseLayerFilterImpl object_vs_broadphase_layer_filter;
-    ObjectLayerPairFilterImpl object_vs_object_layer_filter;
+    BPLayerInterfaceImpl m_broad_phase_layer_interface;
+    ObjectVsBroadPhaseLayerFilterImpl m_object_vs_broadphase_layer_filter;
+    ObjectLayerPairFilterImpl m_object_vs_object_layer_filter;
 
-    JPH::PhysicsSystem physics_system;
+    JPH::PhysicsSystem m_physics_system;
 };
