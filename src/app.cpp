@@ -2,7 +2,7 @@
 
 App::App()
 {
-    m_physics_engine = new PhysicsEngine();
+    m_physics_engine = std::make_unique<PhysicsEngine>();
     LOG_TRACE("Initialized physics engine")
 
     m_window.init("Test Window", 1000, 800);
@@ -58,13 +58,33 @@ App::App()
     m_plane.init("res/models/physics_plane/plane.obj");
     u_plane = glm::scale(glm::mat4 { 1.0 }, glm::vec3(1.0));
     {
+        JPH::TriangleList triangles;
         const auto* meshes = m_plane.get_meshes();
-        JPH::BodyID plane_id = m_physics_engine->create_mesh_body(meshes);
-        m_physics_engine->bodies.push_back(plane_id);
+        PhysicsEngine::create_mesh_triangle_list(triangles, meshes);
+        JPH::BodyID plane_id = m_physics_engine->m_body_interface->CreateAndAddBody(
+            JPH::BodyCreationSettings(
+                new JPH::MeshShapeSettings(triangles),
+                JPH::RVec3::sZero(), JPH::Quat::sIdentity(),
+                JPH::EMotionType::Static,
+                Layers::NON_MOVING),
+            JPH::EActivation::DontActivate);
+        m_physics_engine->m_bodies.push_back(plane_id);
     }
 
     m_cube.init("res/models/physics_cube/cube.obj");
     u_cube = glm::scale(glm::mat4 { 1.0 }, glm::vec3(1.0));
+    {
+        JPH::BodyCreationSettings cube_settings(
+            new JPH::BoxShape(JPH::Vec3(0.5, 0.5, 0.5)),
+            JPH::RVec3(-7.05, 20.0, -5.5),
+            JPH::Quat::sIdentity(),
+            JPH::EMotionType::Dynamic,
+            Layers::MOVING);
+        JPH::BodyID cube_id = m_physics_engine->m_body_interface->CreateAndAddBody(
+            cube_settings,
+            JPH::EActivation::Activate);
+        m_physics_engine->m_bodies.push_back(cube_id);
+    }
 
     m_directional_light.init(
         true,
@@ -91,13 +111,13 @@ App::App()
     keyboard_callback();
 
     // glEnable(GL_MULTISAMPLE);
+
+    m_physics_engine->optimize();
 }
 
-App::~App()
-{
-    delete m_physics_engine;
-    m_physics_engine = nullptr;
-}
+// App::~App()
+// {
+// }
 
 void App::keyboard_callback()
 {
@@ -176,7 +196,7 @@ void App::run()
         m_camera.update();
 
         m_physics_engine->update(m_clock.delta_time());
-        JPH::RVec3 box_pos = m_physics_engine->body_interface->GetCenterOfMassPosition(m_physics_engine->bodies[1]);
+        JPH::RVec3 box_pos = m_physics_engine->m_body_interface->GetCenterOfMassPosition(m_physics_engine->m_bodies[1]);
         u_cube[3] = glm::vec4(glm::vec3(box_pos.GetX(), box_pos.GetY(), box_pos.GetZ()), u_cube[3][3]);
 
         glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
@@ -190,17 +210,17 @@ void App::run()
         //     m_model.draw();
         // });
 
-        m_directional_light.shadowmap_draw(m_shadowmap_shader, u_plane, [&]() {
+        m_directional_light.shadowmap_draw(m_shadowmap_shader, [&]() {
+            m_shadowmap_shader.set_mat4("model", u_plane);
             m_plane.draw();
-        });
-        m_directional_light.shadowmap_draw(m_shadowmap_shader, u_cube, [&]() {
+            m_shadowmap_shader.set_mat4("model", u_cube);
             m_cube.draw();
         });
 
-        m_point_light.shadowmap_draw(m_shadowmap_cubemap_shader, u_plane, [&]() {
+        m_point_light.shadowmap_draw(m_shadowmap_cubemap_shader, [&]() {
+            m_shadowmap_shader.set_mat4("model", u_plane);
             m_plane.draw();
-        });
-        m_point_light.shadowmap_draw(m_shadowmap_cubemap_shader, u_cube, [&]() {
+            m_shadowmap_shader.set_mat4("model", u_cube);
             m_cube.draw();
         });
 

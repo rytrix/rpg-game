@@ -9,7 +9,7 @@
 class App {
 public:
     App();
-    ~App();
+    ~App() = default;
 
     App(const App&) = delete;
     App& operator=(const App&) = delete;
@@ -25,7 +25,7 @@ private:
 
     Utils::DeltaTime m_clock;
 
-    PhysicsEngine* m_physics_engine = nullptr;
+    std::unique_ptr<PhysicsEngine> m_physics_engine = nullptr;
 
     Renderer::Window m_window;
     Renderer::Camera m_camera;
