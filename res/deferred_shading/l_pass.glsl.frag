@@ -117,7 +117,8 @@ vec3 directional_light(DirectionalLight light, vec3 albedo, float in_specular, v
     float spec = pow(max(dot(view_dir, reflect_dir), 0.0), shininess);
     vec3 specular = (vec3(in_specular) * spec) * light.specular;
 
-    float shadow_bias = max(0.05 * (1.0 - dot(normal, light_dir)), 0.005);  
+    // float shadow_bias = max(0.05 * (1.0 - dot(normal, light_dir)), 0.005);  
+    float shadow_bias = 0.01;
     float shadow = shadow_calculation(light, frag_pos, shadow_bias);
 
     return (ambient + (1.0 - shadow) * (diffuse + specular)) * albedo;
@@ -143,7 +144,7 @@ vec3 point_light(PointLight light, vec3 albedo, float in_specular, vec3 normal, 
     vec3 specular = (in_specular * spec) * light.specular;
 
     // float shadow_bias = max(0.05 * (1.0 - dot(normal, light_dir)), 0.005);
-    float shadow_bias = 0.05;
+    float shadow_bias = 0.01;
     float shadow = shadow_calculation_cubemap(light, frag_pos, shadow_bias);
     // shadow = 0.0;
 
