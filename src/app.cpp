@@ -1,4 +1,5 @@
 #include "app.hpp"
+#include "physics/helpers.hpp"
 
 App::App()
 {
@@ -81,10 +82,10 @@ App::App()
             JPH::Quat::sIdentity(),
             JPH::EMotionType::Dynamic,
             Layers::MOVING);
-        JPH::BodyID cube_id = m_physics_engine->m_body_interface->CreateAndAddBody(
+        b_cube = m_physics_engine->m_body_interface->CreateAndAddBody(
             cube_settings,
             JPH::EActivation::Activate);
-        m_physics_engine->m_bodies.push_back(cube_id);
+        m_physics_engine->m_bodies.push_back(b_cube);
     }
 
     m_directional_light.init(
@@ -131,12 +132,25 @@ void App::keyboard_callback()
             m_gpass.reinit(m_window.get_width(), m_window.get_height());
         }
         if (event.type == SDL_EVENT_MOUSE_MOTION) {
-            m_camera.rotate(event.motion.xrel, -event.motion.yrel);
+            if (m_capture_mouse) {
+                m_camera.rotate(event.motion.xrel, -event.motion.yrel);
+            }
         }
         if (event.type == SDL_EVENT_KEY_DOWN) {
+            // if (event.key.key == SDLK_ESCAPE) {
+            //     m_window.set_should_close();
+            // }
             if (event.key.key == SDLK_ESCAPE) {
-                m_window.set_should_close();
+                if (m_capture_mouse) {
+                    m_capture_mouse = false;
+                    m_window.set_relative_mode(false);
+
+                } else {
+                    m_capture_mouse = true;
+                    m_window.set_relative_mode(true);
+                }
             }
+
             if (event.key.key == SDLK_P) {
                 glm::vec3 pos = m_camera.get_pos();
                 std::println("Camera_position: {}, {}, {}", pos.x, pos.y, pos.z);
@@ -147,26 +161,28 @@ void App::keyboard_callback()
 
 void App::keyboard_input()
 {
-    const bool* keys = SDL_GetKeyboardState(nullptr);
-    float delta_time = m_clock.delta_time();
-    using Dir = Renderer::Camera::Movement;
-    if (keys[SDL_SCANCODE_W]) {
-        m_camera.move(Dir::Forward, delta_time);
-    }
-    if (keys[SDL_SCANCODE_S]) {
-        m_camera.move(Dir::Backward, delta_time);
-    }
-    if (keys[SDL_SCANCODE_A]) {
-        m_camera.move(Dir::Left, delta_time);
-    }
-    if (keys[SDL_SCANCODE_D]) {
-        m_camera.move(Dir::Right, delta_time);
-    }
-    if (keys[SDL_SCANCODE_SPACE]) {
-        m_camera.move(Dir::Up, delta_time);
-    }
-    if (keys[SDL_SCANCODE_LSHIFT]) {
-        m_camera.move(Dir::Down, delta_time);
+    if (m_capture_mouse) {
+        const bool* keys = SDL_GetKeyboardState(nullptr);
+        float delta_time = m_clock.delta_time();
+        using Dir = Renderer::Camera::Movement;
+        if (keys[SDL_SCANCODE_W]) {
+            m_camera.move(Dir::Forward, delta_time);
+        }
+        if (keys[SDL_SCANCODE_S]) {
+            m_camera.move(Dir::Backward, delta_time);
+        }
+        if (keys[SDL_SCANCODE_A]) {
+            m_camera.move(Dir::Left, delta_time);
+        }
+        if (keys[SDL_SCANCODE_D]) {
+            m_camera.move(Dir::Right, delta_time);
+        }
+        if (keys[SDL_SCANCODE_SPACE]) {
+            m_camera.move(Dir::Up, delta_time);
+        }
+        if (keys[SDL_SCANCODE_LSHIFT]) {
+            m_camera.move(Dir::Down, delta_time);
+        }
     }
 }
 
@@ -191,6 +207,35 @@ void App::frame_counter()
     }
 }
 
+void App::imgui_run()
+{
+    // ImGui::ShowDemoWindow(); // Show demo window! :)
+
+    const ImGuiViewport* main_viewport = ImGui::GetMainViewport();
+    ImGui::SetNextWindowPos(ImVec2(main_viewport->WorkPos.x + 20, main_viewport->WorkPos.y + 20), ImGuiCond_FirstUseEver);
+    ImGui::SetNextWindowSize(ImVec2(400, 600), ImGuiCond_FirstUseEver);
+
+    // Main body of the Demo window starts here.
+    if (!ImGui::Begin("Debug Window", nullptr, 0)) {
+        // Early out if the window is collapsed, as an optimization.
+        ImGui::End();
+        return;
+    }
+
+    ImGui::Checkbox("Toggle physics", &m_physics_on);
+    if (ImGui::CollapsingHeader("Cube 1")) {
+        glm::vec3 cube_pos = u_cube[3];
+        ImGui::DragFloat3("XYZ", &cube_pos.x, 1.0F, -8.0f, 8.0f);
+        m_physics_engine->m_body_interface->SetPosition(
+            b_cube,
+            vec3_to_vec3(cube_pos),
+            JPH::EActivation::Activate);
+        u_cube[3] = glm::vec4(cube_pos, u_cube[3][3]);
+    }
+
+    ImGui::End();
+}
+
 void App::run()
 {
     m_window.loop([&]() {
@@ -198,15 +243,17 @@ void App::run()
         frame_counter();
         keyboard_input();
         m_camera.update();
+        imgui_run();
 
-        m_physics_engine->update(m_clock.delta_time());
-        JPH::RVec3 box_pos = m_physics_engine->m_body_interface->GetCenterOfMassPosition(m_physics_engine->m_bodies[1]);
-        u_cube[3] = glm::vec4(glm::vec3(box_pos.GetX(), box_pos.GetY(), box_pos.GetZ()), u_cube[3][3]);
+        if (m_physics_on) {
+            m_physics_engine->update(m_clock.delta_time());
+            JPH::RVec3 box_pos = m_physics_engine->m_body_interface->GetCenterOfMassPosition(b_cube);
+            u_cube[3] = glm::vec4(glm::vec3(box_pos.GetX(), box_pos.GetY(), box_pos.GetZ()), u_cube[3][3]);
+        }
 
         glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
 
         // Shadowmap pass
-        // glCullFace(GL_FRONT);
         glDisable(GL_CULL_FACE);
 
         m_directional_light.shadowmap_draw(m_shadowmap_shader, [&]() {
@@ -216,16 +263,19 @@ void App::run()
             m_cube.draw();
         });
 
+        // glCullFace(GL_FRONT);
+
         m_point_light.shadowmap_draw(m_shadowmap_cubemap_shader, [&]() {
-            m_shadowmap_shader.set_mat4("model", u_plane);
+            m_shadowmap_cubemap_shader.set_mat4("model", u_plane);
             m_plane.draw();
-            m_shadowmap_shader.set_mat4("model", u_cube);
+            m_shadowmap_cubemap_shader.set_mat4("model", u_cube);
             m_cube.draw();
         });
 
+        glEnable(GL_CULL_FACE);
+
         // Geometry pass
         // glCullFace(GL_BACK);
-        glEnable(GL_CULL_FACE);
         m_gpass.bind();
         glViewport(0, 0, m_window.get_width(), m_window.get_height());
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);

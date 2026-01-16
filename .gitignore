@@ -5,6 +5,8 @@ res/models/Sponza
 res/models/cube
 res/models/cube_texture_mapping
 
+imgui.ini
+
 .cache
 
 # Build directories and binary files
