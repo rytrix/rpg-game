@@ -20,6 +20,7 @@ spell system needs to be ironed out
   -lets wait till we can test gameplay
 
 physics engine, make the interface better to use
+  -split the PhysicsEngine class into multiple physics systems, PhysicsEngine should probably be a singleton (ish because jolt wanted it that way)
 
 lighting system, spot lights
 
