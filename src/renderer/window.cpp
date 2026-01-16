@@ -80,6 +80,16 @@ void Window::init(const char* name, int width, int height)
 
     glViewport(0, 0, width, height);
 
+    // Setup Dear ImGui context
+    IMGUI_CHECKVERSION();
+    ImGui::CreateContext();
+    ImGuiIO& io = ImGui::GetIO();
+    io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard; // Enable Keyboard Controls
+    io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad; // Enable Gamepad Controls
+
+    ImGui_ImplSDL3_InitForOpenGL(m_window, m_context);
+    ImGui_ImplOpenGL3_Init();
+
     initialized = true;
 }
 
@@ -92,6 +102,10 @@ Window::~Window()
             SDL_DestroyWindow(m_window);
             SDL_Quit();
             m_window = nullptr;
+
+            ImGui_ImplOpenGL3_Shutdown();
+            ImGui_ImplSDL3_Shutdown();
+            ImGui::DestroyContext();
         }
         initialized = false;
     }
@@ -115,6 +129,7 @@ void Window::process_input_internal()
             SDL_GetWindowSize(m_window, &m_width, &m_height);
         }
 
+        ImGui_ImplSDL3_ProcessEvent(&event);
         m_process_input_fn(event);
     }
 }
@@ -128,7 +143,16 @@ void Window::loop(const std::function<void()>& commands)
             break;
         }
 
+        // (After event loop)
+        // Start the Dear ImGui frame
+        ImGui_ImplOpenGL3_NewFrame();
+        ImGui_ImplSDL3_NewFrame();
+        ImGui::NewFrame();
+
         commands();
+
+        ImGui::Render();
+        ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 
         SDL_GL_SwapWindow(m_window);
     }

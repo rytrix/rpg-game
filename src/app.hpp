@@ -22,8 +22,12 @@ private:
     void frame_counter();
     void keyboard_callback();
     void keyboard_input();
+    void imgui_run();
 
     Utils::DeltaTime m_clock;
+
+    bool m_capture_mouse = true;
+    bool m_physics_on = false;
 
     std::unique_ptr<PhysicsEngine> m_physics_engine = nullptr;
 
@@ -43,6 +47,7 @@ private:
 
     Renderer::Model m_cube;
     glm::mat4 u_cube {};
+    JPH::BodyID b_cube;
 
     Renderer::Light::Directional m_directional_light;
     Renderer::Light::Point m_point_light;
