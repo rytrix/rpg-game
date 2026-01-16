@@ -38,9 +38,6 @@ private:
     Renderer::ShaderProgram m_shadowmap_shader;
     Renderer::ShaderProgram m_shadowmap_cubemap_shader;
 
-    // Renderer::Model m_model;
-    // glm::mat4 u_model {};
-
     Renderer::Model m_plane;
     glm::mat4 u_plane {};
 

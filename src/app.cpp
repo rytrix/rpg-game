@@ -55,8 +55,8 @@ App::App()
     // m_model.init("res/models/cube_texture_mapping/Cube.obj");
     // u_model = glm::scale(glm::mat4 { 1.0 }, glm::vec3(1.0));
 
-    m_plane.init("res/models/physics_plane/plane.obj");
     // m_plane.init("res/models/Sponza/glTF/Sponza.gltf");
+    m_plane.init("res/models/physics_plane/plane.obj");
     u_plane = glm::scale(glm::mat4 { 1.0 }, glm::vec3(1.0));
     {
         JPH::TriangleList triangles;
@@ -76,7 +76,7 @@ App::App()
     u_cube = glm::scale(glm::mat4 { 1.0 }, glm::vec3(1.0));
     {
         JPH::BodyCreationSettings cube_settings(
-            new JPH::BoxShape(JPH::Vec3(0.6, 0.8, 0.6)),
+            new JPH::BoxShape(JPH::Vec3(0.5, 0.5, 0.5)),
             JPH::RVec3(-7.05, 20.0, -5.5),
             JPH::Quat::sIdentity(),
             JPH::EMotionType::Dynamic,
@@ -206,7 +206,8 @@ void App::run()
         glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
 
         // Shadowmap pass
-        glCullFace(GL_FRONT);
+        // glCullFace(GL_FRONT);
+        glDisable(GL_CULL_FACE);
 
         m_directional_light.shadowmap_draw(m_shadowmap_shader, [&]() {
             m_shadowmap_shader.set_mat4("model", u_plane);
@@ -223,7 +224,8 @@ void App::run()
         });
 
         // Geometry pass
-        glCullFace(GL_BACK);
+        // glCullFace(GL_BACK);
+        glEnable(GL_CULL_FACE);
         m_gpass.bind();
         glViewport(0, 0, m_window.get_width(), m_window.get_height());
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
