@@ -30,7 +30,9 @@ PhysicsEngine::~PhysicsEngine()
 
 void PhysicsEngine::update(float delta_time)
 {
-    // If you take larger steps than 1 / 60th of a second you need to do multiple collision steps in order to keep the simulation stable. Do 1 collision step per 1 / 60th of a second (round up).
+    // If you take larger steps than 1 / 60th of a second you
+    // need to do multiple collision steps in order to keep the simulation stable.
+    // Do 1 collision step per 1 / 60th of a second (round up).
     const int collision_steps = std::max(static_cast<int>(std::ceil(delta_time / (1.0f / 60.0f))), 1);
 
     m_physics_system.Update(delta_time, collision_steps, &m_temp_allocator, m_job_system);

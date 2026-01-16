@@ -128,10 +128,10 @@ private:
     JPH::TempAllocatorMalloc m_temp_allocator;
     JPH::JobSystemThreadPool* m_job_system;
 
-    const uint cMaxBodies = 1024;
+    const uint cMaxBodies = 65536;
     const uint cNumBodyMutexes = 0;
-    const uint cMaxBodyPairs = 1024;
-    const uint cMaxContactConstraints = 1024;
+    const uint cMaxBodyPairs = 65536;
+    const uint cMaxContactConstraints = 10240;
 
     BPLayerInterfaceImpl m_broad_phase_layer_interface;
     ObjectVsBroadPhaseLayerFilterImpl m_object_vs_broadphase_layer_filter;

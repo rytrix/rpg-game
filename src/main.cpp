@@ -5,12 +5,8 @@
 
 int main()
 {
-    try {
-        App app;
-        app.run();
-    } catch (std::runtime_error& error) {
-        std::println("Caught error: {}", error.what());
-    }
+    App app;
+    app.run();
 
     return 0;
 }

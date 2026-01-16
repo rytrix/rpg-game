@@ -5,10 +5,10 @@
 namespace Utils {
 
 static constexpr bool runtime_checks = true;
-static constexpr bool use_throws = true;
+static constexpr bool use_throws = false;
 
 template <typename StrType>
-constexpr void util_assert(bool error, StrType error_msg, const char* file, int line)
+void util_assert(bool error, StrType error_msg, const char* file, int line)
 {
     if constexpr (runtime_checks) {
         if (!error) {
@@ -16,7 +16,7 @@ constexpr void util_assert(bool error, StrType error_msg, const char* file, int 
             if constexpr (use_throws) {
                 throw std::runtime_error(msg);
             } else {
-                std::println(msg);
+                std::println("{}", msg);
                 std::quick_exit(EXIT_FAILURE);
             }
         }
