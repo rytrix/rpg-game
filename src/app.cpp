@@ -56,6 +56,7 @@ App::App()
     // u_model = glm::scale(glm::mat4 { 1.0 }, glm::vec3(1.0));
 
     m_plane.init("res/models/physics_plane/plane.obj");
+    // m_plane.init("res/models/Sponza/glTF/Sponza.gltf");
     u_plane = glm::scale(glm::mat4 { 1.0 }, glm::vec3(1.0));
     {
         JPH::TriangleList triangles;
@@ -75,7 +76,7 @@ App::App()
     u_cube = glm::scale(glm::mat4 { 1.0 }, glm::vec3(1.0));
     {
         JPH::BodyCreationSettings cube_settings(
-            new JPH::BoxShape(JPH::Vec3(0.5, 0.5, 0.5)),
+            new JPH::BoxShape(JPH::Vec3(0.6, 0.8, 0.6)),
             JPH::RVec3(-7.05, 20.0, -5.5),
             JPH::Quat::sIdentity(),
             JPH::EMotionType::Dynamic,
@@ -113,6 +114,9 @@ App::App()
     // glEnable(GL_MULTISAMPLE);
 
     m_physics_engine->optimize();
+
+    m_clock.update();
+    LOG_INFO(std::format("Finished loading in {} seconds", m_clock.delta_time()));
 }
 
 // App::~App()
@@ -203,12 +207,6 @@ void App::run()
 
         // Shadowmap pass
         glCullFace(GL_FRONT);
-        // m_directional_light.shadowmap_draw(m_shadowmap_shader, u_model, [&]() {
-        //     m_model.draw();
-        // });
-        // m_point_light.shadowmap_draw(m_shadowmap_cubemap_shader, u_model, [&]() {
-        //     m_model.draw();
-        // });
 
         m_directional_light.shadowmap_draw(m_shadowmap_shader, [&]() {
             m_shadowmap_shader.set_mat4("model", u_plane);
@@ -233,9 +231,6 @@ void App::run()
         m_gpass_shader.bind();
         m_gpass_shader.set_mat4("proj", m_camera.get_proj());
         m_gpass_shader.set_mat4("view", m_camera.get_view());
-
-        // m_gpass_shader.set_mat4("model", u_model);
-        // m_model.draw(m_gpass_shader);
 
         m_gpass_shader.set_mat4("model", u_plane);
         m_plane.draw(m_gpass_shader);
