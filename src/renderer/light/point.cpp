@@ -32,7 +32,7 @@ void Point::update(PointInfo& info)
     util_assert(initialized == true && m_info.shadowmap == info.shadowmap, "Point::update() cannot change shadowmap value through update function");
 
     if (info.shadowmap) {
-        float aspect = m_shadowmap_internal->m_shadowmap.get_width() / m_shadowmap_internal->m_shadowmap.get_height();
+        f32 aspect = static_cast<f32>(m_shadowmap_internal->m_shadowmap.get_width()) / static_cast<f32>(m_shadowmap_internal->m_shadowmap.get_height());
 
         glm::mat4 light_projection = glm::perspective(glm::radians(90.0F), aspect, info.near, info.far);
         m_shadowmap_internal->m_light_space_matrix.at(0) = light_projection * glm::lookAt(info.position, info.position + glm::vec3(1.0, 0.0, 0.0), glm::vec3(0.0, -1.0, 0.0));
