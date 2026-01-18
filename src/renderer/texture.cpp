@@ -28,6 +28,8 @@ u32 TextureAllocator::next()
         reset();
     }
 
+    LOG_TRACE(std::format("TextureAllocator::next() returning {}", m_front));
+
     return m_front++;
 }
 

@@ -10,7 +10,7 @@ enum class LogLevel {
     Error,
 };
 
-static constexpr LogLevel LOG_LEVEL = LogLevel::Trace;
+static constexpr LogLevel LOG_LEVEL = LogLevel::Info;
 static constexpr bool SHOW_FILE = true;
 static constexpr bool SHOW_LINE = true;
 

@@ -1,4 +1,5 @@
 #include "app.hpp"
+#include "Jolt/Math/Real.h"
 #include "physics/helpers.hpp"
 
 App::App()
@@ -103,6 +104,8 @@ App::App()
     point_info.linear = 0.022F;
     point_info.quadratic = 0.0019F;
     point_info.shadowmap = true;
+    point_info.near = 0.1F;
+    point_info.far = 50.0F;
     m_point_light.init(point_info);
 
     glEnable(GL_DEPTH_TEST);
@@ -250,9 +253,7 @@ void App::run()
 
         if (m_physics_on) {
             m_physics_engine->update(m_clock.delta_time());
-            JPH::RVec3 box_pos = m_physics_engine->m_body_interface->GetCenterOfMassPosition(b_cube);
-            glm::mat4& u_model = m_cube.get_model_matrix();
-            u_model[3] = glm::vec4(glm::vec3(box_pos.GetX(), box_pos.GetY(), box_pos.GetZ()), u_model[3][3]);
+            m_cube.get_model_matrix() = mat4_to_mat4(m_physics_engine->m_body_interface->GetCenterOfMassTransform(b_cube));
         }
 
         glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
