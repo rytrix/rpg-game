@@ -88,21 +88,24 @@ App::App()
         m_physics_engine->m_bodies.push_back(b_cube);
     }
 
-    m_directional_light.init(
-        true,
-        glm::vec3(-0.2F, -1.0F, 0.3F),
-        glm::vec3(0.1),
-        glm::vec3(0.5),
-        glm::vec3(0.5));
+    Renderer::Light::DirectionalInfo directional_info;
+    directional_info.direction = glm::vec3(-0.2F, -1.0F, 0.3F);
+    directional_info.ambient = glm::vec3(0.1);
+    directional_info.diffuse = glm::vec3(0.5);
+    directional_info.specular = glm::vec3(0.5);
+    directional_info.shadowmap = true;
+    m_directional_light.init(directional_info);
 
-    m_point_light.init(true,
-        glm::vec3(2.0F, 2.0F, 2.0F),
-        glm::vec3(0.05F),
-        glm::vec3(0.5F),
-        glm::vec3(0.5F),
-        1.0F,
-        0.022F,
-        0.0019F);
+    Renderer::Light::PointInfo point_info;
+    point_info.position = glm::vec3(2.0F, 2.0F, 2.0F);
+    point_info.ambient = glm::vec3(0.05F);
+    point_info.diffuse = glm::vec3(0.5F);
+    point_info.specular = glm::vec3(0.5F);
+    point_info.constant = 1.0F;
+    point_info.linear = 0.022F;
+    point_info.quadratic = 0.0019F;
+    point_info.shadowmap = true;
+    m_point_light.init(point_info);
 
     glEnable(GL_DEPTH_TEST);
     glDepthFunc(GL_LESS);

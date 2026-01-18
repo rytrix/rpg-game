@@ -5,55 +5,51 @@ namespace Renderer::Light {
 Point::~Point()
 {
     if (initialized) {
-        if (m_shadowmap_enabled) {
+        if (m_info.shadowmap) {
             delete m_shadowmap_internal;
         }
         initialized = false;
     }
 }
 
-void Point::init(bool shadowmap,
-    glm::vec3 position, glm::vec3 ambient, glm::vec3 diffuse, glm::vec3 specular,
-    float constant, float linear, float quadratic)
+void Point::init(PointInfo& info)
 {
     util_assert(initialized == false, "Point::init() has already been initialized");
 
-    m_pos = position;
-    m_ambient = ambient;
-    m_diffuse = diffuse;
-    m_specular = specular;
-
-    m_constant = constant;
-    m_linear = linear;
-    m_quadratic = quadratic;
-
-    if (shadowmap) {
-        m_shadowmap_enabled = true;
-
+    if (info.shadowmap) {
         m_shadowmap_internal = new ShadowMap_Internal();
         m_shadowmap_internal->m_shadowmap.init_cubemap();
-
-        float aspect = m_shadowmap_internal->m_shadowmap.get_width() / m_shadowmap_internal->m_shadowmap.get_height();
-        float near = 1.0F;
-        float far = 25.0F;
-
-        glm::mat4 light_projection = glm::perspective(glm::radians(90.0F), aspect, near, far);
-        m_shadowmap_internal->m_light_space_matrix.at(0) = light_projection * glm::lookAt(m_pos, m_pos + glm::vec3(1.0, 0.0, 0.0), glm::vec3(0.0, -1.0, 0.0));
-        m_shadowmap_internal->m_light_space_matrix.at(1) = light_projection * glm::lookAt(m_pos, m_pos + glm::vec3(-1.0, 0.0, 0.0), glm::vec3(0.0, -1.0, 0.0));
-        m_shadowmap_internal->m_light_space_matrix.at(2) = light_projection * glm::lookAt(m_pos, m_pos + glm::vec3(0.0, 1.0, 0.0), glm::vec3(0.0, 0.0, 1.0));
-        m_shadowmap_internal->m_light_space_matrix.at(3) = light_projection * glm::lookAt(m_pos, m_pos + glm::vec3(0.0, -1.0, 0.0), glm::vec3(0.0, 0.0, -1.0));
-        m_shadowmap_internal->m_light_space_matrix.at(4) = light_projection * glm::lookAt(m_pos, m_pos + glm::vec3(0.0, 0.0, 1.0), glm::vec3(0.0, -1.0, 0.0));
-        m_shadowmap_internal->m_light_space_matrix.at(5) = light_projection * glm::lookAt(m_pos, m_pos + glm::vec3(0.0, 0.0, -1.0), glm::vec3(0.0, -1.0, 0.0));
-        m_shadowmap_internal->m_far = far;
     }
 
     initialized = true;
+    m_info = info;
+    update(info);
+}
+
+void Point::update(PointInfo& info)
+{
+    util_assert(initialized == true, "Light::Point has not been initialized");
+    util_assert(initialized == true && m_info.shadowmap == info.shadowmap, "Point::update() cannot change shadowmap value through update function");
+
+    if (info.shadowmap) {
+        float aspect = m_shadowmap_internal->m_shadowmap.get_width() / m_shadowmap_internal->m_shadowmap.get_height();
+
+        glm::mat4 light_projection = glm::perspective(glm::radians(90.0F), aspect, info.near, info.far);
+        m_shadowmap_internal->m_light_space_matrix.at(0) = light_projection * glm::lookAt(info.position, info.position + glm::vec3(1.0, 0.0, 0.0), glm::vec3(0.0, -1.0, 0.0));
+        m_shadowmap_internal->m_light_space_matrix.at(1) = light_projection * glm::lookAt(info.position, info.position + glm::vec3(-1.0, 0.0, 0.0), glm::vec3(0.0, -1.0, 0.0));
+        m_shadowmap_internal->m_light_space_matrix.at(2) = light_projection * glm::lookAt(info.position, info.position + glm::vec3(0.0, 1.0, 0.0), glm::vec3(0.0, 0.0, 1.0));
+        m_shadowmap_internal->m_light_space_matrix.at(3) = light_projection * glm::lookAt(info.position, info.position + glm::vec3(0.0, -1.0, 0.0), glm::vec3(0.0, 0.0, -1.0));
+        m_shadowmap_internal->m_light_space_matrix.at(4) = light_projection * glm::lookAt(info.position, info.position + glm::vec3(0.0, 0.0, 1.0), glm::vec3(0.0, -1.0, 0.0));
+        m_shadowmap_internal->m_light_space_matrix.at(5) = light_projection * glm::lookAt(info.position, info.position + glm::vec3(0.0, 0.0, -1.0), glm::vec3(0.0, -1.0, 0.0));
+    }
+
+    m_info = info;
 }
 
 void Point::shadowmap_draw(Renderer::ShaderProgram& shader, const std::function<void()>& draw_function)
 {
     util_assert(initialized == true, "Light::Point has not been initialized");
-    util_assert(m_shadowmap_enabled == true, "Trying to call shadowmap_draw on a point light without a shadowmap enabled");
+    util_assert(m_info.shadowmap == true, "Trying to call shadowmap_draw on a point light without a shadowmap enabled");
 
     glViewport(0, 0, m_shadowmap_internal->m_shadowmap.get_width(), m_shadowmap_internal->m_shadowmap.get_height());
     m_shadowmap_internal->m_shadowmap.bind();
@@ -66,8 +62,8 @@ void Point::shadowmap_draw(Renderer::ShaderProgram& shader, const std::function<
     shader.set_mat4("light_space_matrices[3]", m_shadowmap_internal->m_light_space_matrix[3]);
     shader.set_mat4("light_space_matrices[4]", m_shadowmap_internal->m_light_space_matrix[4]);
     shader.set_mat4("light_space_matrices[5]", m_shadowmap_internal->m_light_space_matrix[5]);
-    shader.set_float("far_plane", m_shadowmap_internal->m_far);
-    shader.set_vec3("light_pos", m_pos);
+    shader.set_float("far_plane", m_info.far);
+    shader.set_vec3("light_pos", m_info.position);
     draw_function();
 
     m_shadowmap_internal->m_shadowmap.unbind();
@@ -77,15 +73,15 @@ void Point::set_uniforms(Renderer::ShaderProgram& shader, const char* light_name
 {
     util_assert(initialized == true, "Point has not been initialized");
 
-    shader.set_vec3(std::format("{}.pos", light_name).c_str(), m_pos);
-    shader.set_vec3(std::format("{}.ambient", light_name).c_str(), m_ambient);
-    shader.set_vec3(std::format("{}.diffuse", light_name).c_str(), m_diffuse);
-    shader.set_vec3(std::format("{}.specular", light_name).c_str(), m_specular);
-    shader.set_float(std::format("{}.constant", light_name).c_str(), m_constant);
-    shader.set_float(std::format("{}.linear", light_name).c_str(), m_linear);
-    shader.set_float(std::format("{}.quadratic", light_name).c_str(), m_quadratic);
-    if (m_shadowmap_enabled) {
-        shader.set_float(std::format("{}.far_plane", light_name).c_str(), m_shadowmap_internal->m_far);
+    shader.set_vec3(std::format("{}.pos", light_name).c_str(), m_info.position);
+    shader.set_vec3(std::format("{}.ambient", light_name).c_str(), m_info.ambient);
+    shader.set_vec3(std::format("{}.diffuse", light_name).c_str(), m_info.diffuse);
+    shader.set_vec3(std::format("{}.specular", light_name).c_str(), m_info.specular);
+    shader.set_float(std::format("{}.constant", light_name).c_str(), m_info.constant);
+    shader.set_float(std::format("{}.linear", light_name).c_str(), m_info.linear);
+    shader.set_float(std::format("{}.quadratic", light_name).c_str(), m_info.quadratic);
+    if (m_info.shadowmap) {
+        shader.set_float(std::format("{}.far_plane", light_name).c_str(), m_info.far);
         m_shadowmap_internal->m_shadowmap.get_texture().bind(5);
         shader.set_int(std::format("{}.shadow_map", light_name).c_str(), 5);
     }
@@ -94,7 +90,7 @@ void Point::set_uniforms(Renderer::ShaderProgram& shader, const char* light_name
 bool Point::has_shadowmap()
 {
     util_assert(initialized == true, "Point has not been initialized");
-    return m_shadowmap_enabled;
+    return m_info.shadowmap;
 }
 
 } // namespace Renderer::Light

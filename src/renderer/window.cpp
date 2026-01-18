@@ -36,7 +36,7 @@ void Window::init(const char* name, int width, int height)
     m_height = height;
 
     if (!SDL_Init(SDL_INIT_VIDEO)) {
-        throw std::runtime_error(std::format("Could not initialize SDL: {}", SDL_GetError()));
+        util_error(std::format("Could not initialize SDL: {}", SDL_GetError()));
     }
 
     SDL_GL_SetAttribute(SDL_GL_CONTEXT_FLAGS, 0);
@@ -53,21 +53,21 @@ void Window::init(const char* name, int width, int height)
 
     if (m_window == nullptr) {
         SDL_Quit();
-        throw std::runtime_error(std::format("Could not create window: {}", SDL_GetError()));
+        util_error(std::format("Could not create window: {}", SDL_GetError()));
     }
 
     m_context = SDL_GL_CreateContext(m_window);
     if (m_context == nullptr) {
         SDL_DestroyWindow(m_window);
         SDL_Quit();
-        throw std::runtime_error(std::format("Could not create OpenGL context: {}", SDL_GetError()));
+        util_error(std::format("Could not create OpenGL context: {}", SDL_GetError()));
     }
 
     if (gladLoadGLLoader((GLADloadproc)SDL_GL_GetProcAddress) == 0) {
         SDL_GL_DestroyContext(m_context);
         SDL_DestroyWindow(m_window);
         SDL_Quit();
-        throw std::runtime_error("Failed to initialize GLAD");
+        util_error("Filed to initialize GLAD");
     }
 
     SDL_GL_MakeCurrent(m_window, m_context);

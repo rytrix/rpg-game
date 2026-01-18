@@ -5,6 +5,17 @@
 
 namespace Renderer::Light {
 
+struct DirectionalInfo {
+    glm::vec3 direction {};
+    glm::vec3 ambient {};
+    glm::vec3 diffuse {};
+    glm::vec3 specular {};
+
+    float near = 1.0F;
+    float far = 20.0F;
+    bool shadowmap = false;
+};
+
 class Directional {
 public:
     Directional() = default;
@@ -15,7 +26,9 @@ public:
     Directional(Directional&&) = default;
     Directional& operator=(Directional&&) = default;
 
-    void init(bool shadowmap, glm::vec3 direction, glm::vec3 ambient, glm::vec3 diffuse, glm::vec3 specular);
+    void init(DirectionalInfo& info);
+
+    void update(DirectionalInfo& info);
 
     void shadowmap_draw(Renderer::ShaderProgram& shader, const std::function<void()>& draw_function);
 
@@ -23,15 +36,11 @@ public:
 
     bool has_shadowmap();
 
-    glm::vec3 m_direction {};
-    glm::vec3 m_ambient {};
-    glm::vec3 m_diffuse {};
-    glm::vec3 m_specular {};
-
 private:
     bool initialized = false;
 
-    bool m_shadowmap_enabled {};
+    DirectionalInfo m_info {};
+
     struct ShadowMap_Internal {
         glm::mat4 m_light_space_matrix {};
         Renderer::ShadowMap m_shadowmap;
