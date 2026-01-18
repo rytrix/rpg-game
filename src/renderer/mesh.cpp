@@ -51,12 +51,14 @@ void Mesh::draw(ShaderProgram& shader)
     // https://learnopengl.com/Model-Loading/Mesh
     for (int i = 0; i < m_textures.size(); i++) {
         if (strcmp(m_textures[i].m_type, "texture_diffuse") == 0) {
-            m_textures[i].m_tex->m_tex.bind(0);
-            shader.set_int("material.diffuse", 0);
+            GLuint texture_unit = Texture::get_texture_unit();
+            m_textures[i].m_tex->m_tex.bind(texture_unit);
+            shader.set_int("material.diffuse", static_cast<int>(texture_unit));
 
         } else if (strcmp(m_textures[i].m_type, "texture_specular") == 0) {
-            m_textures[i].m_tex->m_tex.bind(1);
-            shader.set_int("material.specular", 1);
+            GLuint texture_unit = Texture::get_texture_unit();
+            m_textures[i].m_tex->m_tex.bind(texture_unit);
+            shader.set_int("material.specular", static_cast<int>(texture_unit));
         }
     }
 

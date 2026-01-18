@@ -28,6 +28,7 @@ public:
     [[nodiscard]] std::pair<f32, f32> get_size_f32() const;
     [[nodiscard]] f32 get_aspect_ratio() const;
     void set_should_close();
+    void set_window_title(const char* title);
 
 private:
     bool initialized = false;

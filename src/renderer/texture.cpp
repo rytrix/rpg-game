@@ -1,5 +1,54 @@
 #include "texture.hpp"
 
+namespace {
+
+class TextureAllocator {
+public:
+    explicit TextureAllocator(u32 max_textures);
+
+    u32 next();
+    void reset();
+
+private:
+    const u32 m_max_textures {};
+    u32 m_front {};
+};
+
+TextureAllocator::TextureAllocator(u32 max_textures)
+    : m_max_textures(max_textures)
+{
+}
+
+u32 TextureAllocator::next()
+{
+    util_assert(m_front < m_max_textures,
+        "TextureAllocator: attempting to call next when front is greater than max_textures");
+
+    if (m_front >= m_max_textures) {
+        reset();
+    }
+
+    return m_front++;
+}
+
+void TextureAllocator::reset()
+{
+    m_front = 0;
+}
+
+std::unique_ptr<TextureAllocator> create_texture_allocator()
+{
+    int max_units {};
+    glGetIntegerv(GL_MAX_COMBINED_TEXTURE_IMAGE_UNITS, &max_units);
+    LOG_INFO(std::format("Max texture units {}", max_units));
+
+    return std::make_unique<TextureAllocator>(static_cast<u32>(max_units));
+}
+
+std::unique_ptr<TextureAllocator> texture_unit_allocator = nullptr;
+
+}
+
 namespace Renderer {
 
 Texture::Texture(TextureInfo& info)
@@ -42,6 +91,19 @@ void Texture::init(TextureInfo& info)
     if (info.mipmaps) {
         generate_mipmap();
     }
+}
+
+GLuint Texture::get_texture_unit()
+{
+    if (texture_unit_allocator == nullptr) {
+        texture_unit_allocator = create_texture_allocator();
+    }
+    return texture_unit_allocator->next();
+}
+
+void Texture::reset_texture_units()
+{
+    texture_unit_allocator->reset();
 }
 
 void Texture::generate_mipmap()

@@ -29,6 +29,8 @@ private:
     bool m_capture_mouse = true;
     bool m_physics_on = false;
 
+    const char* m_title = "Test Window";
+
     std::unique_ptr<PhysicsEngine> m_physics_engine = nullptr;
 
     Renderer::Window m_window;
@@ -43,10 +45,8 @@ private:
     Renderer::ShaderProgram m_shadowmap_cubemap_shader;
 
     Renderer::Model m_plane;
-    glm::mat4 u_plane {};
 
     Renderer::Model m_cube;
-    glm::mat4 u_cube {};
     JPH::BodyID b_cube;
 
     Renderer::Light::Directional m_directional_light;

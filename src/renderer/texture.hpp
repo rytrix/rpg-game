@@ -46,6 +46,9 @@ public:
     Texture(Texture&&) = default;
     Texture& operator=(Texture&&) = default;
 
+    static GLuint get_texture_unit();
+    static void reset_texture_units();
+
     void init(TextureInfo& info);
     void sub_image(TextureSubimageInfo& info);
     void bind(GLuint texture_unit);

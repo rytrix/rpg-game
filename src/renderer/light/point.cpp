@@ -82,8 +82,10 @@ void Point::set_uniforms(Renderer::ShaderProgram& shader, const char* light_name
     shader.set_float(std::format("{}.quadratic", light_name).c_str(), m_info.quadratic);
     if (m_info.shadowmap) {
         shader.set_float(std::format("{}.far_plane", light_name).c_str(), m_info.far);
-        m_shadowmap_internal->m_shadowmap.get_texture().bind(5);
-        shader.set_int(std::format("{}.shadow_map", light_name).c_str(), 5);
+
+        GLuint texture_unit = Texture::get_texture_unit();
+        m_shadowmap_internal->m_shadowmap.get_texture().bind(texture_unit);
+        shader.set_int(std::format("{}.shadow_map", light_name).c_str(), static_cast<int>(texture_unit));
     }
 }
 
