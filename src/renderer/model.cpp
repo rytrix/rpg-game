@@ -17,6 +17,7 @@ void Model::init(const char* file_path)
     util_assert(initialized == false, "Model::init() has already been initialized");
 
     m_directory = file_path;
+    u_model = glm::mat4(1.0);
 
     util_assert(std::filesystem::exists(file_path), std::format("Model \"{}\" is an invalid path", file_path));
 
@@ -55,6 +56,12 @@ const std::deque<Mesh>* Model::get_meshes()
 {
     util_assert(initialized == true, "Model has not been initialized");
     return &m_meshes;
+}
+
+glm::mat4& Model::get_model_matrix()
+{
+    util_assert(initialized == true, "Model has not been initialized");
+    return u_model;
 }
 
 void Model::process_node(aiNode* node, const aiScene* scene)

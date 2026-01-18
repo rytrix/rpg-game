@@ -70,8 +70,9 @@ void Directional::set_uniforms(Renderer::ShaderProgram& shader, const char* ligh
     shader.set_vec3(std::format("{}.specular", light_name).c_str(), m_info.specular);
     if (m_info.shadowmap) {
         shader.set_mat4(std::format("{}.light_space_matrix", light_name).c_str(), m_shadowmap_internal->m_light_space_matrix);
-        m_shadowmap_internal->m_shadowmap.get_texture().bind(4);
-        shader.set_int(std::format("{}.shadow_map", light_name).c_str(), 4);
+        GLuint texture_unit = Texture::get_texture_unit();
+        m_shadowmap_internal->m_shadowmap.get_texture().bind(texture_unit);
+        shader.set_int(std::format("{}.shadow_map", light_name).c_str(), static_cast<int>(texture_unit));
     }
 }
 

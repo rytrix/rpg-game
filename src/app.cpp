@@ -6,9 +6,9 @@ App::App()
     m_physics_engine = std::make_unique<PhysicsEngine>();
     LOG_TRACE("Initialized physics engine")
 
-    m_window.init("Test Window", 1000, 800);
+    m_window.init(m_title, 1000, 800);
     m_window.set_relative_mode(true);
-    LOG_TRACE("Created window \"Test Window\"");
+    LOG_TRACE(std::format("Created window \"{}\"", m_title));
 
     m_camera.init(90.0F, 0.1F, 1000.0F, m_window.get_aspect_ratio(), { -2.0F, 1.5F, 4.0F });
     m_camera.set_speed(5.0F);
@@ -58,7 +58,6 @@ App::App()
 
     // m_plane.init("res/models/Sponza/glTF/Sponza.gltf");
     m_plane.init("res/models/physics_plane/plane.obj");
-    u_plane = glm::scale(glm::mat4 { 1.0 }, glm::vec3(1.0));
     {
         JPH::TriangleList triangles;
         const auto* meshes = m_plane.get_meshes();
@@ -74,7 +73,6 @@ App::App()
     }
 
     m_cube.init("res/models/physics_cube/cube.obj");
-    u_cube = glm::scale(glm::mat4 { 1.0 }, glm::vec3(1.0));
     {
         JPH::BodyCreationSettings cube_settings(
             new JPH::BoxShape(JPH::Vec3(0.5, 0.5, 0.5)),
@@ -204,7 +202,8 @@ void App::frame_counter()
         frames += 1;
         if (time_passed >= 1.0F) {
             time_passed = 0;
-            std::println("Frames: {}", frames);
+            auto title = std::format("{} {} fps", m_title, frames);
+            m_window.set_window_title(title.c_str());
             frames = 0;
         }
     }
@@ -227,13 +226,14 @@ void App::imgui_run()
 
     ImGui::Checkbox("Toggle physics", &m_physics_on);
     if (ImGui::CollapsingHeader("Cube 1")) {
-        glm::vec3 cube_pos = u_cube[3];
+        glm::mat4& u_model = m_cube.get_model_matrix();
+        glm::vec3 cube_pos = u_model[3];
         ImGui::DragFloat3("XYZ", &cube_pos.x, 1.0F, -8.0f, 8.0f);
         m_physics_engine->m_body_interface->SetPosition(
             b_cube,
             vec3_to_vec3(cube_pos),
             JPH::EActivation::Activate);
-        u_cube[3] = glm::vec4(cube_pos, u_cube[3][3]);
+        u_model[3] = glm::vec4(cube_pos, u_model[3][3]);
     }
 
     ImGui::End();
@@ -251,7 +251,8 @@ void App::run()
         if (m_physics_on) {
             m_physics_engine->update(m_clock.delta_time());
             JPH::RVec3 box_pos = m_physics_engine->m_body_interface->GetCenterOfMassPosition(b_cube);
-            u_cube[3] = glm::vec4(glm::vec3(box_pos.GetX(), box_pos.GetY(), box_pos.GetZ()), u_cube[3][3]);
+            glm::mat4& u_model = m_cube.get_model_matrix();
+            u_model[3] = glm::vec4(glm::vec3(box_pos.GetX(), box_pos.GetY(), box_pos.GetZ()), u_model[3][3]);
         }
 
         glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
@@ -260,18 +261,18 @@ void App::run()
         glDisable(GL_CULL_FACE);
 
         m_directional_light.shadowmap_draw(m_shadowmap_shader, [&]() {
-            m_shadowmap_shader.set_mat4("model", u_plane);
+            m_shadowmap_shader.set_mat4("model", m_plane.get_model_matrix());
             m_plane.draw();
-            m_shadowmap_shader.set_mat4("model", u_cube);
+            m_shadowmap_shader.set_mat4("model", m_cube.get_model_matrix());
             m_cube.draw();
         });
 
         // glCullFace(GL_FRONT);
 
         m_point_light.shadowmap_draw(m_shadowmap_cubemap_shader, [&]() {
-            m_shadowmap_cubemap_shader.set_mat4("model", u_plane);
+            m_shadowmap_cubemap_shader.set_mat4("model", m_plane.get_model_matrix());
             m_plane.draw();
-            m_shadowmap_cubemap_shader.set_mat4("model", u_cube);
+            m_shadowmap_cubemap_shader.set_mat4("model", m_cube.get_model_matrix());
             m_cube.draw();
         });
 
@@ -287,9 +288,9 @@ void App::run()
         m_gpass_shader.set_mat4("proj", m_camera.get_proj());
         m_gpass_shader.set_mat4("view", m_camera.get_view());
 
-        m_gpass_shader.set_mat4("model", u_plane);
+        m_gpass_shader.set_mat4("model", m_plane.get_model_matrix());
         m_plane.draw(m_gpass_shader);
-        m_gpass_shader.set_mat4("model", u_cube);
+        m_gpass_shader.set_mat4("model", m_cube.get_model_matrix());
         m_cube.draw(m_gpass_shader);
 
         m_gpass.blit_depth_buffer();
@@ -305,5 +306,7 @@ void App::run()
         m_directional_light.set_uniforms(m_lpass_shader, "u_directional_light");
         m_point_light.set_uniforms(m_lpass_shader, "u_point_light");
         m_lpass.draw();
+
+        Renderer::Texture::reset_texture_units();
     });
 }

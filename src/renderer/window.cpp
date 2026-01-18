@@ -220,4 +220,10 @@ void Window::set_should_close()
     m_should_close = true;
 }
 
+void Window::set_window_title(const char* title)
+{
+    util_assert(initialized == true, "Renderer::Window has not been initialized");
+    SDL_SetWindowTitle(m_window, title);
+}
+
 } // namespace Renderer

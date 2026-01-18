@@ -25,6 +25,8 @@ public:
     void draw(ShaderProgram& shader);
 
     const std::deque<Mesh>* get_meshes();
+    glm::mat4& get_model_matrix();
+
 
 private:
     bool initialized = false;
@@ -32,6 +34,7 @@ private:
     std::deque<TextureStorage> m_textures;
     std::deque<Mesh> m_meshes;
     std::string m_directory;
+    glm::mat4 u_model;
 
     void process_node(aiNode* node, const aiScene* scene);
     void process_mesh(aiMesh* mesh, const aiScene* scene);
