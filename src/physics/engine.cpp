@@ -59,6 +59,26 @@ void PhysicsEngine::create_mesh_triangle_list(JPH::TriangleList& triangles, cons
     }
 }
 
+void PhysicsEngine::create_mesh_triangle_list(JPH::TriangleList& triangles, const glm::mat4& model, const std::deque<Renderer::Mesh>* meshes)
+{
+    for (std::size_t i = 0; i < meshes->size(); i++) {
+        const Renderer::Mesh* mesh = &meshes->at(i);
+        glm::vec3 v1;
+        glm::vec3 v2;
+        glm::vec3 v3;
+        u32 j = 0;
+        while (j + 2 < mesh->m_indicies.size()) {
+            v1 = glm::vec4(mesh->m_verticies[mesh->m_indicies.at(j + 0)].m_pos, 1.0F) * model;
+            v2 = glm::vec4(mesh->m_verticies[mesh->m_indicies.at(j + 1)].m_pos, 1.0F) * model;
+            v3 = glm::vec4(mesh->m_verticies[mesh->m_indicies.at(j + 2)].m_pos, 1.0F) * model;
+            j += 3;
+
+            JPH::Triangle triangle(vec3_to_float3(v1), vec3_to_float3(v2), vec3_to_float3(v3));
+            triangles.push_back(triangle);
+        }
+    }
+}
+
 void PhysicsEngine::optimize()
 {
     m_physics_system.OptimizeBroadPhase();

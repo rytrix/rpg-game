@@ -21,12 +21,11 @@ public:
 
     void init(const char* path);
 
-    void draw();
+    void draw_untextured(ShaderProgram& shader);
     void draw(ShaderProgram& shader);
 
     const std::deque<Mesh>* get_meshes();
     glm::mat4& get_model_matrix();
-
 
 private:
     bool initialized = false;

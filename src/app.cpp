@@ -58,10 +58,12 @@ App::App()
     // u_model = glm::scale(glm::mat4 { 1.0 }, glm::vec3(1.0));
 
     // m_plane.init("res/models/Sponza/glTF/Sponza.gltf");
+    // m_plane.get_model_matrix() = glm::scale(glm::mat4(1.0), glm::vec3(0.01));
     m_plane.init("res/models/physics_plane/plane.obj");
     {
         JPH::TriangleList triangles;
         const auto* meshes = m_plane.get_meshes();
+        // const glm::mat4& model = m_plane.get_model_matrix();
         PhysicsEngine::create_mesh_triangle_list(triangles, meshes);
         JPH::BodyID plane_id = m_physics_engine->m_body_interface->CreateAndAddBody(
             JPH::BodyCreationSettings(
@@ -105,7 +107,7 @@ App::App()
     point_info.quadratic = 0.0019F;
     point_info.shadowmap = true;
     point_info.near = 0.1F;
-    point_info.far = 50.0F;
+    point_info.far = 25.0F;
     m_point_light.init(point_info);
 
     glEnable(GL_DEPTH_TEST);
@@ -259,25 +261,20 @@ void App::run()
         glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
 
         // Shadowmap pass
-        glDisable(GL_CULL_FACE);
-
-        m_directional_light.shadowmap_draw(m_shadowmap_shader, [&]() {
-            m_shadowmap_shader.set_mat4("model", m_plane.get_model_matrix());
-            m_plane.draw();
-            m_shadowmap_shader.set_mat4("model", m_cube.get_model_matrix());
-            m_cube.draw();
-        });
-
+        // glDisable(GL_CULL_FACE);
         // glCullFace(GL_FRONT);
 
-        m_point_light.shadowmap_draw(m_shadowmap_cubemap_shader, [&]() {
-            m_shadowmap_cubemap_shader.set_mat4("model", m_plane.get_model_matrix());
-            m_plane.draw();
-            m_shadowmap_cubemap_shader.set_mat4("model", m_cube.get_model_matrix());
-            m_cube.draw();
+        m_directional_light.shadowmap_draw(m_shadowmap_shader, [&]() {
+            m_plane.draw_untextured(m_shadowmap_shader);
+            m_cube.draw_untextured(m_shadowmap_shader);
         });
 
-        glEnable(GL_CULL_FACE);
+        m_point_light.shadowmap_draw(m_shadowmap_cubemap_shader, [&]() {
+            m_plane.draw_untextured(m_shadowmap_cubemap_shader);
+            m_cube.draw_untextured(m_shadowmap_cubemap_shader);
+        });
+
+        // glEnable(GL_CULL_FACE);
 
         // Geometry pass
         // glCullFace(GL_BACK);
@@ -289,9 +286,7 @@ void App::run()
         m_gpass_shader.set_mat4("proj", m_camera.get_proj());
         m_gpass_shader.set_mat4("view", m_camera.get_view());
 
-        m_gpass_shader.set_mat4("model", m_plane.get_model_matrix());
         m_plane.draw(m_gpass_shader);
-        m_gpass_shader.set_mat4("model", m_cube.get_model_matrix());
         m_cube.draw(m_gpass_shader);
 
         m_gpass.blit_depth_buffer();
