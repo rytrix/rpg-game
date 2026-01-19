@@ -156,8 +156,8 @@ private:
         )";
     }
 
-    static constexpr i32 DEFAULT_SHADOW_WIDTH = 1024;
-    static constexpr i32 DEFAULT_SHADOW_HEIGHT = 1024;
+    static constexpr i32 DEFAULT_SHADOW_WIDTH = 2000;
+    static constexpr i32 DEFAULT_SHADOW_HEIGHT = 2000;
 
     bool initialized = false;
 

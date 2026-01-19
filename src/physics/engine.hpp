@@ -117,6 +117,7 @@ public:
     void update(float delta_time);
 
     static void create_mesh_triangle_list(JPH::TriangleList& triangles, const std::deque<Renderer::Mesh>* meshes);
+    static void create_mesh_triangle_list(JPH::TriangleList& triangles, const glm::mat4& model, const std::deque<Renderer::Mesh>* meshes);
 
     void optimize();
 

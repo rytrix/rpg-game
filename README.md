@@ -24,7 +24,8 @@ physics engine, make the interface better to use
 
 lighting system, spot lights
 
-texture unit ring buffer or something
+Some sort of Scene/Object system, runtime generated shaders for adding lights dynamically
+
 
 # Done
 resistances/damage reduction

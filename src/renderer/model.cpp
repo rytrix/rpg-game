@@ -36,9 +36,11 @@ Model::~Model()
     initialized = false;
 }
 
-void Model::draw()
+void Model::draw_untextured(ShaderProgram& shader)
 {
     util_assert(initialized == true, "Model has not been initialized");
+
+    shader.set_mat4("model", u_model);
     for (auto& mesh : m_meshes) {
         mesh.draw();
     }
@@ -47,6 +49,7 @@ void Model::draw()
 void Model::draw(ShaderProgram& shader)
 {
     util_assert(initialized == true, "Model has not been initialized");
+    shader.set_mat4("model", u_model);
     for (auto& mesh : m_meshes) {
         mesh.draw(shader);
     }
