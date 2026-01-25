@@ -9,7 +9,7 @@
 class App : public NoCopyNoMove {
 public:
     App();
-    ~App() = default;
+    ~App();
 
     void run();
 
@@ -26,7 +26,7 @@ private:
 
     const char* m_title = "Test Window";
 
-    std::unique_ptr<PhysicsEngine> m_physics_engine = nullptr;
+    std::unique_ptr<Physics::System> m_physics_engine = nullptr;
 
     Renderer::Window m_window;
     Renderer::Camera m_camera;

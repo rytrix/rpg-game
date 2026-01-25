@@ -1,10 +1,12 @@
 #include "app.hpp"
-#include "Jolt/Math/Real.h"
+
 #include "physics/helpers.hpp"
 
 App::App()
 {
-    m_physics_engine = std::make_unique<PhysicsEngine>();
+    Physics::Engine::setup_singletons();
+
+    m_physics_engine = std::make_unique<Physics::System>();
     LOG_TRACE("Initialized physics engine")
 
     m_window.init(m_title, 1000, 800);
@@ -64,13 +66,13 @@ App::App()
         JPH::TriangleList triangles;
         const auto* meshes = m_plane.get_meshes();
         // const glm::mat4& model = m_plane.get_model_matrix();
-        PhysicsEngine::create_mesh_triangle_list(triangles, meshes);
+        Physics::System::create_mesh_triangle_list(triangles, meshes);
         JPH::BodyID plane_id = m_physics_engine->m_body_interface->CreateAndAddBody(
             JPH::BodyCreationSettings(
                 new JPH::MeshShapeSettings(triangles),
                 JPH::RVec3::sZero(), JPH::Quat::sIdentity(),
                 JPH::EMotionType::Static,
-                Layers::NON_MOVING),
+                Physics::Layers::NON_MOVING),
             JPH::EActivation::DontActivate);
         m_physics_engine->m_bodies.push_back(plane_id);
     }
@@ -82,7 +84,7 @@ App::App()
             JPH::RVec3(-7.05, 20.0, -5.5),
             JPH::Quat::sIdentity(),
             JPH::EMotionType::Dynamic,
-            Layers::MOVING);
+            Physics::Layers::MOVING);
         b_cube = m_physics_engine->m_body_interface->CreateAndAddBody(
             cube_settings,
             JPH::EActivation::Activate);
@@ -126,9 +128,10 @@ App::App()
     LOG_INFO(std::format("Finished loading in {} seconds", m_clock.delta_time()));
 }
 
-// App::~App()
-// {
-// }
+App::~App()
+{
+    Physics::Engine::cleanup_singletons();
+}
 
 void App::keyboard_callback()
 {
@@ -160,6 +163,10 @@ void App::keyboard_callback()
             if (event.key.key == SDLK_P) {
                 glm::vec3 pos = m_camera.get_pos();
                 std::println("Camera_position: {}, {}, {}", pos.x, pos.y, pos.z);
+            }
+
+            if (event.key.key == SDLK_Q) {
+                m_window.set_should_close();
             }
         }
     });

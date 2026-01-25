@@ -98,14 +98,14 @@ Window::~Window()
     // util_assert(initialized == true, "Attempting to call destructor with uninitialized data");
     if (initialized) {
         if (m_window != nullptr) {
+            ImGui_ImplOpenGL3_Shutdown();
+            ImGui_ImplSDL3_Shutdown();
+            ImGui::DestroyContext();
+
             SDL_GL_DestroyContext(m_context);
             SDL_DestroyWindow(m_window);
             SDL_Quit();
             m_window = nullptr;
-
-            ImGui_ImplOpenGL3_Shutdown();
-            ImGui_ImplSDL3_Shutdown();
-            ImGui::DestroyContext();
         }
         initialized = false;
     }
