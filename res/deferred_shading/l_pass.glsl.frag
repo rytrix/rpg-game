@@ -181,7 +181,7 @@ vec3 point_light(PointLight light, vec3 albedo, float in_specular, vec3 normal, 
     float spec = pow(max(dot(view_dir, reflect_dir), 0.0), shininess);
     vec3 specular = (in_specular * spec) * light.specular;
 
-    return (ambient + diffuse + specular)) * albedo;
+    return (ambient + diffuse + specular) * albedo;
 }
 
 vec3 point_light_shadow(PointLightShadow light, vec3 albedo, float in_specular, vec3 normal, vec3 view_pos, vec3 frag_pos, float shininess)
