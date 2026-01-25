@@ -104,7 +104,7 @@ public:
     }
 };
 
-class PhysicsEngine {
+class PhysicsEngine : public NoCopyNoMove {
 public:
     PhysicsEngine();
     ~PhysicsEngine();

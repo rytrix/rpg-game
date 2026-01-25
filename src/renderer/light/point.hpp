@@ -21,15 +21,10 @@ struct PointInfo {
     float far = 25.0F;
 };
 
-class Point {
+class Point : public NoCopyNoMove {
 public:
     Point() = default;
     ~Point();
-
-    Point(const Point&) = delete;
-    Point& operator=(const Point&) = delete;
-    Point(Point&&) = default;
-    Point& operator=(Point&&) = default;
 
     void init(PointInfo& info);
 

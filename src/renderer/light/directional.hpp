@@ -16,15 +16,10 @@ struct DirectionalInfo {
     bool shadowmap = false;
 };
 
-class Directional {
+class Directional : public NoCopyNoMove {
 public:
     Directional() = default;
     ~Directional();
-
-    Directional(const Directional&) = delete;
-    Directional& operator=(const Directional&) = delete;
-    Directional(Directional&&) = default;
-    Directional& operator=(Directional&&) = default;
 
     void init(DirectionalInfo& info);
 

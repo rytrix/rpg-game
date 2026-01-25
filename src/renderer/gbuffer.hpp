@@ -7,15 +7,10 @@
 
 namespace Renderer {
 
-class GBuffer {
+class GBuffer : public NoCopyNoMove {
 public:
     GBuffer() = default;
     ~GBuffer();
-
-    GBuffer(const GBuffer&) = delete;
-    GBuffer& operator=(const GBuffer&) = delete;
-    GBuffer(GBuffer&&) = default;
-    GBuffer& operator=(GBuffer&&) = default;
 
     void init(int screen_width, int screen_height);
     void reinit(int screen_width, int screen_height);
@@ -37,8 +32,8 @@ private:
 
     Renderer::Renderbuffer m_depth;
 
-    i32 m_buffer_width;
-    i32 m_buffer_height;
+    i32 m_buffer_width {};
+    i32 m_buffer_height {};
 };
 
 } // namespace Renderer

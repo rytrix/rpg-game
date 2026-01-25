@@ -35,16 +35,11 @@ struct TextureSubimageInfo {
     void* pixels {};
 };
 
-class Texture {
+class Texture : public NoCopyNoMove {
 public:
     Texture() = default;
     explicit Texture(TextureInfo& info);
     ~Texture();
-
-    Texture(const Texture&) = delete;
-    Texture& operator=(const Texture&) = delete;
-    Texture(Texture&&) = default;
-    Texture& operator=(Texture&&) = default;
 
     static GLuint get_texture_unit();
     static void reset_texture_units();

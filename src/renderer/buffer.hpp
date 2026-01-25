@@ -2,14 +2,9 @@
 
 namespace Renderer {
 
-struct Buffer {
+struct Buffer : public NoCopyNoMove {
     Buffer() = default;
     ~Buffer();
-
-    Buffer(const Buffer&) = delete;
-    Buffer& operator=(const Buffer&) = delete;
-    Buffer(Buffer&&) = default;
-    Buffer& operator=(Buffer&&) = default;
 
     void init();
 
