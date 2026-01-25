@@ -7,7 +7,7 @@
 
 namespace Renderer {
 
-class Mesh {
+class Mesh : public NoCopyNoMove {
 public:
     struct Vertex {
         glm::vec3 m_pos;
@@ -20,11 +20,6 @@ public:
         std::vector<u32>&& indicies,
         std::vector<TextureRef>&& textures);
     ~Mesh();
-
-    Mesh(const Mesh&) = delete;
-    Mesh& operator=(const Mesh&) = delete;
-    Mesh(Mesh&&) = default;
-    Mesh& operator=(Mesh&&) = default;
 
     void init(std::vector<Vertex>&& verticies,
         std::vector<u32>&& indicies,

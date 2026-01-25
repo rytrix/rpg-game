@@ -6,15 +6,10 @@
 
 namespace Renderer {
 
-class ShadowMap {
+class ShadowMap : public NoCopyNoMove {
 public:
     ShadowMap() = default;
     ~ShadowMap();
-
-    ShadowMap(const ShadowMap&) = delete;
-    ShadowMap& operator=(const ShadowMap&) = delete;
-    ShadowMap(ShadowMap&&) = default;
-    ShadowMap& operator=(ShadowMap&&) = default;
 
     void init();
     void init(i32 width, i32 height);

@@ -2,15 +2,10 @@
 
 namespace Renderer {
 
-class Framebuffer {
+class Framebuffer : public NoCopyNoMove {
 public:
     Framebuffer() = default;
     ~Framebuffer();
-
-    Framebuffer(const Framebuffer&) = delete;
-    Framebuffer& operator=(const Framebuffer&) = delete;
-    Framebuffer(Framebuffer&&) = default;
-    Framebuffer& operator=(Framebuffer&&) = default;
 
     void init();
 

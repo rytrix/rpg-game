@@ -155,7 +155,8 @@ std::vector<TextureRef> Model::load_material_textures(aiMaterial* mat, aiTexture
 
             LOG_INFO(std::format("Loading {}", texture_path));
 
-            m_textures.emplace_back(Texture {}, texture_path);
+            m_textures.emplace_back();
+            m_textures.at(m_textures.size() - 1).file_path = texture_path;
             m_textures.at(m_textures.size() - 1).m_tex.init(texture_info);
 
             texture.m_id = static_cast<u32>(m_textures.size()) - 1;

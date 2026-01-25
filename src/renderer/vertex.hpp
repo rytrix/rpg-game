@@ -2,17 +2,12 @@
 
 namespace Renderer {
 
-class VertexArray {
+class VertexArray : public NoCopyNoMove {
 public:
     VertexArray() = default;
     ~VertexArray();
 
     void init();
-
-    VertexArray(const VertexArray&) = delete;
-    VertexArray& operator=(const VertexArray&) = delete;
-    VertexArray(VertexArray&&) = default;
-    VertexArray& operator=(VertexArray&&) = default;
 
     void vertex_attrib(GLuint attrib_index, GLuint binding_index, GLint values_per_vertex, GLenum data_type, GLuint relative_offset_in_bytes);
     void bind_vertex_buffer(GLuint binding_index, GLuint vertex_buffer_id, GLintptr offset, GLsizei stride_in_bytes);

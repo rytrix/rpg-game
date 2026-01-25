@@ -22,6 +22,7 @@
 #include <imgui_impl_sdl3.h>
 
 #include "utils/assert.hpp"
+#include "utils/default.hpp"
 #include "utils/log.hpp"
 
 #include <algorithm>

@@ -5,15 +5,10 @@
 
 namespace Renderer {
 
-class Quad {
+class Quad : public NoCopyNoMove {
 public:
     Quad() = default;
     ~Quad();
-
-    Quad(const Quad&) = delete;
-    Quad& operator=(const Quad&) = delete;
-    Quad(Quad&&) = default;
-    Quad& operator=(Quad&&) = default;
 
     void init();
     void draw();

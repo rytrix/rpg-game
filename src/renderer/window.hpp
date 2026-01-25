@@ -2,18 +2,13 @@
 
 namespace Renderer {
 
-class Window {
+class Window : public NoCopyNoMove {
 public:
     Window() = default;
     Window(const char* name, int width, int height);
     ~Window();
 
     void init(const char* name, int width, int height);
-
-    Window(const Window&) = delete;
-    Window& operator=(const Window&) = delete;
-    Window(Window&&) = default;
-    Window& operator=(Window&&) = default;
 
     void process_input_callback(const std::function<void(SDL_Event& event)>& commands);
     void loop(const std::function<void()>& commands);

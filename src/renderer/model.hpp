@@ -8,16 +8,11 @@
 
 namespace Renderer {
 
-class Model {
+class Model : public NoCopyNoMove {
 public:
     Model() = default;
     explicit Model(const char* path);
     ~Model();
-
-    Model(const Model&) = delete;
-    Model& operator=(const Model&) = delete;
-    Model(Model&&) noexcept = default;
-    Model& operator=(Model&&) = default;
 
     void init(const char* path);
 
@@ -33,7 +28,7 @@ private:
     std::deque<TextureStorage> m_textures;
     std::deque<Mesh> m_meshes;
     std::string m_directory;
-    glm::mat4 u_model;
+    glm::mat4 u_model { 1.0 };
 
     void process_node(aiNode* node, const aiScene* scene);
     void process_mesh(aiMesh* mesh, const aiScene* scene);

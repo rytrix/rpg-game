@@ -2,15 +2,10 @@
 
 namespace Renderer {
 
-class Renderbuffer {
+class Renderbuffer : public NoCopyNoMove {
 public:
     Renderbuffer() = default;
     ~Renderbuffer();
-
-    Renderbuffer(const Renderbuffer&) = delete;
-    Renderbuffer& operator=(const Renderbuffer&) = delete;
-    Renderbuffer(Renderbuffer&&) = default;
-    Renderbuffer& operator=(Renderbuffer&&) = default;
 
     void init();
 
