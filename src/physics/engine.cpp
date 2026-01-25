@@ -2,33 +2,49 @@
 
 #include "helpers.hpp"
 
-PhysicsEngine::PhysicsEngine()
+namespace Physics {
+
+namespace {
+JPH::JobSystemThreadPool* s_job_system = nullptr;
+}
+
+namespace Engine {
+
+void setup_singletons()
 {
     JPH::RegisterDefaultAllocator();
     JPH::Factory::sInstance = new JPH::Factory();
     JPH::RegisterTypes();
-    m_job_system = new JPH::JobSystemThreadPool(JPH::cMaxPhysicsJobs, JPH::cMaxPhysicsBarriers, std::thread::hardware_concurrency() - 1);
+    s_job_system = new JPH::JobSystemThreadPool(JPH::cMaxPhysicsJobs, JPH::cMaxPhysicsBarriers, std::thread::hardware_concurrency() - 1);
+}
 
+void cleanup_singletons()
+{
+    delete s_job_system;
+    s_job_system = nullptr;
+
+    delete JPH::Factory::sInstance;
+    JPH::Factory::sInstance = nullptr;
+}
+
+} // namespace Engine
+
+System::System()
+{
     m_physics_system.Init(cMaxBodies, cNumBodyMutexes, cMaxBodyPairs, cMaxContactConstraints, m_broad_phase_layer_interface, m_object_vs_broadphase_layer_filter, m_object_vs_object_layer_filter);
     m_body_interface = &m_physics_system.GetBodyInterface();
 }
 
-PhysicsEngine::~PhysicsEngine()
+System::~System()
 {
     m_body_interface->RemoveBodies(m_bodies.data(), m_bodies.size());
     m_body_interface->DestroyBodies(m_bodies.data(), m_bodies.size());
 
     // Unregisters all types with the factory and cleans up the default material
     JPH::UnregisterTypes();
-
-    delete m_job_system;
-    m_job_system = nullptr;
-
-    delete JPH::Factory::sInstance;
-    JPH::Factory::sInstance = nullptr;
 }
 
-void PhysicsEngine::update(float delta_time)
+void System::update(float delta_time)
 {
     // If you take larger steps than 1 / 60th of a second you
     // need to do multiple collision steps in order to keep the simulation stable.
@@ -36,10 +52,10 @@ void PhysicsEngine::update(float delta_time)
     // For some reason I have to cap it at a number or it will segfault the program
     const int collision_steps = std::min(std::max(static_cast<int>(std::ceil(delta_time / (1.0f / 60.0f))), 1), 10);
 
-    m_physics_system.Update(delta_time, collision_steps, &m_temp_allocator, m_job_system);
+    m_physics_system.Update(delta_time, collision_steps, &m_temp_allocator, s_job_system);
 }
 
-void PhysicsEngine::create_mesh_triangle_list(JPH::TriangleList& triangles, const std::deque<Renderer::Mesh>* meshes)
+void System::create_mesh_triangle_list(JPH::TriangleList& triangles, const std::deque<Renderer::Mesh>* meshes)
 {
     for (std::size_t i = 0; i < meshes->size(); i++) {
         const Renderer::Mesh* mesh = &meshes->at(i);
@@ -59,7 +75,7 @@ void PhysicsEngine::create_mesh_triangle_list(JPH::TriangleList& triangles, cons
     }
 }
 
-void PhysicsEngine::create_mesh_triangle_list(JPH::TriangleList& triangles, const glm::mat4& model, const std::deque<Renderer::Mesh>* meshes)
+void System::create_mesh_triangle_list(JPH::TriangleList& triangles, const glm::mat4& model, const std::deque<Renderer::Mesh>* meshes)
 {
     for (std::size_t i = 0; i < meshes->size(); i++) {
         const Renderer::Mesh* mesh = &meshes->at(i);
@@ -79,7 +95,9 @@ void PhysicsEngine::create_mesh_triangle_list(JPH::TriangleList& triangles, cons
     }
 }
 
-void PhysicsEngine::optimize()
+void System::optimize()
 {
     m_physics_system.OptimizeBroadPhase();
 }
+
+} // namespace Physics

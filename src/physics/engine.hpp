@@ -15,6 +15,8 @@
 #include <Jolt/Physics/PhysicsSystem.h>
 #include <Jolt/RegisterTypes.h>
 
+namespace Physics {
+
 namespace Layers {
 
 static constexpr JPH::ObjectLayer NON_MOVING = 0;
@@ -104,15 +106,15 @@ public:
     }
 };
 
-class PhysicsEngine : public NoCopyNoMove {
-public:
-    PhysicsEngine();
-    ~PhysicsEngine();
+namespace Engine {
+    void setup_singletons();
+    void cleanup_singletons();
+}
 
-    PhysicsEngine(const PhysicsEngine&) = delete;
-    PhysicsEngine& operator=(const PhysicsEngine&) = delete;
-    PhysicsEngine(PhysicsEngine&&) = delete;
-    PhysicsEngine& operator=(PhysicsEngine&&) = delete;
+class System : public NoCopyNoMove {
+public:
+    System();
+    ~System();
 
     void update(float delta_time);
 
@@ -127,7 +129,6 @@ public:
 
 private:
     JPH::TempAllocatorMalloc m_temp_allocator;
-    JPH::JobSystemThreadPool* m_job_system;
 
     const uint cMaxBodies = 65536;
     const uint cNumBodyMutexes = 0;
@@ -140,3 +141,5 @@ private:
 
     JPH::PhysicsSystem m_physics_system;
 };
+
+} // namespace Physics
