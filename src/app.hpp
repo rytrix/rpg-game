@@ -6,15 +6,10 @@
 
 #include "renderer.hpp"
 
-class App {
+class App : public NoCopyNoMove {
 public:
     App();
     ~App() = default;
-
-    App(const App&) = delete;
-    App& operator=(const App&) = delete;
-    App(App&&) = default;
-    App& operator=(App&&) = default;
 
     void run();
 
