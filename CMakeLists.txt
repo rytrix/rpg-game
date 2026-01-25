@@ -8,6 +8,7 @@ project(rpg)
 add_executable(${PROJECT_NAME} 
     src/main.cpp 
     src/app.cpp 
+    src/scene.cpp
 
     src/physics/engine.cpp
     
