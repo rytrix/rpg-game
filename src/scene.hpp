@@ -19,10 +19,25 @@ private:
     void create_point_light(Renderer::Light::PointInfo& info);
     void create_directional_light(Renderer::Light::DirectionalInfo& info);
 
+    void compile_shader();
+
+    Renderer::ShaderProgram m_lpass_shader;
+
+    // TODO
+    // Make removal of elements efficient
     std::vector<Renderer::Light::Point> m_point_lights;
     std::vector<Renderer::Light::Directional> m_directional_lights;
     std::vector<Renderer::Model> m_models;
     std::vector<JPH::BodyID> m_bodies;
+
+    struct Mapping {
+        u32 point;
+        u32 directional;
+        u32 model;
+        u32 body;
+    };
+
+    std::unordered_map<Entity, Mapping> m_mappings;
 
     std::vector<Entity> m_entities;
 };
