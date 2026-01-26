@@ -1,13 +1,16 @@
 #include "app.hpp"
 
 #include "physics/helpers.hpp"
+#include "scene.hpp"
 
 App::App()
 {
     Physics::Engine::setup_singletons();
-
     m_physics_engine = std::make_unique<Physics::System>();
     LOG_TRACE("Initialized physics engine")
+
+    auto scene = Scene {};
+    scene.compile_shader();
 
     m_window.init(m_title, 1000, 800);
     m_window.set_relative_mode(true);

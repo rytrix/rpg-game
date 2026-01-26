@@ -43,15 +43,6 @@ struct PointLightShadow {
     float far_plane;
 };
 
-uniform sampler2D gPosition;
-uniform sampler2D gNormal;
-uniform sampler2D gAlbedoSpec;
-
-uniform vec3 view_position;
-
-uniform DirectionalLightShadow u_directional_light;
-uniform PointLightShadow u_point_light;
-
 float shadow_calculation(DirectionalLightShadow light, vec3 frag_pos, float bias)
 {
     vec4 light_space_frag_pos = light.light_space_matrix * vec4(frag_pos, 1.0);
@@ -209,6 +200,15 @@ vec3 point_light_shadow(PointLightShadow light, vec3 albedo, float in_specular, 
 
     return (ambient + (1.0 - shadow) * (diffuse + specular)) * albedo;
 }
+
+uniform sampler2D gPosition;
+uniform sampler2D gNormal;
+uniform sampler2D gAlbedoSpec;
+
+uniform vec3 view_position;
+
+uniform DirectionalLightShadow u_directional_light;
+uniform PointLightShadow u_point_light;
 
 void main()
 {

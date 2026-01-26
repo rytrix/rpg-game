@@ -13,13 +13,13 @@ class Scene : public NoCopyNoMove {
 public:
     void add_entity(EntityBuilder& entity);
 
+    void compile_shader();
+
 private:
     void create_model(const char* path);
     void create_physics_body(PhysicsFn& create_body_function);
     void create_point_light(Renderer::Light::PointInfo& info);
     void create_directional_light(Renderer::Light::DirectionalInfo& info);
-
-    void compile_shader();
 
     Renderer::ShaderProgram m_lpass_shader;
 
