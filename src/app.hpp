@@ -26,7 +26,7 @@ private:
 
     const char* m_title = "Test Window";
 
-    std::unique_ptr<Physics::System> m_physics_engine = nullptr;
+    std::unique_ptr<Physics::System> m_physics_system = nullptr;
 
     Renderer::Window m_window;
     Renderer::Camera m_camera;
@@ -40,8 +40,10 @@ private:
     Renderer::ShaderProgram m_shadowmap_cubemap_shader;
 
     Renderer::Model m_plane;
+    glm::mat4 m_plane_matrix { 1.0 };
 
     Renderer::Model m_cube;
+    glm::mat4 m_cube_matrix { 1.0 };
     JPH::BodyID b_cube;
 
     Renderer::Light::Directional m_directional_light;

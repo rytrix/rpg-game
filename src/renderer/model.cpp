@@ -17,7 +17,6 @@ void Model::init(const char* file_path)
     util_assert(initialized == false, "Model::init() has already been initialized");
 
     m_directory = file_path;
-    u_model = glm::mat4(1.0);
 
     util_assert(std::filesystem::exists(file_path), std::format("Model \"{}\" is an invalid path", file_path));
 
@@ -36,20 +35,20 @@ Model::~Model()
     initialized = false;
 }
 
-void Model::draw_untextured(ShaderProgram& shader)
+void Model::draw_untextured(ShaderProgram& shader, glm::mat4 model)
 {
     util_assert(initialized == true, "Model has not been initialized");
 
-    shader.set_mat4("model", u_model);
+    shader.set_mat4("model", model);
     for (auto& mesh : m_meshes) {
         mesh.draw();
     }
 }
 
-void Model::draw(ShaderProgram& shader)
+void Model::draw(ShaderProgram& shader, glm::mat4 model)
 {
     util_assert(initialized == true, "Model has not been initialized");
-    shader.set_mat4("model", u_model);
+    shader.set_mat4("model", model);
     for (auto& mesh : m_meshes) {
         mesh.draw(shader);
     }
@@ -61,11 +60,11 @@ const std::deque<Mesh>* Model::get_meshes()
     return &m_meshes;
 }
 
-glm::mat4& Model::get_model_matrix()
-{
-    util_assert(initialized == true, "Model has not been initialized");
-    return u_model;
-}
+// glm::mat4& Model::get_model_matrix()
+// {
+//     util_assert(initialized == true, "Model has not been initialized");
+//     return u_model;
+// }
 
 void Model::process_node(aiNode* node, const aiScene* scene)
 {

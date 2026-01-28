@@ -31,6 +31,7 @@ public:
     void set_mat4(const char* name, glm::mat4 value);
 
     [[nodiscard]] bool has_errors() const;
+    [[nodiscard]] bool is_initialized() const;
 
 private:
     bool initialized = false;

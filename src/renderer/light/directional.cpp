@@ -2,6 +2,11 @@
 
 namespace Renderer::Light {
 
+Directional::Directional(DirectionalInfo& info)
+{
+    init(info);
+}
+
 Directional::~Directional()
 {
     if (initialized) {

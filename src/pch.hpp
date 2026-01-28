@@ -21,6 +21,8 @@
 #include <imgui_impl_opengl3.h>
 #include <imgui_impl_sdl3.h>
 
+#include <entt/entt.hpp>
+
 #include "utils/assert.hpp"
 #include "utils/default.hpp"
 #include "utils/log.hpp"

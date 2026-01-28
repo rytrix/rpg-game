@@ -19,6 +19,7 @@ struct DirectionalInfo {
 class Directional : public NoCopyNoMove {
 public:
     Directional() = default;
+    Directional(DirectionalInfo& info);
     ~Directional();
 
     void init(DirectionalInfo& info);

@@ -1,16 +1,16 @@
 #include "app.hpp"
 
 #include "physics/helpers.hpp"
-#include "scene.hpp"
+#include "scene/scene.hpp"
 
 App::App()
 {
     Physics::Engine::setup_singletons();
-    m_physics_engine = std::make_unique<Physics::System>();
+    m_physics_system = std::make_unique<Physics::System>();
     LOG_TRACE("Initialized physics engine")
 
     auto scene = Scene {};
-    scene.compile_shader();
+    scene.compile_shaders();
 
     m_window.init(m_title, 1000, 800);
     m_window.set_relative_mode(true);
@@ -70,14 +70,14 @@ App::App()
         const auto* meshes = m_plane.get_meshes();
         // const glm::mat4& model = m_plane.get_model_matrix();
         Physics::System::create_mesh_triangle_list(triangles, meshes);
-        JPH::BodyID plane_id = m_physics_engine->m_body_interface->CreateAndAddBody(
+        JPH::BodyID plane_id = m_physics_system->m_body_interface->CreateAndAddBody(
             JPH::BodyCreationSettings(
                 new JPH::MeshShapeSettings(triangles),
                 JPH::RVec3::sZero(), JPH::Quat::sIdentity(),
                 JPH::EMotionType::Static,
                 Physics::Layers::NON_MOVING),
             JPH::EActivation::DontActivate);
-        m_physics_engine->m_bodies.push_back(plane_id);
+        m_physics_system->m_bodies.push_back(plane_id);
     }
 
     m_cube.init("res/models/physics_cube/cube.obj");
@@ -88,10 +88,10 @@ App::App()
             JPH::Quat::sIdentity(),
             JPH::EMotionType::Dynamic,
             Physics::Layers::MOVING);
-        b_cube = m_physics_engine->m_body_interface->CreateAndAddBody(
+        b_cube = m_physics_system->m_body_interface->CreateAndAddBody(
             cube_settings,
             JPH::EActivation::Activate);
-        m_physics_engine->m_bodies.push_back(b_cube);
+        m_physics_system->m_bodies.push_back(b_cube);
     }
 
     Renderer::Light::DirectionalInfo directional_info;
@@ -125,7 +125,7 @@ App::App()
 
     // glEnable(GL_MULTISAMPLE);
 
-    m_physics_engine->optimize();
+    m_physics_system->optimize();
 
     m_clock.update();
     LOG_INFO(std::format("Finished loading in {} seconds", m_clock.delta_time()));
@@ -241,14 +241,13 @@ void App::imgui_run()
 
     ImGui::Checkbox("Toggle physics", &m_physics_on);
     if (ImGui::CollapsingHeader("Cube 1")) {
-        glm::mat4& u_model = m_cube.get_model_matrix();
-        glm::vec3 cube_pos = u_model[3];
+        glm::vec3 cube_pos = m_cube_matrix[3];
         ImGui::DragFloat3("XYZ", &cube_pos.x, 1.0F, -8.0f, 8.0f);
-        m_physics_engine->m_body_interface->SetPosition(
+        m_physics_system->m_body_interface->SetPosition(
             b_cube,
             vec3_to_vec3(cube_pos),
             JPH::EActivation::Activate);
-        u_model[3] = glm::vec4(cube_pos, u_model[3][3]);
+        m_cube_matrix[3] = glm::vec4(cube_pos, m_cube_matrix[3][3]);
     }
 
     ImGui::End();
@@ -264,8 +263,8 @@ void App::run()
         imgui_run();
 
         if (m_physics_on) {
-            m_physics_engine->update(m_clock.delta_time());
-            m_cube.get_model_matrix() = mat4_to_mat4(m_physics_engine->m_body_interface->GetCenterOfMassTransform(b_cube));
+            m_physics_system->update(m_clock.delta_time());
+            m_cube_matrix = mat4_to_mat4(m_physics_system->m_body_interface->GetCenterOfMassTransform(b_cube));
         }
 
         glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
@@ -275,13 +274,13 @@ void App::run()
         // glCullFace(GL_FRONT);
 
         m_directional_light.shadowmap_draw(m_shadowmap_shader, [&]() {
-            m_plane.draw_untextured(m_shadowmap_shader);
-            m_cube.draw_untextured(m_shadowmap_shader);
+            m_plane.draw_untextured(m_shadowmap_shader, m_plane_matrix);
+            m_cube.draw_untextured(m_shadowmap_shader, m_cube_matrix);
         });
 
         m_point_light.shadowmap_draw(m_shadowmap_cubemap_shader, [&]() {
-            m_plane.draw_untextured(m_shadowmap_cubemap_shader);
-            m_cube.draw_untextured(m_shadowmap_cubemap_shader);
+            m_plane.draw_untextured(m_shadowmap_cubemap_shader, m_plane_matrix);
+            m_cube.draw_untextured(m_shadowmap_cubemap_shader, m_cube_matrix);
         });
 
         // glEnable(GL_CULL_FACE);
@@ -296,8 +295,8 @@ void App::run()
         m_gpass_shader.set_mat4("proj", m_camera.get_proj());
         m_gpass_shader.set_mat4("view", m_camera.get_view());
 
-        m_plane.draw(m_gpass_shader);
-        m_cube.draw(m_gpass_shader);
+        m_plane.draw(m_gpass_shader, m_plane_matrix);
+        m_cube.draw(m_gpass_shader, m_cube_matrix);
 
         m_gpass.blit_depth_buffer();
         m_gpass.unbind();
