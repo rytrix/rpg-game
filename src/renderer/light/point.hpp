@@ -24,6 +24,7 @@ struct PointInfo {
 class Point : public NoCopyNoMove {
 public:
     Point() = default;
+    Point(PointInfo& info);
     ~Point();
 
     void init(PointInfo& info);

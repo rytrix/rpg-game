@@ -8,7 +8,9 @@ project(rpg)
 add_executable(${PROJECT_NAME} 
     src/main.cpp 
     src/app.cpp 
-    src/scene.cpp
+
+    src/scene/scene.cpp
+    src/scene/entity_builder.cpp
 
     src/physics/engine.cpp
     
@@ -94,4 +96,5 @@ target_include_directories(${PROJECT_NAME}
     PUBLIC dep/assimp/include
     PUBLIC ${CMAKE_CURRENT_BINARY_DIR}/dep/assimp/include
     PUBLIC dep/JoltPhysics
+    PUBLIC dep/entt/single_include
 )

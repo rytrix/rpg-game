@@ -1,7 +1,3 @@
-#include "scene.hpp"
-
-namespace {
-
 constexpr const char* BOILERPLATE_SHADER_CODE_DEFERRED = R"(
 in vec2 TexCoords;
 uniform sampler2D gPosition;
@@ -208,30 +204,3 @@ vec3 point_light_shadow(PointLightShadow light, vec3 albedo, float in_specular, 
 
     return (ambient + (1.0 - shadow) * (diffuse + specular)) * albedo;
 })";
-
-} // anonymous namespace
-
-void Scene::compile_shader()
-{
-    std::string shader_source = std::format(
-        R"(
-        #version 460 core
-        out vec4 FragColor;
-        {} // Lighting code
-        {} // Deferred in/uniforms
-        {} // Light uniforms
-        void main() {{
-        vec3 FragPos = texture(gPosition, TexCoords).xyz;
-        vec3 Normal = texture(gNormal, TexCoords).xyz;
-        vec3 Albedo = texture(gAlbedoSpec, TexCoords).rgb;
-        float Specular = texture(gAlbedoSpec, TexCoords).a;
-        FragColor = vec4(0.0);
-        {}
-        }})",
-        LIGHTING_SHADER_CODE,
-        BOILERPLATE_SHADER_CODE_DEFERRED,
-        "light uniforms",
-        "light function calls");
-
-    LOG_INFO(std::format("shader_source:\n {}", shader_source));
-}

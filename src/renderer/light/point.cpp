@@ -2,6 +2,11 @@
 
 namespace Renderer::Light {
 
+Point::Point(PointInfo& info)
+{
+    init(info);
+}
+
 Point::~Point()
 {
     if (initialized) {

@@ -145,6 +145,11 @@ void ShaderProgram::init(ShaderInfo* shader_info, std::size_t shader_count)
     initialized = true;
 }
 
+[[nodiscard]] bool ShaderProgram::is_initialized() const
+{
+    return initialized;
+}
+
 void ShaderProgram::bind()
 {
     util_assert(initialized == true, "ShaderProgram has not been initialized");
