@@ -10,3 +10,6 @@
 [submodule "dep/imgui"]
 	path = dep/imgui
 	url = https://github.com/ocornut/imgui.git
+[submodule "dep/entt"]
+	path = dep/entt
+	url = https://github.com/skypjack/entt.git
