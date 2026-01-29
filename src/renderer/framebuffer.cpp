@@ -35,7 +35,7 @@ void Framebuffer::bind_texture(GLenum attachment, GLuint texture, GLint level) c
     glNamedFramebufferTexture(m_id, attachment, texture, level);
     auto error = glCheckNamedFramebufferStatus(m_id, GL_FRAMEBUFFER);
     if (error != GL_FRAMEBUFFER_COMPLETE) {
-        throw std::runtime_error(std::format("Framebuffer error: {}", error));
+        util_error(std::format("Framebuffer error: {}", error));
     }
 }
 

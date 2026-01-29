@@ -220,4 +220,5 @@ void main()
     FragColor = vec4(0.0);
     FragColor += vec4(directional_light_shadow(u_directional_light, Albedo, Specular, Normal, view_position, FragPos, 32.0), 1.0);
     FragColor += vec4(point_light_shadow(u_point_light, Albedo, Specular, Normal, view_position, FragPos, 32.0), 1.0);
+    // FragColor = vec4(Albedo, 1.0);
 }

@@ -9,8 +9,9 @@ class EntityBuilder : public NoCopy {
     friend class Scene;
 
 public:
+    EntityBuilder& add_name(const char* name);
     EntityBuilder& add_model_path(const char* path);
-    EntityBuilder& add_physics_command(PhysicsFn& create_body_function);
+    EntityBuilder& add_physics_command(const PhysicsFn& create_body_function);
     EntityBuilder& add_point_light(Renderer::Light::PointInfo& info);
     EntityBuilder& add_directional_light(Renderer::Light::DirectionalInfo& info);
     EntityBuilder& add_model_matrix(glm::mat4 model);
@@ -21,4 +22,5 @@ private:
     Renderer::Light::PointInfo* m_point_info = nullptr;
     Renderer::Light::DirectionalInfo* m_directional_info = nullptr;
     glm::mat4 m_model_matrix { 1.0 };
+    const char* m_name = nullptr;
 };

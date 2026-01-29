@@ -47,6 +47,7 @@ void Mesh::draw(ShaderProgram& shader)
 {
     util_assert(initialized == true, "Mesh has not been initialized");
 
+    m_vao.bind();
     // shader.bind();
     // https://learnopengl.com/Model-Loading/Mesh
     for (int i = 0; i < m_textures.size(); i++) {
@@ -62,7 +63,6 @@ void Mesh::draw(ShaderProgram& shader)
         }
     }
 
-    m_vao.bind();
     // m_vao.bind_vertex_buffer(0, m_vbo.get_id(), 0, sizeof(Vertex));
     // m_vao.bind_element_buffer(m_ebo.get_id());
     glDrawElements(GL_TRIANGLES, static_cast<GLsizei>(m_indicies.size()), GL_UNSIGNED_INT, nullptr);

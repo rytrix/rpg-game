@@ -2,11 +2,158 @@
 #include "game_logic/gear.hpp"
 
 #include "app.hpp"
+#include "scene/scene.hpp"
 
 int main()
 {
-    App app;
-    app.run();
+    Renderer::Window window;
+    window.init("Hi", 1000, 800);
+    window.set_relative_mode(true);
+
+    Physics::Engine::setup_singletons();
+    Scene scene(window);
+
+    EntityBuilder e1;
+    Renderer::Light::DirectionalInfo directional_info;
+    directional_info.direction = glm::vec3(-0.2F, -1.0F, 0.3F);
+    directional_info.ambient = glm::vec3(0.1);
+    directional_info.diffuse = glm::vec3(0.5);
+    directional_info.specular = glm::vec3(0.5);
+    directional_info.shadowmap = true;
+    e1.add_name("directional_light_1");
+    e1.add_directional_light(directional_info);
+    scene.add_entity(e1);
+
+    EntityBuilder e2;
+    e2.add_name("plane");
+    e2.add_model_path("res/models/physics_plane/plane.obj");
+    e2.add_physics_command([](Physics::System* system, Renderer::Model* model) -> std::pair<JPH::BodyID, JPH::EMotionType> {
+        JPH::TriangleList triangles;
+        const auto* meshes = model->get_meshes();
+        Physics::System::create_mesh_triangle_list(triangles, meshes);
+        JPH::BodyID plane_id = system->m_body_interface->CreateAndAddBody(
+            JPH::BodyCreationSettings(
+                new JPH::MeshShapeSettings(triangles),
+                JPH::RVec3::sZero(), JPH::Quat::sIdentity(),
+                JPH::EMotionType::Static,
+                Physics::Layers::NON_MOVING),
+            JPH::EActivation::DontActivate);
+        return { plane_id, JPH::EMotionType::Static };
+    });
+    scene.add_entity(e2);
+
+    EntityBuilder e3;
+    e3.add_name("cube");
+    e3.add_model_path("res/models/physics_cube/cube.obj");
+    e3.add_physics_command([](Physics::System* system, [[maybe_unused]] Renderer::Model* _model) -> std::pair<JPH::BodyID, JPH::EMotionType> {
+        JPH::BodyCreationSettings cube_settings(
+            new JPH::BoxShape(JPH::Vec3(0.5, 0.5, 0.5)),
+            JPH::RVec3(-7.05, 20.0, -5.5),
+            JPH::Quat::sIdentity(),
+            JPH::EMotionType::Dynamic,
+            Physics::Layers::MOVING);
+        auto body = system->m_body_interface->CreateAndAddBody(
+            cube_settings,
+            JPH::EActivation::Activate);
+        return { body, JPH::EMotionType::Dynamic };
+    });
+    scene.add_entity(e3);
+
+    for (int i = 0; i <= 50; i++) {
+        e3.add_physics_command([](Physics::System* system, [[maybe_unused]] Renderer::Model* _model) -> std::pair<JPH::BodyID, JPH::EMotionType> {
+            float y = rand() % 100;
+            JPH::BodyCreationSettings cube_settings(
+                new JPH::BoxShape(JPH::Vec3(0.5, 0.5, 0.5)),
+                JPH::RVec3(7.05, y, -5.5),
+                JPH::Quat::sIdentity(),
+                JPH::EMotionType::Dynamic,
+                Physics::Layers::MOVING);
+            auto body = system->m_body_interface->CreateAndAddBody(
+                cube_settings,
+                JPH::EActivation::Activate);
+            return { body, JPH::EMotionType::Dynamic };
+        });
+        scene.add_entity(e3);
+    }
+
+    EntityBuilder e4;
+    Renderer::Light::PointInfo point_info;
+    point_info.position = glm::vec3(2.0F, 2.0F, 2.0F);
+    point_info.ambient = glm::vec3(0.05F);
+    point_info.diffuse = glm::vec3(0.5F);
+    point_info.specular = glm::vec3(0.5F);
+    point_info.constant = 1.0F;
+    point_info.linear = 0.022F;
+    point_info.quadratic = 0.0019F;
+    point_info.shadowmap = true;
+    point_info.near = 0.1F;
+    point_info.far = 25.0F;
+    e4.add_point_light(point_info);
+    scene.add_entity(e4);
+
+    EntityBuilder e5;
+    point_info.position = glm::vec3(-2.0F, 2.0F, -2.0F);
+    point_info.ambient = glm::vec3(0.00F);
+    point_info.diffuse = glm::vec3(0.5F);
+    point_info.specular = glm::vec3(0.5F);
+    point_info.constant = 1.0F;
+    point_info.linear = 0.022F;
+    point_info.quadratic = 0.0019F;
+    point_info.shadowmap = true;
+    point_info.near = 0.1F;
+    point_info.far = 25.0F;
+    e5.add_point_light(point_info);
+    scene.add_entity(e5);
+
+    scene.update();
+    auto& camera = scene.get_camera();
+
+    window.process_input_callback([&](SDL_Event& event) {
+        if (event.type == SDL_EVENT_WINDOW_RESIZED) {
+            camera.update_aspect(window.get_aspect_ratio());
+            scene.update();
+        }
+        if (event.type == SDL_EVENT_MOUSE_MOTION) {
+            camera.rotate(event.motion.xrel, -event.motion.yrel);
+        }
+    });
+
+    auto scancodes = [&]() {
+        const bool* keys = SDL_GetKeyboardState(nullptr);
+        float delta_time = scene.get_clock().delta_time();
+        using Dir = Renderer::Camera::Movement;
+        if (keys[SDL_SCANCODE_W]) {
+            camera.move(Dir::Forward, delta_time);
+        }
+        if (keys[SDL_SCANCODE_S]) {
+            camera.move(Dir::Backward, delta_time);
+        }
+        if (keys[SDL_SCANCODE_A]) {
+            camera.move(Dir::Left, delta_time);
+        }
+        if (keys[SDL_SCANCODE_D]) {
+            camera.move(Dir::Right, delta_time);
+        }
+        if (keys[SDL_SCANCODE_SPACE]) {
+            camera.move(Dir::Up, delta_time);
+        }
+        if (keys[SDL_SCANCODE_LSHIFT]) {
+            camera.move(Dir::Down, delta_time);
+        }
+    };
+
+    window.loop([&]() {
+        scene.update();
+        scancodes();
+        scene.physics();
+
+        scene.draw();
+    });
+
+    Physics::Engine::cleanup_singletons();
+
+    // App app;
+    // app.run();
 
     LOG_TRACE("Exiting main function");
 

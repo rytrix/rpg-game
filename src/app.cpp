@@ -9,8 +9,8 @@ App::App()
     m_physics_system = std::make_unique<Physics::System>();
     LOG_TRACE("Initialized physics engine")
 
-    auto scene = Scene {};
-    scene.compile_shaders();
+    // auto scene = Scene {};
+    // scene.compile_shaders();
 
     m_window.init(m_title, 1000, 800);
     m_window.set_relative_mode(true);
@@ -296,13 +296,11 @@ void App::run()
         m_gpass_shader.set_mat4("view", m_camera.get_view());
 
         m_plane.draw(m_gpass_shader, m_plane_matrix);
-        m_cube.draw(m_gpass_shader, m_cube_matrix);
-
-        m_gpass.blit_depth_buffer();
+        // m_cube.draw(m_gpass_shader, m_cube_matrix);
         m_gpass.unbind();
 
         // Lighting pass
-        glClear(GL_COLOR_BUFFER_BIT);
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         m_lpass_shader.bind();
 
         m_gpass.set_uniforms(m_lpass_shader);
