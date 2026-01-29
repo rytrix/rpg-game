@@ -130,7 +130,9 @@ void Window::process_input_internal()
         }
 
         ImGui_ImplSDL3_ProcessEvent(&event);
-        m_process_input_fn(event);
+        if (m_process_input_fn != nullptr) {
+            m_process_input_fn(event);
+        }
     }
 }
 

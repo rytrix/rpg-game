@@ -1,6 +1,7 @@
 #pragma once
 
 #include "../physics/engine.hpp"
+#include "../utils/deltatime.hpp"
 
 #include "renderer.hpp"
 
@@ -8,16 +9,36 @@
 
 class Scene : public NoCopyNoMove {
 public:
-    Scene();
-    ~Scene() = default;
+    explicit Scene(Renderer::Window& window);
+    ~Scene();
 
     void add_entity(EntityBuilder& entity);
 
-    void compile_shaders();
+    // Call update after adding an entity (or maybe I do that internally)
+    void update();
+
+    void physics();
+    void draw();
+
+    Renderer::Camera& get_camera();
+    const Utils::DeltaTime& get_clock();
 
 private:
+    void compile_shaders();
+
+    Utils::DeltaTime m_clock;
+
+    Renderer::Window& m_window;
+    Renderer::Camera m_camera;
+
+    bool m_shaders_need_update = true;
     Renderer::ShaderProgram m_gpass_shader;
     Renderer::ShaderProgram m_lpass_shader;
+
+    int m_gpass_width = 0;
+    int m_gpass_height = 0;
+    Renderer::GBuffer m_gpass;
+    Renderer::Quad m_lpass;
 
     // TODO: do I make these global? they never change.
     Renderer::ShaderProgram m_shadowmap_shader;

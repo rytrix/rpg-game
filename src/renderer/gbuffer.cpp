@@ -56,14 +56,18 @@ void GBuffer::bind()
 void GBuffer::set_uniforms(Renderer::ShaderProgram& shader)
 {
     util_assert(initialized == true, "GBuffer has not been initialized");
-    m_position.bind(0);
-    shader.set_int("gPosition", 0);
 
-    m_normal.bind(1);
-    shader.set_int("gNormal", 1);
+    GLuint texture_unit = Texture::get_texture_unit();
+    m_position.bind(texture_unit);
+    shader.set_int("gPosition", static_cast<i32>(texture_unit));
 
-    m_albedo.bind(2);
-    shader.set_int("gAlbedoSpec", 2);
+    texture_unit = Texture::get_texture_unit();
+    m_normal.bind(texture_unit);
+    shader.set_int("gNormal", static_cast<i32>(texture_unit));
+
+    texture_unit = Texture::get_texture_unit();
+    m_albedo.bind(texture_unit);
+    shader.set_int("gAlbedoSpec", static_cast<int>(texture_unit));
 }
 
 void GBuffer::unbind()
