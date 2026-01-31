@@ -18,7 +18,7 @@ real gameplay
 
 spell system 
   - needs to be ironed out
-  - lets wait till we can test gameplay
+  - wait until there is gameplay
 
 lighting
   - spot lights
@@ -27,6 +27,7 @@ lighting
 
 rendering engine
   - swap between deferred and forward rendering 
+  - using caching class for textures
   - potential for forward passes after deferrered pipeline for transparency
   - particles
 
@@ -36,7 +37,6 @@ models
   - learn more blender
 
 ECS
-  - need caching for the same models, maybe that is something to do with the model class itself
   - (maybe) automatic instanced rendering for the same models
 
 physics
