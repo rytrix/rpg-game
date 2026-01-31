@@ -35,7 +35,7 @@ Mesh::~Mesh()
     initialized = false;
 }
 
-void Mesh::draw()
+void Mesh::draw() const
 {
     util_assert(initialized == true, "Mesh has not been initialized");
 
@@ -43,7 +43,7 @@ void Mesh::draw()
     glDrawElements(GL_TRIANGLES, static_cast<GLsizei>(m_indicies.size()), GL_UNSIGNED_INT, nullptr);
 }
 
-void Mesh::draw(ShaderProgram& shader)
+void Mesh::draw(ShaderProgram& shader) const
 {
     util_assert(initialized == true, "Mesh has not been initialized");
 

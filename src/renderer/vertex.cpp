@@ -53,7 +53,7 @@ void VertexArray::binding_devisor(GLuint binding_index, GLuint divisor)
     glVertexArrayBindingDivisor(m_id, binding_index, divisor);
 }
 
-void VertexArray::bind()
+void VertexArray::bind() const
 {
     util_assert(initialized == true, "VertexArray has not been initialized");
     glBindVertexArray(m_id);
