@@ -38,6 +38,7 @@ models
 
 ECS
   - (maybe) automatic instanced rendering for the same models
+  - or indirect rendering pipeline
 
 physics
   - player character
@@ -46,9 +47,9 @@ physics
 
 # Done
 resistances/damage reduction
- -make armor scale off of max hp, 
-   -meaning more armor relative to the scaled stamina grants more % damage reduction
-   -abilities need a scaling factor with armor and resistance indicating how much they get reduced by those stats
+ - make armor scale off of max hp, 
+   - meaning more armor relative to the scaled stamina grants more % damage reduction
+   - abilities need a scaling factor with armor and resistance indicating how much they get reduced by those stats
 
 enemy generation based on item levels
-  -Need to do gear generation (done)
+  - Need to do gear generation (done)
