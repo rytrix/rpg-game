@@ -40,13 +40,15 @@ void Scene::add_entity(EntityBuilder& entity_builder)
     }
 
     if (entity_builder.m_model_path != nullptr) {
-        m_registry.emplace<Renderer::Model>(entity, entity_builder.m_model_path);
+        Renderer::Model& model = m_model_cache.get_or_create(entity_builder.m_model_path, entity_builder.m_model_path);
+        m_registry.emplace<Renderer::Model*>(entity, &model);
         // TODO: Decide if I want physics objects without models someday
         if (entity_builder.m_create_body != nullptr) {
             auto physics_info
-                = entity_builder.m_create_body(m_physics_system.get(), &m_registry.get<Renderer::Model>(entity));
+                = entity_builder.m_create_body(m_physics_system.get(), m_registry.get<Renderer::Model*>(entity));
             m_registry.emplace<JPH::BodyID>(entity, physics_info.first);
             m_registry.emplace<JPH::EMotionType>(entity, physics_info.second);
+            m_physics_needs_optimize = true;
         }
     }
 
@@ -61,6 +63,12 @@ void Scene::add_entity(EntityBuilder& entity_builder)
     }
 
     m_registry.emplace<glm::mat4>(entity, entity_builder.m_model_matrix);
+}
+
+void Scene::optimize()
+{
+    m_physics_system->optimize();
+    m_physics_needs_optimize = false;
 }
 
 void Scene::update()
@@ -99,14 +107,14 @@ void Scene::draw()
 
     m_camera.update();
 
-    auto model_view = m_registry.view<glm::mat4, Renderer::Model>();
+    auto model_view = m_registry.view<glm::mat4, Renderer::Model*>();
 
     auto directional_view = m_registry.view<Renderer::Light::Directional>();
     for (auto [entity, light] : directional_view.each()) {
         if (light.has_shadowmap()) {
             light.shadowmap_draw(m_shadowmap_shader, [&]() {
                 for (auto [entity2, model_matrix, model] : model_view.each()) {
-                    model.draw_untextured(m_shadowmap_shader, model_matrix);
+                    model->draw_untextured(m_shadowmap_shader, model_matrix);
                 }
             });
         }
@@ -117,7 +125,7 @@ void Scene::draw()
         if (light.has_shadowmap()) {
             light.shadowmap_draw(m_shadowmap_cubemap_shader, [&]() {
                 for (auto [entity2, model_matrix, model] : model_view.each()) {
-                    model.draw_untextured(m_shadowmap_cubemap_shader, model_matrix);
+                    model->draw_untextured(m_shadowmap_cubemap_shader, model_matrix);
                 }
             });
         }
@@ -133,14 +141,15 @@ void Scene::draw()
     m_gpass_shader.set_mat4("view", m_camera.get_view());
 
     for (auto [entity, model_matrix, model] : model_view.each()) {
-        model.draw(m_gpass_shader, model_matrix);
+        model->draw(m_gpass_shader, model_matrix);
+        Renderer::Texture::reset_texture_units();
     }
 
-    m_gpass.blit_depth_buffer();
+    // m_gpass.blit_depth_buffer();
     m_gpass.unbind();
 
     // Lighting pass
-    glClear(GL_COLOR_BUFFER_BIT);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     m_lpass_shader.bind();
 
     m_gpass.set_uniforms(m_lpass_shader);

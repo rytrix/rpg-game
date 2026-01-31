@@ -15,7 +15,7 @@ public:
     void bind_element_buffer(GLuint element_buffer_id);
     void binding_devisor(GLuint binding_index, GLuint divisor);
 
-    void bind();
+    void bind() const;
 
     [[nodiscard]] GLuint get_id() const;
 

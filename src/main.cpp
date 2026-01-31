@@ -7,7 +7,7 @@
 int main()
 {
     Renderer::Window window;
-    window.init("Hi", 1000, 800);
+    window.init("test window", 1000, 800);
     window.set_relative_mode(true);
 
     Physics::Engine::setup_singletons();
@@ -20,14 +20,15 @@ int main()
     directional_info.diffuse = glm::vec3(0.5);
     directional_info.specular = glm::vec3(0.5);
     directional_info.shadowmap = true;
-    e1.add_name("directional_light_1");
     e1.add_directional_light(directional_info);
     scene.add_entity(e1);
 
     EntityBuilder e2;
-    e2.add_name("plane");
     e2.add_model_path("res/models/physics_plane/plane.obj");
-    e2.add_physics_command([](Physics::System* system, Renderer::Model* model) -> std::pair<JPH::BodyID, JPH::EMotionType> {
+    // e2.add_model_path("res/models/Sponza/glTF/Sponza.gltf");
+    // glm::mat4 e2_model_matrix = glm::scale(glm::mat4(1.0), glm::vec3(0.1));
+    // e2.add_model_matrix(e2_model_matrix);
+    e2.add_physics_command([&](Physics::System* system, Renderer::Model* model) -> std::pair<JPH::BodyID, JPH::EMotionType> {
         JPH::TriangleList triangles;
         const auto* meshes = model->get_meshes();
         Physics::System::create_mesh_triangle_list(triangles, meshes);
@@ -105,6 +106,7 @@ int main()
     e5.add_point_light(point_info);
     scene.add_entity(e5);
 
+    scene.optimize();
     scene.update();
     auto& camera = scene.get_camera();
 
@@ -143,10 +145,9 @@ int main()
     };
 
     window.loop([&]() {
-        scene.update();
         scancodes();
+        scene.update();
         scene.physics();
-
         scene.draw();
     });
 

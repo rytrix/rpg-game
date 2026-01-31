@@ -25,8 +25,8 @@ public:
         std::vector<u32>&& indicies,
         std::vector<TextureRef>&& textures);
 
-    void draw();
-    void draw(ShaderProgram& shader);
+    void draw() const;
+    void draw(ShaderProgram& shader) const;
 
     std::vector<Vertex> m_verticies;
     std::vector<u32> m_indicies;

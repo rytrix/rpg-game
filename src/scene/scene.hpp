@@ -1,6 +1,7 @@
 #pragma once
 
 #include "../physics/engine.hpp"
+#include "../utils/cache.hpp"
 #include "../utils/deltatime.hpp"
 
 #include "renderer.hpp"
@@ -16,6 +17,7 @@ public:
 
     // Call update after adding an entity (or maybe I do that internally)
     void update();
+    void optimize();
 
     void physics();
     void draw();
@@ -45,6 +47,9 @@ private:
     Renderer::ShaderProgram m_shadowmap_cubemap_shader;
 
     entt::registry m_registry;
+    Cache<const char*, Renderer::Model> m_model_cache;
+
+    bool m_physics_needs_optimize = false;
     std::unique_ptr<Physics::System> m_physics_system = nullptr;
     // std::vector<Entity> m_entities;
 };
