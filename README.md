@@ -16,15 +16,32 @@ clang format is based off of webkit, with a few personal preference modification
 # Todo
 real gameplay
 
-spell system needs to be ironed out
-  -lets wait till we can test gameplay
+spell system 
+  - needs to be ironed out
+  - lets wait till we can test gameplay
 
-physics engine, make the interface better to use
-  -split the PhysicsEngine class into multiple physics systems, PhysicsEngine should probably be a singleton (ish because jolt wanted it that way)
+lighting
+  - spot lights
+  - find a good way to make shadows less pixelated
+  - change depth map size on a per light basis
 
-lighting system, spot lights
+rendering engine
+  - swap between deferred and forward rendering 
+  - potential for forward passes after deferrered pipeline for transparency
+  - particles
 
-Some sort of Scene/Object system, runtime generated shaders for adding lights dynamically
+models
+  - I need some sort of a cool example scene
+  - animation graphs? (research needed)
+  - learn more blender
+
+ECS
+  - need caching for the same models, maybe that is something to do with the model class itself
+  - (maybe) automatic instanced rendering for the same models
+
+physics
+  - player character
+  - ray selection
 
 
 # Done
@@ -35,7 +52,3 @@ resistances/damage reduction
 
 enemy generation based on item levels
   -Need to do gear generation (done)
-
-character saving to sqlite
-
-model loading
