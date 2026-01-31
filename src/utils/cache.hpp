@@ -9,31 +9,21 @@ public:
     Type& get_or_create(ID id, Args&&... args);
 
 private:
-    struct Storage {
-        ID id;
-        Type type;
-
-        template <typename... Args>
-        explicit Storage(ID id, Args&&... args)
-            : id(std::move(id))
-            , type(std::forward<Args>(args)...)
-        {
-        }
-    };
-
-    std::deque<Storage> m_storage;
+    std::vector<ID> m_ids;
+    std::deque<Type> m_types;
 };
 
 template <typename ID, typename Type>
 template <typename... Args>
 Type& Cache<ID, Type>::get_or_create(ID id, Args&&... args)
 {
-    for (Storage& object : m_storage) {
-        if (id == object.id) {
-            return object.type;
+    for (usize i = 0; i < m_ids.size(); i++) {
+        if (id == m_ids.at(i)) {
+            return m_types.at(i);
         }
     }
 
-    m_storage.emplace_back(id, std::forward<Args>(args)...);
-    return m_storage.back().type;
+    m_ids.emplace_back(id);
+    m_types.emplace_back(std::forward<Args>(args)...);
+    return m_types.back();
 }
