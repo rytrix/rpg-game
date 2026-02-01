@@ -4,6 +4,8 @@
 #include "shader.hpp"
 #include "texture.hpp"
 
+#include "../utils/cache.hpp"
+
 #include <assimp/scene.h>
 
 namespace Renderer {
@@ -19,19 +21,20 @@ public:
     void draw_untextured(ShaderProgram& shader, glm::mat4 model) const;
     void draw(ShaderProgram& shader, glm::mat4 model) const;
 
-    const std::deque<Mesh>* get_meshes();
-    // glm::mat4& get_model_matrix();
+    // const std::deque<Mesh>* get_meshes();
+    const Mesh* get_mesh();
 
 private:
     bool initialized = false;
 
-    std::deque<TextureStorage> m_textures;
-    std::deque<Mesh> m_meshes;
+    Utils::Cache<std::string, Texture> m_texture_cache;
+    // std::deque<Mesh> m_meshes;
+    Mesh m_mesh;
     std::string m_directory;
 
     void process_node(aiNode* node, const aiScene* scene);
     void process_mesh(aiMesh* mesh, const aiScene* scene);
-    std::vector<TextureRef> load_material_textures(aiMaterial* mat, aiTextureType type, const char* type_name);
+    std::vector<TextureRef> load_material_textures(aiMaterial* mat, aiTextureType type);
 };
 
 } // namespace Renderer
