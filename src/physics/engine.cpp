@@ -103,8 +103,8 @@ void System::create_mesh_triangle_list_base_index(JPH::TriangleList& triangles, 
         glm::vec3 v2;
         glm::vec3 v3;
 
-        auto base = mesh->m_base_vertices[i].base;
-        auto count = mesh->m_base_vertices[i].count;
+        auto base = mesh->m_base_vertices[i].m_base;
+        auto count = mesh->m_base_vertices[i].m_count;
         u32 j = offset;
         while (j + 2 < count + offset) {
             v1 = mesh->m_vertices[mesh->m_indices.at(j + 0) + base].m_pos;
@@ -128,8 +128,8 @@ void System::create_mesh_triangle_list_base_index(JPH::TriangleList& triangles, 
         glm::vec3 v2;
         glm::vec3 v3;
 
-        auto base = mesh->m_base_vertices[i].base;
-        auto count = mesh->m_base_vertices[i].count;
+        auto base = mesh->m_base_vertices[i].m_base;
+        auto count = mesh->m_base_vertices[i].m_count;
         u32 j = offset;
         while (j + 2 < count + offset) {
             v1 = glm::vec4(mesh->m_vertices[mesh->m_indices.at(j + 0) + base].m_pos, 1.0F) * model;

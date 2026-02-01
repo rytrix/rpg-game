@@ -12,6 +12,9 @@ struct Buffer : public NoCopyNoMove {
     void buffer_storage(GLsizeiptr size, const void* data, GLbitfield flags);
     void buffer_sub_data(GLsizeiptr offset, GLsizeiptr size, const void* data);
 
+    void bind_buffer(GLenum target);
+    void unbind_buffer(GLenum target);
+
     [[nodiscard]] GLuint get_id() const;
 
 private:

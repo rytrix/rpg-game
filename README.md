@@ -27,7 +27,6 @@ lighting
 
 rendering engine
   - swap between deferred and forward rendering 
-  - using caching class for textures
   - potential for forward passes after deferrered pipeline for transparency
   - particles
 

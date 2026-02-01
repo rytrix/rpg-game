@@ -37,6 +37,18 @@ void Buffer::buffer_sub_data(GLsizeiptr offset, GLsizeiptr size, const void* dat
     glNamedBufferSubData(m_id, offset, size, data);
 }
 
+void Buffer::bind_buffer(GLenum target)
+{
+    util_assert(initialized == true, "Buffer has not been initialized");
+    glBindBuffer(target, m_id);
+}
+
+void Buffer::unbind_buffer(GLenum target)
+{
+    util_assert(initialized == true, "Buffer has not been initialized");
+    glBindBuffer(target, 0);
+}
+
 [[nodiscard]] GLuint Buffer::get_id() const
 {
     util_assert(initialized == true, "Buffer has not been initialized");
