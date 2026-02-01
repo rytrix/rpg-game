@@ -170,6 +170,31 @@ void Scene::draw()
     Renderer::Texture::reset_texture_units();
 }
 
+void Scene::draw_debug_imgui()
+{
+    auto view = m_registry.view<glm::mat4, JPH::BodyID, JPH::EMotionType>();
+
+    u32 i = 0;
+    for (auto [entity, model_matrix, body, motion_type] : view.each()) {
+        if (motion_type != JPH::EMotionType::Static) {
+            const char* name = m_registry.get<const char*>(entity);
+            if (name == nullptr) {
+                name = "no name";
+            }
+
+            if (ImGui::CollapsingHeader(std::format("{}_e{}", name, i).c_str())) {
+                glm::vec4& cube_pos = model_matrix[3];
+                ImGui::DragFloat3("XYZ", &cube_pos.x, 1.0F, -8.0f, 8.0f);
+                m_physics_system->m_body_interface->SetPosition(
+                    body,
+                    vec3_to_vec3(cube_pos),
+                    JPH::EActivation::Activate);
+            }
+            i++;
+        }
+    }
+}
+
 Renderer::Camera& Scene::get_camera()
 {
     return m_camera;

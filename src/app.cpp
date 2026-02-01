@@ -45,7 +45,7 @@ App::App()
     directional_info.ambient = glm::vec3(0.1);
     directional_info.diffuse = glm::vec3(0.5);
     directional_info.specular = glm::vec3(0.5);
-    directional_info.shadowmap = true;
+    directional_info.shadowmap = false;
     e1.add_directional_light(directional_info);
     m_scene->add_entity(e1);
 
@@ -56,8 +56,8 @@ App::App()
     e2.add_model_matrix(e2_model_matrix);
     e2.add_physics_command([&](Physics::System* system, Renderer::Model* model) -> std::pair<JPH::BodyID, JPH::EMotionType> {
         JPH::TriangleList triangles;
-        const auto* meshes = model->get_meshes();
-        Physics::System::create_mesh_triangle_list(triangles, e2_model_matrix, meshes);
+        const auto* mesh = model->get_mesh();
+        Physics::System::create_mesh_triangle_list_base_index(triangles, e2_model_matrix, mesh);
         JPH::BodyID plane_id = system->m_body_interface->CreateAndAddBody(
             JPH::BodyCreationSettings(
                 new JPH::MeshShapeSettings(triangles),
@@ -106,13 +106,13 @@ App::App()
     EntityBuilder e4;
     Renderer::Light::PointInfo point_info;
     point_info.position = glm::vec3(2.0F, 2.0F, 2.0F);
-    point_info.ambient = glm::vec3(0.05F);
+    point_info.ambient = glm::vec3(0.00F);
     point_info.diffuse = glm::vec3(0.5F);
     point_info.specular = glm::vec3(0.5F);
     point_info.constant = 1.0F;
     point_info.linear = 0.022F;
     point_info.quadratic = 0.0019F;
-    point_info.shadowmap = true;
+    point_info.shadowmap = false;
     point_info.near = 0.1F;
     point_info.far = 25.0F;
     e4.add_point_light(point_info);
@@ -126,7 +126,7 @@ App::App()
     point_info.constant = 1.0F;
     point_info.linear = 0.022F;
     point_info.quadratic = 0.0019F;
-    point_info.shadowmap = true;
+    point_info.shadowmap = false;
     point_info.near = 0.1F;
     point_info.far = 25.0F;
     e5.add_point_light(point_info);
@@ -200,5 +200,24 @@ void App::run()
             m_scene->physics();
         }
         m_scene->draw();
+
+        const ImGuiViewport* main_viewport = ImGui::GetMainViewport();
+        ImGui::SetNextWindowPos(ImVec2(main_viewport->WorkPos.x + 20, main_viewport->WorkPos.y + 20), ImGuiCond_FirstUseEver);
+        ImGui::SetNextWindowSize(ImVec2(400, 600), ImGuiCond_FirstUseEver);
+
+        // Main body of the Demo window starts here.
+        if (!ImGui::Begin("Debug Window", nullptr, 0)) {
+            // Early out if the window is collapsed, as an optimization.
+            ImGui::End();
+            return;
+        }
+
+        ImGui::Checkbox("Toggle physics", &m_physics_on);
+
+        if (ImGui::CollapsingHeader("Scene_1")) {
+            m_scene->draw_debug_imgui();
+        }
+
+        ImGui::End();
     });
 }

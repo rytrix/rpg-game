@@ -27,6 +27,8 @@ void Model::init(const char* file_path)
     util_assert(scene->mRootNode != nullptr, "Model::Model: Root node is nullptr");
     process_node(scene->mRootNode, scene);
 
+    m_mesh.setup_mesh();
+
     initialized = true;
 }
 
@@ -40,31 +42,34 @@ void Model::draw_untextured(ShaderProgram& shader, glm::mat4 model) const
     util_assert(initialized == true, "Model has not been initialized");
 
     shader.set_mat4("model", model);
-    for (auto& mesh : m_meshes) {
-        mesh.draw();
-    }
+    // for (auto& mesh : m_meshes) {
+    //     mesh.draw();
+    // }
+    m_mesh.draw();
 }
 
 void Model::draw(ShaderProgram& shader, glm::mat4 model) const
 {
     util_assert(initialized == true, "Model has not been initialized");
     shader.set_mat4("model", model);
-    for (auto& mesh : m_meshes) {
-        mesh.draw(shader);
-    }
+    // for (auto& mesh : m_meshes) {
+    //     mesh.draw(shader);
+    // }
+
+    m_mesh.draw(shader);
 }
 
-const std::deque<Mesh>* Model::get_meshes()
-{
-    util_assert(initialized == true, "Model has not been initialized");
-    return &m_meshes;
-}
-
-// glm::mat4& Model::get_model_matrix()
+// TODO
+// const std::deque<Mesh>* Model::get_meshes()
 // {
 //     util_assert(initialized == true, "Model has not been initialized");
-//     return u_model;
+//     return &m_meshes;
 // }
+
+const Mesh* Model::get_mesh()
+{
+    return &m_mesh;
+}
 
 void Model::process_node(aiNode* node, const aiScene* scene)
 {
@@ -82,9 +87,12 @@ void Model::process_node(aiNode* node, const aiScene* scene)
 
 void Model::process_mesh(aiMesh* mesh, const aiScene* scene)
 {
-    std::vector<Mesh::Vertex> vertices;
-    std::vector<u32> indices;
-    std::vector<TextureRef> textures;
+    // std::vector<Mesh::Vertex> vertices;
+    // std::vector<u32> indices;
+    // std::vector<TextureRef> textures;
+
+    GLsizei base_vertex = static_cast<GLsizei>(m_mesh.m_vertices.size());
+    GLsizei count = static_cast<GLsizei>(m_mesh.m_indices.size());
 
     for (u32 i = 0; i < mesh->mNumVertices; i++) {
         Mesh::Vertex vertex {};
@@ -101,31 +109,43 @@ void Model::process_mesh(aiMesh* mesh, const aiScene* scene)
             vertex.m_tex.y = mesh->mTextureCoords[0][i].y;
         }
 
-        vertices.push_back(vertex);
+        m_mesh.m_vertices.push_back(vertex);
+        // vertices.push_back(vertex);
     }
 
     for (u32 i = 0; i < mesh->mNumFaces; i++) {
         aiFace face = mesh->mFaces[i];
 
         for (u32 j = 0; j < face.mNumIndices; j++) {
-            indices.push_back(face.mIndices[j]);
+            m_mesh.m_indices.push_back(face.mIndices[j]);
+            // indices.push_back(face.mIndices[j]);
         }
     }
 
     if (scene->HasMaterials()) {
         aiMaterial* material = scene->mMaterials[mesh->mMaterialIndex];
 
-        std::vector<TextureRef> diffuseMaps = load_material_textures(material, aiTextureType_DIFFUSE, "texture_diffuse");
-        textures.insert(textures.end(), diffuseMaps.begin(), diffuseMaps.end());
+        std::vector<TextureRef> diffuseMaps = load_material_textures(material, aiTextureType_DIFFUSE);
+        // std::println("diffuse size = {}", diffuseMaps.size());
+        m_mesh.m_textures.insert(m_mesh.m_textures.end(), diffuseMaps.begin(), diffuseMaps.end());
+        // textures.insert(textures.end(), diffuseMaps.begin(), diffuseMaps.end());
 
-        std::vector<TextureRef> specularMaps = load_material_textures(material, aiTextureType_SPECULAR, "texture_specular");
-        textures.insert(textures.end(), specularMaps.begin(), specularMaps.end());
+        std::vector<TextureRef> specularMaps = load_material_textures(material, aiTextureType_SPECULAR);
+        // std::println("specular size = {}", specularMaps.size());
+        m_mesh.m_textures.insert(m_mesh.m_textures.end(), specularMaps.begin(), specularMaps.end());
+        // textures.insert(textures.end(), specularMaps.begin(), specularMaps.end());
     }
 
-    m_meshes.emplace_back(std::move(vertices), std::move(indices), std::move(textures));
+    count = static_cast<GLsizei>(m_mesh.m_indices.size()) - count;
+
+    m_mesh.m_base_vertices.emplace_back(
+        count,
+        base_vertex);
+
+    // m_meshes.emplace_back(std::move(vertices), std::move(indices), std::move(textures));
 }
 
-std::vector<TextureRef> Model::load_material_textures(aiMaterial* mat, aiTextureType type, const char* type_name)
+std::vector<TextureRef> Model::load_material_textures(aiMaterial* mat, aiTextureType type)
 {
     std::vector<TextureRef> textures;
 
@@ -133,38 +153,19 @@ std::vector<TextureRef> Model::load_material_textures(aiMaterial* mat, aiTexture
     for (unsigned int i = 0; i < mat->GetTextureCount(type); i++) {
         aiString str;
         mat->GetTexture(type, i, &str);
-        TextureRef texture {};
         std::string texture_path = (m_directory + "/" + str.C_Str());
-        bool skip = false;
 
-        for (u32 j = 0; j < m_textures.size(); j++) {
-            // std::println("is \"{}\" == \"{}\"", m_textures[j].file_path, texture_path);
-            if (m_textures[j].file_path == texture_path) {
-                textures.push_back(TextureRef { .m_tex = &m_textures[j], .m_id = j, .m_type = type_name });
-                skip = true;
-                // std::println("Skipping {}", texture_path);
-            }
-        }
+        TextureInfo texture_info;
+        texture_info.from_file = GL_TRUE;
+        texture_info.file_path = texture_path.c_str();
+        texture_info.flip = false;
 
-        if (!skip) {
-            TextureInfo texture_info;
-            texture_info.from_file = GL_TRUE;
-            texture_info.file_path = texture_path.c_str();
-            texture_info.flip = false;
+        LOG_INFO(std::format("Loading {}", texture_path));
 
-            LOG_INFO(std::format("Loading {}", texture_path));
-
-            m_textures.emplace_back();
-            m_textures.at(m_textures.size() - 1).file_path = texture_path;
-            m_textures.at(m_textures.size() - 1).m_tex.init(texture_info);
-
-            texture.m_id = static_cast<u32>(m_textures.size()) - 1;
-            texture.m_tex = &m_textures.at(texture.m_id);
-            texture.m_type = type_name;
-
-            textures.push_back(texture);
-        }
+        Texture& texture = m_texture_cache.get_or_create(texture_path, texture_info);
+        textures.emplace_back(&texture, type);
     }
+
     return textures;
 }
 

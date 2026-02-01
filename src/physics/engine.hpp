@@ -121,6 +121,9 @@ public:
     static void create_mesh_triangle_list(JPH::TriangleList& triangles, const std::deque<Renderer::Mesh>* meshes);
     static void create_mesh_triangle_list(JPH::TriangleList& triangles, const glm::mat4& model, const std::deque<Renderer::Mesh>* meshes);
 
+    static void create_mesh_triangle_list_base_index(JPH::TriangleList& triangles, const Renderer::Mesh* mesh);
+    static void create_mesh_triangle_list_base_index(JPH::TriangleList& triangles, const glm::mat4& model, const Renderer::Mesh* mesh);
+
     void optimize();
 
     JPH::BodyInterface* m_body_interface = nullptr;

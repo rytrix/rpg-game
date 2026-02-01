@@ -1,5 +1,7 @@
 #pragma once
 
+namespace Utils {
+
 template <typename ID, typename Type>
 class Cache : public NoCopyNoMove {
 public:
@@ -27,3 +29,5 @@ Type& Cache<ID, Type>::get_or_create(ID id, Args&&... args)
     m_types.emplace_back(std::forward<Args>(args)...);
     return m_types.back();
 }
+
+} // namespace Utils

@@ -22,6 +22,8 @@ public:
     void physics();
     void draw();
 
+    void draw_debug_imgui();
+
     Renderer::Camera& get_camera();
     const Utils::DeltaTime& get_clock();
 
@@ -47,7 +49,7 @@ private:
     Renderer::ShaderProgram m_shadowmap_cubemap_shader;
 
     entt::registry m_registry;
-    Cache<const char*, Renderer::Model> m_model_cache;
+    Utils::Cache<const char*, Renderer::Model> m_model_cache;
 
     bool m_physics_needs_optimize = false;
     std::unique_ptr<Physics::System> m_physics_system = nullptr;

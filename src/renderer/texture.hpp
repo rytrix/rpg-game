@@ -61,15 +61,4 @@ private:
     void from_file(const char* file, bool flip);
 };
 
-struct TextureStorage {
-    Texture m_tex;
-    std::string file_path;
-};
-
-struct TextureRef {
-    TextureStorage* m_tex;
-    u32 m_id;
-    const char* m_type;
-};
-
 } // namespace Renderer
