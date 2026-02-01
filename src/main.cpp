@@ -2,7 +2,6 @@
 #include "game_logic/gear.hpp"
 
 #include "app.hpp"
-#include "scene/scene.hpp"
 
 int main()
 {

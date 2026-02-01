@@ -13,6 +13,14 @@ struct TextureRef {
     aiTextureType m_type;
 };
 
+struct IndirectCommands {
+    GLuint count;
+    GLuint instance_count;
+    GLuint first_index;
+    GLint base_vertex;
+    GLuint base_instance;
+};
+
 class Mesh : public NoCopyNoMove {
     friend class Model;
 
@@ -41,12 +49,12 @@ public:
     std::vector<TextureRef> m_textures;
 
     struct BaseVertex {
-        GLsizei count;
-        GLsizei base;
+        GLsizei m_count;
+        GLsizei m_base;
 
         BaseVertex(GLsizei count, GLsizei base)
-            : count(count)
-            , base(base)
+            : m_count(count)
+            , m_base(base)
         {
         }
     };
