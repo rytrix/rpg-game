@@ -179,6 +179,12 @@ void Window::set_relative_mode(bool value)
     SDL_SetWindowRelativeMouseMode(m_window, value);
 }
 
+void Window::set_swap_interval(int value)
+{
+    util_assert(initialized == true, "Renderer::Window has not been initialized");
+    SDL_GL_SetSwapInterval(value);
+}
+
 [[nodiscard]] SDL_Window* Window::get_window_ptr() const
 {
     util_assert(initialized == true, "Renderer::Window has not been initialized");

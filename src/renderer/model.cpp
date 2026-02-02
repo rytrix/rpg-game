@@ -37,7 +37,7 @@ Model::~Model()
     initialized = false;
 }
 
-void Model::draw_untextured(ShaderProgram& shader, glm::mat4 model) const
+void Model::draw_untextured(ShaderProgram& shader, glm::mat4 model)
 {
     util_assert(initialized == true, "Model has not been initialized");
 
@@ -48,7 +48,7 @@ void Model::draw_untextured(ShaderProgram& shader, glm::mat4 model) const
     m_mesh.draw();
 }
 
-void Model::draw(ShaderProgram& shader, glm::mat4 model) const
+void Model::draw(ShaderProgram& shader, glm::mat4 model)
 {
     util_assert(initialized == true, "Model has not been initialized");
     shader.set_mat4("model", model);

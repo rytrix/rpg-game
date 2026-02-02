@@ -13,6 +13,7 @@ struct TextureRef {
     aiTextureType m_type;
 };
 
+#pragma pack(push, 1)
 struct IndirectCommands {
     GLuint count;
     GLuint instance_count;
@@ -20,6 +21,7 @@ struct IndirectCommands {
     GLint base_vertex;
     GLuint base_instance;
 };
+#pragma pack(pop)
 
 class Mesh : public NoCopyNoMove {
     friend class Model;
@@ -41,8 +43,8 @@ public:
         std::vector<u32>&& indicies,
         std::vector<TextureRef>&& textures);
 
-    void draw() const;
-    void draw(ShaderProgram& shader) const;
+    void draw();
+    void draw(ShaderProgram& shader);
 
     std::vector<Vertex> m_vertices;
     std::vector<u32> m_indices;
@@ -68,6 +70,13 @@ private:
     VertexArray m_vao;
     Buffer m_vbo;
     Buffer m_ebo;
+    Buffer m_cmd_buff;
+    Buffer m_diff_ssbo;
+    Buffer m_spec_ssbo;
+
+    std::vector<IndirectCommands> m_commands;
+    std::vector<GLuint64> m_diffuse_textures;
+    std::vector<GLuint64> m_specular_textures;
 };
 
 } // namespace Renderer

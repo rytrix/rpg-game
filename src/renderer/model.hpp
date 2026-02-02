@@ -18,8 +18,8 @@ public:
 
     void init(const char* path);
 
-    void draw_untextured(ShaderProgram& shader, glm::mat4 model) const;
-    void draw(ShaderProgram& shader, glm::mat4 model) const;
+    void draw_untextured(ShaderProgram& shader, glm::mat4 model);
+    void draw(ShaderProgram& shader, glm::mat4 model);
 
     // const std::deque<Mesh>* get_meshes();
     const Mesh* get_mesh();

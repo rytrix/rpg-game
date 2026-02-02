@@ -142,7 +142,6 @@ void Scene::draw()
 
     for (auto [entity, model_matrix, model] : model_view.each()) {
         model->draw(m_gpass_shader, model_matrix);
-        Renderer::Texture::reset_texture_units();
     }
 
     // m_gpass.blit_depth_buffer();
@@ -269,7 +268,7 @@ void main() {{
         light_uniforms,
         light_functions);
 
-    LOG_INFO(std::format("shader_source:\n {}", shader_source));
+    // LOG_INFO(std::format("shader_source:\n {}", shader_source));
 
     std::array<Renderer::ShaderInfo, 2> shader_info = {
         Renderer::ShaderInfo {
