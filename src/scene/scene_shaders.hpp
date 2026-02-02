@@ -3,7 +3,6 @@ in vec2 TexCoords;
 uniform sampler2D gPosition;
 uniform sampler2D gNormal;
 uniform sampler2D gAlbedoSpec;
-uniform vec3 view_position;
 )";
 
 constexpr const char* LIGHTING_SHADER_CODE = R"(
