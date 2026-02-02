@@ -223,6 +223,11 @@ void App::run()
             }
         }
 
+        if (ImGui::Checkbox("Toggle deferred shading", &m_deferred_pass)) {
+            LOG_INFO(std::format("Setting deffered shading to {}", m_deferred_pass));
+            m_scene->set_pass(!m_deferred_pass);
+        }
+
         ImGui::Checkbox("Toggle physics", &m_physics_on);
 
         if (ImGui::CollapsingHeader("Scene_1")) {

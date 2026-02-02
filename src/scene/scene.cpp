@@ -9,22 +9,24 @@ namespace {
 
 Scene::Scene(Renderer::Window& window)
     : m_window(window)
-    , m_gpass_width(m_window.get_width())
-    , m_gpass_height(m_window.get_height())
 {
     m_physics_system = std::make_unique<Physics::System>();
 
     m_camera.init(90.0F, 0.1F, 1000.0F, m_window.get_aspect_ratio(), { -2.0F, 1.5F, 4.0F });
     m_camera.set_speed(5.0F);
 
-    m_gpass.init(m_gpass_width, m_gpass_height);
-    m_lpass.init();
-
+    init_pass();
     update();
 }
 
 Scene::~Scene()
 {
+    if (m_forward_pass) {
+        delete m_forward;
+    } else {
+        delete m_deffered;
+    }
+
     auto view = m_registry.view<JPH::BodyID>();
     for (auto [entity, body] : view.each()) {
         m_physics_system->m_body_interface->RemoveBody(body);
@@ -74,10 +76,12 @@ void Scene::optimize()
 void Scene::update()
 {
     m_clock.update();
-    if (m_window.get_width() != m_gpass_width || m_window.get_height() != m_gpass_height) {
-        m_gpass_width = m_window.get_width();
-        m_gpass_height = m_window.get_height();
-        m_gpass.reinit(m_gpass_width, m_gpass_height);
+    if (m_deffered != nullptr) {
+        if (m_window.get_width() != m_deffered->m_gpass_width || m_window.get_height() != m_deffered->m_gpass_height) {
+            m_deffered->m_gpass_width = m_window.get_width();
+            m_deffered->m_gpass_height = m_window.get_height();
+            m_deffered->m_gpass.reinit(m_deffered->m_gpass_width, m_deffered->m_gpass_height);
+        }
     }
     compile_shaders();
 }
@@ -131,42 +135,76 @@ void Scene::draw()
         }
     }
 
-    // Geometry pass
-    m_gpass.bind();
-    glViewport(0, 0, m_window.get_width(), m_window.get_height());
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    if (m_forward_pass) {
+        glViewport(0, 0, m_window.get_width(), m_window.get_height());
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-    m_gpass_shader.bind();
-    m_gpass_shader.set_mat4("proj", m_camera.get_proj());
-    m_gpass_shader.set_mat4("view", m_camera.get_view());
+        m_forward->m_shader.bind();
+        m_forward->m_shader.set_mat4("proj", m_camera.get_proj());
+        m_forward->m_shader.set_mat4("view", m_camera.get_view());
 
-    for (auto [entity, model_matrix, model] : model_view.each()) {
-        model->draw(m_gpass_shader, model_matrix);
+        m_forward->m_shader.set_vec3("view_position", m_camera.get_pos());
+
+        u32 i = 0;
+        for (auto [entity, light] : directional_view.each()) {
+            light.set_uniforms(m_forward->m_shader, std::format("u_directional_light_{}", i).c_str());
+            i++;
+        }
+        i = 0;
+        for (auto [entity, light] : point_view.each()) {
+            light.set_uniforms(m_forward->m_shader, std::format("u_point_light_{}", i).c_str());
+            i++;
+        }
+
+        for (auto [entity, model_matrix, model] : model_view.each()) {
+            model->draw(m_forward->m_shader, model_matrix);
+        }
+    } else {
+        // Geometry pass
+        m_deffered->m_gpass.bind();
+        glViewport(0, 0, m_window.get_width(), m_window.get_height());
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+        m_deffered->m_gpass_shader.bind();
+        m_deffered->m_gpass_shader.set_mat4("proj", m_camera.get_proj());
+        m_deffered->m_gpass_shader.set_mat4("view", m_camera.get_view());
+
+        for (auto [entity, model_matrix, model] : model_view.each()) {
+            model->draw(m_deffered->m_gpass_shader, model_matrix);
+        }
+
+        // m_gpass.blit_depth_buffer();
+        m_deffered->m_gpass.unbind();
+
+        // Lighting pass
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+        m_deffered->m_lpass_shader.bind();
+
+        m_deffered->m_gpass.set_uniforms(m_deffered->m_lpass_shader);
+        m_deffered->m_lpass_shader.set_vec3("view_position", m_camera.get_pos());
+
+        u32 i = 0;
+        for (auto [entity, light] : directional_view.each()) {
+            light.set_uniforms(m_deffered->m_lpass_shader, std::format("u_directional_light_{}", i).c_str());
+            i++;
+        }
+        i = 0;
+        for (auto [entity, light] : point_view.each()) {
+            light.set_uniforms(m_deffered->m_lpass_shader, std::format("u_point_light_{}", i).c_str());
+            i++;
+        }
+        m_deffered->m_lpass.draw();
     }
-
-    // m_gpass.blit_depth_buffer();
-    m_gpass.unbind();
-
-    // Lighting pass
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-    m_lpass_shader.bind();
-
-    m_gpass.set_uniforms(m_lpass_shader);
-    m_lpass_shader.set_vec3("view_position", m_camera.get_pos());
-
-    u32 i = 0;
-    for (auto [entity, light] : directional_view.each()) {
-        light.set_uniforms(m_lpass_shader, std::format("u_directional_light_{}", i).c_str());
-        i++;
-    }
-    i = 0;
-    for (auto [entity, light] : point_view.each()) {
-        light.set_uniforms(m_lpass_shader, std::format("u_point_light_{}", i).c_str());
-        i++;
-    }
-    m_lpass.draw();
-
     Renderer::Texture::reset_texture_units();
+}
+
+void Scene::set_pass(bool forward)
+{
+    if (m_forward_pass != forward) {
+        m_forward_pass = forward;
+        init_pass();
+        update();
+    }
 }
 
 void Scene::draw_debug_imgui()
@@ -178,7 +216,7 @@ void Scene::draw_debug_imgui()
         if (motion_type != JPH::EMotionType::Static) {
             const char* name = m_registry.get<const char*>(entity);
             if (name == nullptr) {
-                name = "no name";
+                name = "no_name";
             }
 
             if (ImGui::CollapsingHeader(std::format("{}_e{}", name, i).c_str())) {
@@ -240,8 +278,89 @@ void Scene::compile_shaders()
         i++;
     }
 
-    std::string shader_source = std::format(
-        R"(
+    if (m_forward_pass) {
+        // Do something simplier :)
+        std::string shader_source = std::format(
+            R"(
+#version 460 core
+#extension GL_ARB_bindless_texture : require
+
+out vec4 FragColor;
+
+// Lighting code
+{}
+
+in vec2 TexCoords;
+in vec3 Normal;
+in vec3 FragPos;
+in flat int DrawID;
+
+layout(binding = 1, std430) readonly buffer ssbo1 {{
+    sampler2D diffuse[];
+}};
+
+layout(binding = 2, std430) readonly buffer ssbo2 {{
+    sampler2D specular[];
+}};
+
+uniform int diffuse_max_textures;
+uniform int specular_max_textures;
+uniform vec3 view_position;
+
+// Light uniforms
+{}
+
+void main() {{
+    vec3 Normal = normalize(Normal);
+    vec3 Albedo = vec3(0.0);
+    float Specular = 0.0;
+    if (DrawID < diffuse_max_textures) {{
+        Albedo.rgb = texture(diffuse[DrawID], TexCoords).rgb;
+    }} else {{
+        Albedo.rgb = vec3(0.0);
+    }}
+
+    if (DrawID < diffuse_max_textures) {{
+        Specular = texture(specular[DrawID], TexCoords).r;
+    }} else {{
+        Specular = 0.0;
+    }}
+    
+    // vec3 FragPos = texture(gPosition, TexCoords).xyz;
+    // vec3 Normal = texture(gNormal, TexCoords).xyz;
+    // vec3 Albedo = texture(gAlbedoSpec, TexCoords).rgb;
+    // float Specular = texture(gAlbedoSpec, TexCoords).a;
+
+    FragColor = vec4(0.0);
+    {}
+    // FragColor = vec4(Albedo, 1.0);
+}})",
+            LIGHTING_SHADER_CODE,
+            light_uniforms,
+            light_functions);
+
+        std::array<Renderer::ShaderInfo, 2> shader_info = {
+            Renderer::ShaderInfo {
+                .is_file = true,
+                .shader = "res/forward_pass/model_indirect.glsl.vert",
+                .type = GL_VERTEX_SHADER,
+            },
+            // Todo swap to dynamic shaders
+            Renderer::ShaderInfo {
+                // .is_file = true,
+                // .shader = "res/deferred_shading/l_pass.glsl.frag",
+                .is_file = false,
+                .shader = shader_source.c_str(),
+                .type = GL_FRAGMENT_SHADER,
+            },
+        };
+        if (m_forward->m_shader.is_initialized()) {
+            m_forward->m_shader.~ShaderProgram();
+        }
+        m_forward->m_shader.init(shader_info.data(), shader_info.size());
+    } else {
+        std::string shader_source = std::format(
+            R"(
 #version 460 core
 out vec4 FragColor;
 
@@ -250,9 +369,11 @@ out vec4 FragColor;
 
 // Deferred in/uniforms
 {}
+uniform vec3 view_position;
 
 // Light uniforms
 {}
+
 
 void main() {{
     vec3 FragPos = texture(gPosition, TexCoords).xyz;
@@ -263,49 +384,50 @@ void main() {{
     {}
     // FragColor = vec4(Albedo, 1.0);
 }})",
-        LIGHTING_SHADER_CODE,
-        BOILERPLATE_SHADER_CODE_DEFERRED,
-        light_uniforms,
-        light_functions);
+            LIGHTING_SHADER_CODE,
+            BOILERPLATE_SHADER_CODE_DEFERRED,
+            light_uniforms,
+            light_functions);
 
-    // LOG_INFO(std::format("shader_source:\n {}", shader_source));
+        // LOG_INFO(std::format("shader_source:\n {}", shader_source));
 
-    std::array<Renderer::ShaderInfo, 2> shader_info = {
-        Renderer::ShaderInfo {
-            .is_file = true,
-            .shader = "res/deferred_shading/g_pass.glsl.vert",
-            .type = GL_VERTEX_SHADER,
-        },
-        Renderer::ShaderInfo {
-            .is_file = true,
-            .shader = "res/deferred_shading/g_pass.glsl.frag",
-            .type = GL_FRAGMENT_SHADER,
-        },
-    };
-    if (m_gpass_shader.is_initialized()) {
-        m_gpass_shader.~ShaderProgram();
+        std::array<Renderer::ShaderInfo, 2> shader_info = {
+            Renderer::ShaderInfo {
+                .is_file = true,
+                .shader = "res/deferred_shading/g_pass.glsl.vert",
+                .type = GL_VERTEX_SHADER,
+            },
+            Renderer::ShaderInfo {
+                .is_file = true,
+                .shader = "res/deferred_shading/g_pass.glsl.frag",
+                .type = GL_FRAGMENT_SHADER,
+            },
+        };
+        if (m_deffered->m_gpass_shader.is_initialized()) {
+            m_deffered->m_gpass_shader.~ShaderProgram();
+        }
+        m_deffered->m_gpass_shader.init(shader_info.data(), shader_info.size());
+
+        shader_info = {
+            Renderer::ShaderInfo {
+                .is_file = true,
+                .shader = "res/deferred_shading/l_pass.glsl.vert",
+                .type = GL_VERTEX_SHADER,
+            },
+            // Todo swap to dynamic shaders
+            Renderer::ShaderInfo {
+                // .is_file = true,
+                // .shader = "res/deferred_shading/l_pass.glsl.frag",
+                .is_file = false,
+                .shader = shader_source.c_str(),
+                .type = GL_FRAGMENT_SHADER,
+            },
+        };
+        if (m_deffered->m_lpass_shader.is_initialized()) {
+            m_deffered->m_lpass_shader.~ShaderProgram();
+        }
+        m_deffered->m_lpass_shader.init(shader_info.data(), shader_info.size());
     }
-    m_gpass_shader.init(shader_info.data(), shader_info.size());
-
-    shader_info = {
-        Renderer::ShaderInfo {
-            .is_file = true,
-            .shader = "res/deferred_shading/l_pass.glsl.vert",
-            .type = GL_VERTEX_SHADER,
-        },
-        // Todo swap to dynamic shaders
-        Renderer::ShaderInfo {
-            // .is_file = true,
-            // .shader = "res/deferred_shading/l_pass.glsl.frag",
-            .is_file = false,
-            .shader = shader_source.c_str(),
-            .type = GL_FRAGMENT_SHADER,
-        },
-    };
-    if (m_lpass_shader.is_initialized()) {
-        m_lpass_shader.~ShaderProgram();
-    }
-    m_lpass_shader.init(shader_info.data(), shader_info.size());
 
     if (!m_shadowmap_shader.is_initialized()) {
         auto shadowmap_info = Renderer::ShadowMap::get_shader_info();
@@ -318,4 +440,32 @@ void main() {{
     }
 
     m_shaders_need_update = false;
+}
+
+void Scene::init_pass()
+{
+    if (m_forward != nullptr) {
+        delete m_forward;
+        m_forward = nullptr;
+        LOG_INFO("Deleted forward pass");
+    }
+    if (m_deffered != nullptr) {
+        delete m_deffered;
+        m_deffered = nullptr;
+        LOG_INFO("Deleted deferred pass");
+    }
+
+    if (m_forward_pass) {
+        m_forward = new ForwardPass {};
+        LOG_INFO("Created forward pass");
+    } else {
+        m_deffered = new DeferedPass {};
+        m_deffered->m_gpass_width = m_window.get_width();
+        m_deffered->m_gpass_height = m_window.get_height();
+        m_deffered->m_gpass.init(m_deffered->m_gpass_width, m_deffered->m_gpass_height);
+        m_deffered->m_lpass.init();
+        LOG_INFO("Created deferred pass");
+    }
+
+    m_shaders_need_update = true;
 }
