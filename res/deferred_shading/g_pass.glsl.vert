@@ -6,6 +6,7 @@ layout (location = 2) in vec2 inTexCoords;
 out vec3 Normal;
 out vec3 FragPos;
 out vec2 TexCoords;
+out flat int DrawID;
 
 uniform mat4 model;
 uniform mat4 view;
@@ -21,4 +22,6 @@ void main()
     FragPos = world_pos.xyz;
 
     gl_Position = proj * view * world_pos;
+
+    DrawID = gl_DrawID;
 }

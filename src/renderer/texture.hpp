@@ -48,6 +48,11 @@ public:
     void sub_image(TextureSubimageInfo& info);
     void bind(GLuint texture_unit);
 
+    [[nodiscard]] GLuint64 get_bindless_texture_id();
+    [[nodiscard]] bool is_bindless_texture_mapped();
+    void map_bindless_texture();
+    void unmap_bindless_texture();
+
     [[nodiscard]] GLuint get_id() const noexcept;
 
 private:
@@ -55,6 +60,8 @@ private:
 
     GLuint m_id {};
     GLenum m_dimensions {};
+
+    bool m_bindless_texture_mapped = false;
 
     void generate_mipmap();
     void texture_storage(TextureSize& size, GLenum internal_format);

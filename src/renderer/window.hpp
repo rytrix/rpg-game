@@ -15,6 +15,7 @@ public:
 
     void set_capture_mouse(bool value);
     void set_relative_mode(bool value);
+    void set_swap_interval(int value);
 
     [[nodiscard]] SDL_Window* get_window_ptr() const;
     [[nodiscard]] std::pair<int, int> get_size() const;

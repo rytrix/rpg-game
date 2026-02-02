@@ -105,7 +105,9 @@ GLuint Texture::get_texture_unit()
 
 void Texture::reset_texture_units()
 {
-    texture_unit_allocator->reset();
+    if (texture_unit_allocator != nullptr) {
+        texture_unit_allocator->reset();
+    }
 }
 
 void Texture::generate_mipmap()
@@ -160,6 +162,30 @@ void Texture::bind(GLuint texture_unit)
 {
     util_assert(initialized == true, "Texture has not been initialized");
     glBindTextureUnit(texture_unit, m_id);
+}
+
+[[nodiscard]] GLuint64 Texture::get_bindless_texture_id()
+{
+    return glGetTextureHandleARB(m_id);
+}
+
+[[nodiscard]] bool Texture::is_bindless_texture_mapped()
+{
+    return m_bindless_texture_mapped;
+}
+
+void Texture::map_bindless_texture()
+{
+    util_assert(m_bindless_texture_mapped == false, "Attempting to map bindless texture that is already mapped");
+    glMakeTextureHandleResidentARB(get_bindless_texture_id());
+    m_bindless_texture_mapped = true;
+}
+
+void Texture::unmap_bindless_texture()
+{
+    util_assert(m_bindless_texture_mapped == true, "Attempting to unmap bindless texture that is not mapped");
+    glMakeTextureHandleNonResidentARB(get_bindless_texture_id());
+    m_bindless_texture_mapped = false;
 }
 
 [[nodiscard]] GLuint Texture::get_id() const noexcept
