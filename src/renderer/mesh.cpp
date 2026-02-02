@@ -40,7 +40,17 @@ void Mesh::draw()
     util_assert(initialized == true, "Mesh has not been initialized");
 
     m_vao.bind();
-    glDrawElements(GL_TRIANGLES, static_cast<GLsizei>(m_indices.size()), GL_UNSIGNED_INT, nullptr);
+
+    m_cmd_buff.bind_buffer(GL_DRAW_INDIRECT_BUFFER);
+
+    glMultiDrawElementsIndirect(
+        GL_TRIANGLES,
+        GL_UNSIGNED_INT,
+        nullptr,
+        m_commands.size(),
+        0);
+
+    m_cmd_buff.unbind_buffer(GL_DRAW_INDIRECT_BUFFER);
 }
 
 void Mesh::draw(ShaderProgram& shader)
