@@ -69,39 +69,39 @@ App::App()
     });
     m_scene->add_entity(e2);
 
-    // EntityBuilder e3;
-    // e3.add_name("cube");
-    // e3.add_model_path("res/models/physics_cube/cube.obj");
-    // e3.add_physics_command([](Physics::System* system, [[maybe_unused]] Renderer::Model* _model) -> std::pair<JPH::BodyID, JPH::EMotionType> {
-    //     JPH::BodyCreationSettings cube_settings(
-    //         new JPH::BoxShape(JPH::Vec3(0.5, 0.5, 0.5)),
-    //         JPH::RVec3(-7.05, 20.0, -5.5),
-    //         JPH::Quat::sIdentity(),
-    //         JPH::EMotionType::Dynamic,
-    //         Physics::Layers::MOVING);
-    //     auto body = system->m_body_interface->CreateAndAddBody(
-    //         cube_settings,
-    //         JPH::EActivation::Activate);
-    //     return { body, JPH::EMotionType::Dynamic };
-    // });
-    // m_scene->add_entity(e3);
+    EntityBuilder e3;
+    e3.add_name("cube");
+    e3.add_model_path("res/models/physics_cube/cube.obj");
+    e3.add_physics_command([](Physics::System* system, [[maybe_unused]] Renderer::Model* _model) -> std::pair<JPH::BodyID, JPH::EMotionType> {
+        JPH::BodyCreationSettings cube_settings(
+            new JPH::BoxShape(JPH::Vec3(0.5, 0.5, 0.5)),
+            JPH::RVec3(-7.05, 20.0, -5.5),
+            JPH::Quat::sIdentity(),
+            JPH::EMotionType::Dynamic,
+            Physics::Layers::MOVING);
+        auto body = system->m_body_interface->CreateAndAddBody(
+            cube_settings,
+            JPH::EActivation::Activate);
+        return { body, JPH::EMotionType::Dynamic };
+    });
+    m_scene->add_entity(e3);
 
-    // for (int i = 0; i <= 50; i++) {
-    //     e3.add_physics_command([](Physics::System* system, [[maybe_unused]] Renderer::Model* _model) -> std::pair<JPH::BodyID, JPH::EMotionType> {
-    //         float y = rand() % 100;
-    //         JPH::BodyCreationSettings cube_settings(
-    //             new JPH::BoxShape(JPH::Vec3(0.5, 0.5, 0.5)),
-    //             JPH::RVec3(7.05, y, -5.5),
-    //             JPH::Quat::sIdentity(),
-    //             JPH::EMotionType::Dynamic,
-    //             Physics::Layers::MOVING);
-    //         auto body = system->m_body_interface->CreateAndAddBody(
-    //             cube_settings,
-    //             JPH::EActivation::Activate);
-    //         return { body, JPH::EMotionType::Dynamic };
-    //     });
-    //     m_scene->add_entity(e3);
-    // }
+    for (int i = 0; i <= 50; i++) {
+        e3.add_physics_command([](Physics::System* system, [[maybe_unused]] Renderer::Model* _model) -> std::pair<JPH::BodyID, JPH::EMotionType> {
+            float y = rand() % 100;
+            JPH::BodyCreationSettings cube_settings(
+                new JPH::BoxShape(JPH::Vec3(0.5, 0.5, 0.5)),
+                JPH::RVec3(7.05, y, -5.5),
+                JPH::Quat::sIdentity(),
+                JPH::EMotionType::Dynamic,
+                Physics::Layers::MOVING);
+            auto body = system->m_body_interface->CreateAndAddBody(
+                cube_settings,
+                JPH::EActivation::Activate);
+            return { body, JPH::EMotionType::Dynamic };
+        });
+        m_scene->add_entity(e3);
+    }
 
     EntityBuilder e4;
     Renderer::Light::PointInfo point_info;
@@ -210,6 +210,15 @@ void App::run()
             // Early out if the window is collapsed, as an optimization.
             ImGui::End();
             return;
+        }
+
+        if (ImGui::Checkbox("Toggle vsync", &m_vsync)) {
+            LOG_INFO(std::format("Setting swap interval to {}", m_vsync));
+            if (m_vsync) {
+                m_window.set_swap_interval(1);
+            } else {
+                m_window.set_swap_interval(0);
+            }
         }
 
         ImGui::Checkbox("Toggle physics", &m_physics_on);
