@@ -45,7 +45,7 @@ App::App()
     directional_info.ambient = glm::vec3(0.1);
     directional_info.diffuse = glm::vec3(0.5);
     directional_info.specular = glm::vec3(0.5);
-    directional_info.shadowmap = false;
+    directional_info.shadowmap = true;
     e1.add_directional_light(directional_info);
     m_scene->add_entity(e1);
 
@@ -112,7 +112,7 @@ App::App()
     point_info.constant = 1.0F;
     point_info.linear = 0.022F;
     point_info.quadratic = 0.0019F;
-    point_info.shadowmap = false;
+    point_info.shadowmap = true;
     point_info.near = 0.1F;
     point_info.far = 25.0F;
     e4.add_point_light(point_info);
@@ -126,7 +126,7 @@ App::App()
     point_info.constant = 1.0F;
     point_info.linear = 0.022F;
     point_info.quadratic = 0.0019F;
-    point_info.shadowmap = false;
+    point_info.shadowmap = true;
     point_info.near = 0.1F;
     point_info.far = 25.0F;
     e5.add_point_light(point_info);
@@ -196,9 +196,11 @@ void App::run()
         m_scene->update();
         scancodes();
         fps_counter();
+
         if (m_physics_on) {
             m_scene->physics();
         }
+
         m_scene->draw();
 
         const ImGuiViewport* main_viewport = ImGui::GetMainViewport();
