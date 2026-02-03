@@ -279,133 +279,69 @@ void Scene::compile_shaders()
     }
 
     if (m_forward_pass) {
-        // Do something simplier :)
-        std::string shader_source = std::format(
-            R"(
-#version 460 core
-#extension GL_ARB_bindless_texture : require
+        std::string shader_source_frag;
+        const char* shader_source_vert;
+        if (Renderer::Extensions::is_extension_supported("GL_ARB_bindless_texture")) {
+            shader_source_frag = get_forward_pass_indirect(light_uniforms, light_functions);
+            shader_source_vert = "res/forward_pass/model_indirect.glsl.vert";
+        } else {
+            shader_source_frag = get_forward_pass_normal(light_uniforms, light_functions);
+            shader_source_vert = "res/forward_pass/model_normal.glsl.vert";
+        }
 
-out vec4 FragColor;
-
-// Lighting code
-{}
-
-in vec2 TexCoords;
-in vec3 Normal;
-in vec3 FragPos;
-in flat int DrawID;
-
-layout(binding = 1, std430) readonly buffer ssbo1 {{
-    sampler2D diffuse[];
-}};
-
-layout(binding = 2, std430) readonly buffer ssbo2 {{
-    sampler2D specular[];
-}};
-
-uniform int diffuse_max_textures;
-uniform int specular_max_textures;
-uniform vec3 view_position;
-
-// Light uniforms
-{}
-
-void main() {{
-    vec3 Normal = normalize(Normal);
-    vec3 Albedo = vec3(0.0);
-    float Specular = 0.0;
-    if (DrawID < diffuse_max_textures) {{
-        Albedo.rgb = texture(diffuse[DrawID], TexCoords).rgb;
-    }} else {{
-        Albedo.rgb = vec3(0.0);
-    }}
-
-    if (DrawID < diffuse_max_textures) {{
-        Specular = texture(specular[DrawID], TexCoords).r;
-    }} else {{
-        Specular = 0.0;
-    }}
-    
-    // vec3 FragPos = texture(gPosition, TexCoords).xyz;
-    // vec3 Normal = texture(gNormal, TexCoords).xyz;
-    // vec3 Albedo = texture(gAlbedoSpec, TexCoords).rgb;
-    // float Specular = texture(gAlbedoSpec, TexCoords).a;
-
-    FragColor = vec4(0.0);
-    {}
-    // FragColor = vec4(Albedo, 1.0);
-}})",
-            LIGHTING_SHADER_CODE,
-            light_uniforms,
-            light_functions);
-
-        std::array<Renderer::ShaderInfo, 2> shader_info = {
-            Renderer::ShaderInfo {
-                .is_file = true,
-                .shader = "res/forward_pass/model_indirect.glsl.vert",
-                .type = GL_VERTEX_SHADER,
-            },
-            // Todo swap to dynamic shaders
-            Renderer::ShaderInfo {
-                // .is_file = true,
-                // .shader = "res/deferred_shading/l_pass.glsl.frag",
-                .is_file = false,
-                .shader = shader_source.c_str(),
-                .type = GL_FRAGMENT_SHADER,
-            },
-        };
+        std::array<Renderer::ShaderInfo, 2>
+            shader_info = {
+                Renderer::ShaderInfo {
+                    .is_file = true,
+                    .shader = shader_source_vert,
+                    .type = GL_VERTEX_SHADER,
+                },
+                Renderer::ShaderInfo {
+                    .is_file = false,
+                    .shader = shader_source_frag.c_str(),
+                    .type = GL_FRAGMENT_SHADER,
+                },
+            };
         if (m_forward->m_shader.is_initialized()) {
             m_forward->m_shader.~ShaderProgram();
         }
         m_forward->m_shader.init(shader_info.data(), shader_info.size());
     } else {
-        std::string shader_source = std::format(
-            R"(
-#version 460 core
-out vec4 FragColor;
+        std::array<Renderer::ShaderInfo, 2> shader_info;
 
-// Lighting code
-{}
-
-// Deferred in/uniforms
-{}
-uniform vec3 view_position;
-
-// Light uniforms
-{}
-
-void main() {{
-    vec3 FragPos = texture(gPosition, TexCoords).xyz;
-    vec3 Normal = texture(gNormal, TexCoords).xyz;
-    vec3 Albedo = texture(gAlbedoSpec, TexCoords).rgb;
-    float Specular = texture(gAlbedoSpec, TexCoords).a;
-    FragColor = vec4(0.0);
-    {}
-    // FragColor = vec4(Albedo, 1.0);
-}})",
-            LIGHTING_SHADER_CODE,
-            BOILERPLATE_SHADER_CODE_DEFERRED,
-            light_uniforms,
-            light_functions);
-
-        // LOG_INFO(std::format("shader_source:\n {}", shader_source));
-
-        std::array<Renderer::ShaderInfo, 2> shader_info = {
-            Renderer::ShaderInfo {
-                .is_file = true,
-                .shader = "res/deferred_shading/g_pass.glsl.vert",
-                .type = GL_VERTEX_SHADER,
-            },
-            Renderer::ShaderInfo {
-                .is_file = true,
-                .shader = "res/deferred_shading/g_pass.glsl.frag",
-                .type = GL_FRAGMENT_SHADER,
-            },
-        };
+        if (Renderer::Extensions::is_extension_supported("GL_ARB_bindless_texture")) {
+            shader_info = {
+                Renderer::ShaderInfo {
+                    .is_file = true,
+                    .shader = "res/deferred_shading/g_pass_indirect.glsl.vert",
+                    .type = GL_VERTEX_SHADER,
+                },
+                Renderer::ShaderInfo {
+                    .is_file = true,
+                    .shader = "res/deferred_shading/g_pass_indirect.glsl.frag",
+                    .type = GL_FRAGMENT_SHADER,
+                },
+            };
+        } else {
+            shader_info = {
+                Renderer::ShaderInfo {
+                    .is_file = true,
+                    .shader = "res/deferred_shading/g_pass_normal.glsl.vert",
+                    .type = GL_VERTEX_SHADER,
+                },
+                Renderer::ShaderInfo {
+                    .is_file = true,
+                    .shader = "res/deferred_shading/g_pass_normal.glsl.frag",
+                    .type = GL_FRAGMENT_SHADER,
+                },
+            };
+        }
         if (m_deffered->m_gpass_shader.is_initialized()) {
             m_deffered->m_gpass_shader.~ShaderProgram();
         }
         m_deffered->m_gpass_shader.init(shader_info.data(), shader_info.size());
+
+        std::string shader_source_frag = get_deferred_pass(light_uniforms, light_functions);
 
         shader_info = {
             Renderer::ShaderInfo {
@@ -413,12 +349,9 @@ void main() {{
                 .shader = "res/deferred_shading/l_pass.glsl.vert",
                 .type = GL_VERTEX_SHADER,
             },
-            // Todo swap to dynamic shaders
             Renderer::ShaderInfo {
-                // .is_file = true,
-                // .shader = "res/deferred_shading/l_pass.glsl.frag",
                 .is_file = false,
-                .shader = shader_source.c_str(),
+                .shader = shader_source_frag.c_str(),
                 .type = GL_FRAGMENT_SHADER,
             },
         };

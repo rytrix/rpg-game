@@ -1,5 +1,7 @@
 #include "texture.hpp"
 
+#include "extensions.hpp"
+
 namespace {
 
 class TextureAllocator {
@@ -166,16 +168,22 @@ void Texture::bind(GLuint texture_unit)
 
 [[nodiscard]] GLuint64 Texture::get_bindless_texture_id()
 {
+    util_assert(initialized == true, "Texture has not been initialized");
+    util_assert(Renderer::Extensions::is_extension_supported("GL_ARB_bindless_texture") == true, "GL_ARB_bindless_texture not supported");
     return glGetTextureHandleARB(m_id);
 }
 
 [[nodiscard]] bool Texture::is_bindless_texture_mapped()
 {
+    util_assert(initialized == true, "Texture has not been initialized");
+    util_assert(Renderer::Extensions::is_extension_supported("GL_ARB_bindless_texture") == true, "GL_ARB_bindless_texture not supported");
     return m_bindless_texture_mapped;
 }
 
 void Texture::map_bindless_texture()
 {
+    util_assert(initialized == true, "Texture has not been initialized");
+    util_assert(Renderer::Extensions::is_extension_supported("GL_ARB_bindless_texture") == true, "GL_ARB_bindless_texture not supported");
     util_assert(m_bindless_texture_mapped == false, "Attempting to map bindless texture that is already mapped");
     glMakeTextureHandleResidentARB(get_bindless_texture_id());
     m_bindless_texture_mapped = true;
@@ -184,6 +192,7 @@ void Texture::map_bindless_texture()
 void Texture::unmap_bindless_texture()
 {
     util_assert(m_bindless_texture_mapped == true, "Attempting to unmap bindless texture that is not mapped");
+    util_assert(Renderer::Extensions::is_extension_supported("GL_ARB_bindless_texture") == true, "GL_ARB_bindless_texture not supported");
     glMakeTextureHandleNonResidentARB(get_bindless_texture_id());
     m_bindless_texture_mapped = false;
 }

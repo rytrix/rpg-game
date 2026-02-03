@@ -5,6 +5,7 @@
 #include "shader.hpp"
 #include "texture.hpp"
 #include "vertex.hpp"
+#include "extensions.hpp"
 
 namespace Renderer {
 
@@ -70,6 +71,7 @@ private:
     VertexArray m_vao;
     Buffer m_vbo;
     Buffer m_ebo;
+
     Buffer m_cmd_buff;
     Buffer m_diff_ssbo;
     Buffer m_spec_ssbo;
