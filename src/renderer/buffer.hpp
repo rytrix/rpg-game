@@ -15,6 +15,7 @@ struct Buffer : public NoCopyNoMove {
     void bind_buffer(GLenum target) const;
     void unbind_buffer(GLenum target) const;
 
+    [[nodiscard]] bool is_initialized() const;
     [[nodiscard]] GLuint get_id() const;
 
 private:

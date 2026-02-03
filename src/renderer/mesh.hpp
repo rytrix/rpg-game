@@ -2,10 +2,10 @@
 
 #include "assimp/material.h"
 #include "buffer.hpp"
+#include "extensions.hpp"
 #include "shader.hpp"
 #include "texture.hpp"
 #include "vertex.hpp"
-#include "extensions.hpp"
 
 namespace Renderer {
 
@@ -44,6 +44,8 @@ public:
         std::vector<u32>&& indicies,
         std::vector<TextureRef>&& textures);
 
+    void update_model_ssbos(const std::vector<glm::mat4>& model_matrices);
+
     void draw();
     void draw(ShaderProgram& shader);
 
@@ -75,6 +77,8 @@ private:
     Buffer m_cmd_buff;
     Buffer m_diff_ssbo;
     Buffer m_spec_ssbo;
+    Buffer m_model_ssbo;
+    GLuint m_instance_count = 1;
 
     std::vector<IndirectCommands> m_commands;
     std::vector<GLuint64> m_diffuse_textures;

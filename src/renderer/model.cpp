@@ -37,25 +37,21 @@ Model::~Model()
     initialized = false;
 }
 
-void Model::draw_untextured(ShaderProgram& shader, glm::mat4 model)
+void Model::draw_untextured(ShaderProgram& shader, const std::vector<glm::mat4>& model)
 {
     util_assert(initialized == true, "Model has not been initialized");
 
-    shader.set_mat4("model", model);
-    // for (auto& mesh : m_meshes) {
-    //     mesh.draw();
-    // }
+    // shader.set_mat4("model", model[0]);
+    m_mesh.update_model_ssbos(model);
     m_mesh.draw();
 }
 
-void Model::draw(ShaderProgram& shader, glm::mat4 model)
+void Model::draw(ShaderProgram& shader, const std::vector<glm::mat4>& model)
 {
     util_assert(initialized == true, "Model has not been initialized");
-    shader.set_mat4("model", model);
-    // for (auto& mesh : m_meshes) {
-    //     mesh.draw(shader);
-    // }
 
+    // shader.set_mat4("model", model[0]);
+    m_mesh.update_model_ssbos(model);
     m_mesh.draw(shader);
 }
 
@@ -68,6 +64,7 @@ void Model::draw(ShaderProgram& shader, glm::mat4 model)
 
 const Mesh* Model::get_mesh()
 {
+    util_assert(initialized == true, "Model has not been initialized");
     return &m_mesh;
 }
 
