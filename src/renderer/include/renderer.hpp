@@ -9,6 +9,7 @@
 #include "../texture.hpp"
 #include "../vertex.hpp"
 #include "../window.hpp"
+#include "../extensions.hpp"
 
 #include "../gbuffer.hpp"
 #include "../model.hpp"

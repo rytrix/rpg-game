@@ -1,10 +1,3 @@
-constexpr const char* BOILERPLATE_SHADER_CODE_DEFERRED = R"(
-in vec2 TexCoords;
-uniform sampler2D gPosition;
-uniform sampler2D gNormal;
-uniform sampler2D gAlbedoSpec;
-)";
-
 constexpr const char* LIGHTING_SHADER_CODE = R"(
 struct DirectionalLight {
     vec3 direction;
@@ -203,3 +196,146 @@ vec3 point_light_shadow(PointLightShadow light, vec3 albedo, float in_specular, 
 
     return (ambient + (1.0 - shadow) * (diffuse + specular)) * albedo;
 })";
+
+constexpr std::string get_forward_pass_indirect(const std::string& light_uniforms, const std::string& light_functions)
+{
+    std::string shader_source = std::format(
+        R"(
+#version 460 core
+#extension GL_ARB_bindless_texture : require
+
+out vec4 FragColor;
+
+// Lighting code
+{}
+
+in vec2 TexCoords;
+in vec3 Normal;
+in vec3 FragPos;
+in flat int DrawID;
+
+layout(binding = 1, std430) readonly buffer ssbo1 {{
+    sampler2D diffuse[];
+}};
+
+layout(binding = 2, std430) readonly buffer ssbo2 {{
+    sampler2D specular[];
+}};
+
+uniform int diffuse_max_textures;
+uniform int specular_max_textures;
+uniform vec3 view_position;
+
+// Light uniforms
+{}
+
+void main() {{
+    vec3 Normal = normalize(Normal);
+    vec3 Albedo = vec3(0.0);
+    float Specular = 0.0;
+    if (DrawID < diffuse_max_textures) {{
+        Albedo.rgb = texture(diffuse[DrawID], TexCoords).rgb;
+    }} else {{
+        Albedo.rgb = vec3(0.0);
+    }}
+
+    if (DrawID < diffuse_max_textures) {{
+        Specular = texture(specular[DrawID], TexCoords).r;
+    }} else {{
+        Specular = 0.0;
+    }}
+    
+    // vec3 FragPos = texture(gPosition, TexCoords).xyz;
+    // vec3 Normal = texture(gNormal, TexCoords).xyz;
+    // vec3 Albedo = texture(gAlbedoSpec, TexCoords).rgb;
+    // float Specular = texture(gAlbedoSpec, TexCoords).a;
+
+    FragColor = vec4(0.0);
+    {}
+    // FragColor = vec4(Albedo, 1.0);
+}})",
+        LIGHTING_SHADER_CODE,
+        light_uniforms,
+        light_functions);
+
+    return shader_source;
+}
+
+constexpr std::string get_forward_pass_normal(const std::string& light_uniforms, const std::string& light_functions)
+{
+    std::string shader_source = std::format(
+        R"(
+#version 460 core
+
+out vec4 FragColor;
+
+// Lighting code
+{}
+
+in vec2 TexCoords;
+in vec3 Normal;
+in vec3 FragPos;
+
+uniform sampler2D diffuse;
+uniform sampler2D specular;
+uniform vec3 view_position;
+
+// Light uniforms
+{}
+
+void main() {{
+    vec3 Normal = normalize(Normal);
+    vec3 Albedo = texture(diffuse, TexCoords).rgb;
+    float Specular = texture(specular, TexCoords).r;
+    
+    // vec3 FragPos = texture(gPosition, TexCoords).xyz;
+    // vec3 Normal = texture(gNormal, TexCoords).xyz;
+    // vec3 Albedo = texture(gAlbedoSpec, TexCoords).rgb;
+    // float Specular = texture(gAlbedoSpec, TexCoords).a;
+
+    FragColor = vec4(0.0);
+    {}
+    // FragColor = vec4(Albedo, 1.0);
+}})",
+        LIGHTING_SHADER_CODE,
+        light_uniforms,
+        light_functions);
+
+    return shader_source;
+}
+
+constexpr std::string get_deferred_pass(const std::string& light_uniforms, const std::string& light_functions)
+{
+    std::string shader_source_frag = std::format(
+        R"(
+#version 460 core
+out vec4 FragColor;
+
+in vec2 TexCoords;
+
+// Lighting code
+{}
+
+uniform sampler2D gPosition;
+uniform sampler2D gNormal;
+uniform sampler2D gAlbedoSpec;
+uniform vec3 view_position;
+
+// Light uniforms
+{}
+
+void main() {{
+    vec3 FragPos = texture(gPosition, TexCoords).xyz;
+    vec3 Normal = texture(gNormal, TexCoords).xyz;
+    vec3 Albedo = texture(gAlbedoSpec, TexCoords).rgb;
+    float Specular = texture(gAlbedoSpec, TexCoords).a;
+    FragColor = vec4(0.0);
+    {}
+    // FragColor = vec4(Albedo, 1.0);
+}})",
+        LIGHTING_SHADER_CODE,
+        light_uniforms,
+        light_functions);
+
+    return shader_source_frag;
+}
