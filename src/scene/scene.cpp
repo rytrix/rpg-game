@@ -24,7 +24,7 @@ Scene::~Scene()
     if (m_forward_pass) {
         delete m_forward;
     } else {
-        delete m_deffered;
+        delete m_deferred;
     }
 
     auto view = m_registry.view<JPH::BodyID>();
@@ -76,11 +76,11 @@ void Scene::optimize()
 void Scene::update()
 {
     m_clock.update();
-    if (m_deffered != nullptr) {
-        if (m_window.get_width() != m_deffered->m_gpass_width || m_window.get_height() != m_deffered->m_gpass_height) {
-            m_deffered->m_gpass_width = m_window.get_width();
-            m_deffered->m_gpass_height = m_window.get_height();
-            m_deffered->m_gpass.reinit(m_deffered->m_gpass_width, m_deffered->m_gpass_height);
+    if (m_deferred != nullptr) {
+        if (m_window.get_width() != m_deferred->m_gpass_width || m_window.get_height() != m_deferred->m_gpass_height) {
+            m_deferred->m_gpass_width = m_window.get_width();
+            m_deferred->m_gpass_height = m_window.get_height();
+            m_deferred->m_gpass.reinit(m_deferred->m_gpass_width, m_deferred->m_gpass_height);
         }
     }
     compile_shaders();
@@ -161,39 +161,39 @@ void Scene::draw()
         }
     } else {
         // Geometry pass
-        m_deffered->m_gpass.bind();
+        m_deferred->m_gpass.bind();
         glViewport(0, 0, m_window.get_width(), m_window.get_height());
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-        m_deffered->m_gpass_shader.bind();
-        m_deffered->m_gpass_shader.set_mat4("proj", m_camera.get_proj());
-        m_deffered->m_gpass_shader.set_mat4("view", m_camera.get_view());
+        m_deferred->m_gpass_shader.bind();
+        m_deferred->m_gpass_shader.set_mat4("proj", m_camera.get_proj());
+        m_deferred->m_gpass_shader.set_mat4("view", m_camera.get_view());
 
         for (auto [entity, model_matrix, model] : model_view.each()) {
-            model->draw(m_deffered->m_gpass_shader, model_matrix);
+            model->draw(m_deferred->m_gpass_shader, model_matrix);
         }
 
         // m_gpass.blit_depth_buffer();
-        m_deffered->m_gpass.unbind();
+        m_deferred->m_gpass.unbind();
 
         // Lighting pass
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-        m_deffered->m_lpass_shader.bind();
+        m_deferred->m_lpass_shader.bind();
 
-        m_deffered->m_gpass.set_uniforms(m_deffered->m_lpass_shader);
-        m_deffered->m_lpass_shader.set_vec3("view_position", m_camera.get_pos());
+        m_deferred->m_gpass.set_uniforms(m_deferred->m_lpass_shader);
+        m_deferred->m_lpass_shader.set_vec3("view_position", m_camera.get_pos());
 
         u32 i = 0;
         for (auto [entity, light] : directional_view.each()) {
-            light.set_uniforms(m_deffered->m_lpass_shader, std::format("u_directional_light_{}", i).c_str());
+            light.set_uniforms(m_deferred->m_lpass_shader, std::format("u_directional_light_{}", i).c_str());
             i++;
         }
         i = 0;
         for (auto [entity, light] : point_view.each()) {
-            light.set_uniforms(m_deffered->m_lpass_shader, std::format("u_point_light_{}", i).c_str());
+            light.set_uniforms(m_deferred->m_lpass_shader, std::format("u_point_light_{}", i).c_str());
             i++;
         }
-        m_deffered->m_lpass.draw();
+        m_deferred->m_lpass.draw();
     }
     Renderer::Texture::reset_texture_units();
 }
@@ -336,10 +336,10 @@ void Scene::compile_shaders()
                 },
             };
         }
-        if (m_deffered->m_gpass_shader.is_initialized()) {
-            m_deffered->m_gpass_shader.~ShaderProgram();
+        if (m_deferred->m_gpass_shader.is_initialized()) {
+            m_deferred->m_gpass_shader.~ShaderProgram();
         }
-        m_deffered->m_gpass_shader.init(shader_info.data(), shader_info.size());
+        m_deferred->m_gpass_shader.init(shader_info.data(), shader_info.size());
 
         std::string shader_source_frag = get_deferred_pass(light_uniforms, light_functions);
 
@@ -355,10 +355,10 @@ void Scene::compile_shaders()
                 .type = GL_FRAGMENT_SHADER,
             },
         };
-        if (m_deffered->m_lpass_shader.is_initialized()) {
-            m_deffered->m_lpass_shader.~ShaderProgram();
+        if (m_deferred->m_lpass_shader.is_initialized()) {
+            m_deferred->m_lpass_shader.~ShaderProgram();
         }
-        m_deffered->m_lpass_shader.init(shader_info.data(), shader_info.size());
+        m_deferred->m_lpass_shader.init(shader_info.data(), shader_info.size());
     }
 
     if (!m_shadowmap_shader.is_initialized()) {
@@ -381,9 +381,9 @@ void Scene::init_pass()
         m_forward = nullptr;
         LOG_INFO("Deleted forward pass");
     }
-    if (m_deffered != nullptr) {
-        delete m_deffered;
-        m_deffered = nullptr;
+    if (m_deferred != nullptr) {
+        delete m_deferred;
+        m_deferred = nullptr;
         LOG_INFO("Deleted deferred pass");
     }
 
@@ -392,11 +392,11 @@ void Scene::init_pass()
         LOG_INFO("Created forward pass");
         glEnable(GL_MULTISAMPLE);
     } else {
-        m_deffered = new DeferedPass {};
-        m_deffered->m_gpass_width = m_window.get_width();
-        m_deffered->m_gpass_height = m_window.get_height();
-        m_deffered->m_gpass.init(m_deffered->m_gpass_width, m_deffered->m_gpass_height);
-        m_deffered->m_lpass.init();
+        m_deferred = new DeferedPass {};
+        m_deferred->m_gpass_width = m_window.get_width();
+        m_deferred->m_gpass_height = m_window.get_height();
+        m_deferred->m_gpass.init(m_deferred->m_gpass_width, m_deferred->m_gpass_height);
+        m_deferred->m_lpass.init();
         LOG_INFO("Created deferred pass");
         glDisable(GL_MULTISAMPLE);
     }

@@ -56,7 +56,7 @@ private:
         Renderer::ShaderProgram m_shader;
     };
 
-    DeferedPass* m_deffered = nullptr;
+    DeferedPass* m_deferred = nullptr;
     ForwardPass* m_forward = nullptr;
 
     // TODO: do I make these global? they never change.
