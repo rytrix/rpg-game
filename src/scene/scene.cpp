@@ -374,7 +374,6 @@ uniform vec3 view_position;
 // Light uniforms
 {}
 
-
 void main() {{
     vec3 FragPos = texture(gPosition, TexCoords).xyz;
     vec3 Normal = texture(gNormal, TexCoords).xyz;
@@ -458,6 +457,7 @@ void Scene::init_pass()
     if (m_forward_pass) {
         m_forward = new ForwardPass {};
         LOG_INFO("Created forward pass");
+        glEnable(GL_MULTISAMPLE);
     } else {
         m_deffered = new DeferedPass {};
         m_deffered->m_gpass_width = m_window.get_width();
@@ -465,6 +465,7 @@ void Scene::init_pass()
         m_deffered->m_gpass.init(m_deffered->m_gpass_width, m_deffered->m_gpass_height);
         m_deffered->m_lpass.init();
         LOG_INFO("Created deferred pass");
+        glDisable(GL_MULTISAMPLE);
     }
 
     m_shaders_need_update = true;
