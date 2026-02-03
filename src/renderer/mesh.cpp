@@ -121,7 +121,6 @@ void Mesh::setup_mesh()
     m_vao.init();
     m_vbo.init();
     m_ebo.init();
-    m_cmd_buff.init();
 
     m_vao.bind();
 
@@ -149,7 +148,7 @@ void Mesh::setup_mesh()
     }
 
     if (Renderer::Extensions::is_extension_supported("GL_ARB_bindless_texture")) {
-
+        m_cmd_buff.init();
         m_cmd_buff.buffer_storage(m_commands.size() * sizeof(IndirectCommands), m_commands.data(), 0);
 
         m_diff_ssbo.init();
