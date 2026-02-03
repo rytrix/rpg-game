@@ -38,6 +38,7 @@ private:
 
     Renderer::Window& m_window;
     Renderer::Camera m_camera;
+    float m_camera_speed = 5.0F;
 
     bool m_shaders_need_update = true;
     bool m_forward_pass = true;

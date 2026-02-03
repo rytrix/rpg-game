@@ -49,6 +49,11 @@ void Buffer::unbind_buffer(GLenum target) const
     glBindBuffer(target, 0);
 }
 
+[[nodiscard]] bool Buffer::is_initialized() const
+{
+    return initialized;
+}
+
 [[nodiscard]] GLuint Buffer::get_id() const
 {
     util_assert(initialized == true, "Buffer has not been initialized");

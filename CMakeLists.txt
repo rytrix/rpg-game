@@ -54,6 +54,7 @@ add_subdirectory(dep/assimp)
 
 set(ENABLE_ALL_WARNINGS OFF CACHE BOOL "Stop warnings as errors for JoltPhysics" FORCE)
 set(BUILD_SHARED_LIBS OFF CACHE BOOL "Build static libs for JoltPhysics" FORCE)
+set(DOUBLE_PRECISION OFF CACHE BOOL "Double precision floats for JoltPhysics" FORCE)
 add_subdirectory(dep/JoltPhysics/Build)
 
 add_library(imgui 

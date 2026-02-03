@@ -35,6 +35,30 @@ Mesh::~Mesh()
     initialized = false;
 }
 
+void Mesh::update_model_ssbos(const std::vector<glm::mat4>& model_matrices)
+{
+    util_assert(initialized == true, "Mesh has not been initialized");
+
+    if (!m_model_ssbo.is_initialized()) {
+        m_model_ssbo.init();
+        m_model_ssbo.buffer_storage(model_matrices.size() * sizeof(model_matrices[0]), model_matrices.data(), GL_DYNAMIC_STORAGE_BIT);
+    } else {
+        m_model_ssbo.buffer_sub_data(0, model_matrices.size() * sizeof(model_matrices[0]), model_matrices.data());
+    }
+
+    if (m_instance_count != model_matrices.size()) {
+        m_instance_count = model_matrices.size();
+
+        for (usize i = 0; i < m_commands.size(); i++) {
+            m_commands.at(i).instance_count = m_instance_count;
+        }
+
+        m_cmd_buff.buffer_sub_data(0, m_commands.size() * sizeof(m_commands[0]), m_commands.data());
+    }
+
+    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 3, m_model_ssbo.get_id());
+}
+
 void Mesh::draw()
 {
     util_assert(initialized == true, "Mesh has not been initialized");
@@ -149,7 +173,7 @@ void Mesh::setup_mesh()
 
     if (Renderer::Extensions::is_extension_supported("GL_ARB_bindless_texture")) {
         m_cmd_buff.init();
-        m_cmd_buff.buffer_storage(m_commands.size() * sizeof(IndirectCommands), m_commands.data(), 0);
+        m_cmd_buff.buffer_storage(m_commands.size() * sizeof(IndirectCommands), m_commands.data(), GL_DYNAMIC_STORAGE_BIT);
 
         m_diff_ssbo.init();
         m_spec_ssbo.init();

@@ -86,12 +86,14 @@ App::App()
     });
     m_scene->add_entity(e3);
 
-    for (int i = 0; i <= 50; i++) {
+    for (int i = 0; i <= 5000; i++) {
         e3.add_physics_command([](Physics::System* system, [[maybe_unused]] Renderer::Model* _model) -> std::pair<JPH::BodyID, JPH::EMotionType> {
-            float y = rand() % 100;
+            float y = rand() % 200;
+            float x = rand() % 10 - 5;
+            float z = rand() % 10 - 5;
             JPH::BodyCreationSettings cube_settings(
                 new JPH::BoxShape(JPH::Vec3(0.5, 0.5, 0.5)),
-                JPH::RVec3(7.05, y, -5.5),
+                JPH::RVec3(x, y, z),
                 JPH::Quat::sIdentity(),
                 JPH::EMotionType::Dynamic,
                 Physics::Layers::MOVING);
