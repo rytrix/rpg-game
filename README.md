@@ -36,8 +36,7 @@ models
   - learn more blender
 
 ECS
-  - (maybe) automatic instanced rendering for the same models
-  - or indirect rendering pipeline
+  - automatic instanced rendering for the same models
 
 physics
   - player character
