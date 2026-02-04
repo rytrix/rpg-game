@@ -7,12 +7,18 @@ out vec3 Normal;
 out vec3 FragPos;
 out vec2 TexCoords;
 
-uniform mat4 model;
+// uniform mat4 model;
 uniform mat4 view;
 uniform mat4 proj;
 
+layout(binding = 3, std430) readonly buffer ssbo3 {
+    mat4 models[];
+};
+
 void main()
 {
+    mat4 model = models[gl_InstanceID];
+
     vec4 world_pos = model * vec4(inPos, 1.0);
     TexCoords = inTexCoords;
 

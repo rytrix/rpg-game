@@ -53,7 +53,9 @@ void Mesh::update_model_ssbos(const std::vector<glm::mat4>& model_matrices)
             m_commands.at(i).instance_count = m_instance_count;
         }
 
-        m_cmd_buff.buffer_sub_data(0, m_commands.size() * sizeof(m_commands[0]), m_commands.data());
+        if (Renderer::Extensions::is_extension_supported("GL_ARB_bindless_texture")) {
+            m_cmd_buff.buffer_sub_data(0, m_commands.size() * sizeof(m_commands[0]), m_commands.data());
+        }
     }
 
     glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 3, m_model_ssbo.get_id());
@@ -163,7 +165,7 @@ void Mesh::setup_mesh()
     usize offset = 0;
     for (usize i = 0; i < m_base_vertices.size(); i++) {
         m_commands[i].count = m_base_vertices.at(i).m_count;
-        m_commands[i].instance_count = 1;
+        m_commands[i].instance_count = m_instance_count;
         m_commands[i].first_index = offset; // * sizeof(GLuint);
         m_commands[i].base_instance = 0;
         m_commands[i].base_vertex = m_base_vertices.at(i).m_base;
