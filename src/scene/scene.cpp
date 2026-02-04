@@ -52,6 +52,7 @@ void Scene::add_entity(EntityBuilder& entity_builder)
             m_registry.emplace<JPH::EMotionType>(entity, physics_info.second);
             m_physics_needs_optimize = true;
         }
+        m_models_instance_draw_cache_needs_update = true;
     }
 
     if (entity_builder.m_directional_info != nullptr) {
@@ -76,6 +77,39 @@ void Scene::optimize()
 void Scene::update()
 {
     m_clock.update();
+
+    if (m_models_instance_draw_cache_needs_update) {
+        auto model_view = m_registry.view<glm::mat4, Renderer::Model*>();
+
+        m_models_instance_draw_cache.clear();
+        for (auto [entity, model_matrix, model] : model_view.each()) {
+            for (auto& model_cached : m_models_instance_draw_cache) {
+                if (model == model_cached.model) {
+                    model_cached.model_matrices.emplace_back(model_matrix);
+                    goto end_model_matrix_label;
+                }
+            }
+            m_models_instance_draw_cache.emplace_back(model, model_matrix);
+        end_model_matrix_label:
+        }
+
+        LOG_INFO("Updated scene instanced draw cache");
+        m_models_instance_draw_cache_needs_update = false;
+    } else {
+        auto model_view = m_registry.view<glm::mat4, Renderer::Model*>();
+
+        for (auto& model : m_models_instance_draw_cache) {
+            model.model_matrices.clear();
+        }
+        for (auto [entity, model_matrix, model] : model_view.each()) {
+            for (usize j = 0; j < m_models_instance_draw_cache.size(); j++) {
+                if (model == m_models_instance_draw_cache[j].model) {
+                    m_models_instance_draw_cache[j].model_matrices.emplace_back(model_matrix);
+                }
+            }
+        }
+    }
+
     if (m_deferred != nullptr) {
         if (m_window.get_width() != m_deferred->m_gpass_width || m_window.get_height() != m_deferred->m_gpass_height) {
             m_deferred->m_gpass_width = m_window.get_width();
@@ -99,6 +133,18 @@ void Scene::physics()
     }
 }
 
+void Scene::instance_draw_internal(Renderer::ShaderProgram& shader, bool shadowmap)
+{
+    for (auto& model : m_models_instance_draw_cache) {
+        // std::println("Drawing model with {} instance count", model.model_matrices.size());
+        if (shadowmap) {
+            model.model->draw_untextured(shader, model.model_matrices);
+        } else {
+            model.model->draw(shader, model.model_matrices);
+        }
+    }
+}
+
 void Scene::draw()
 {
     glEnable(GL_DEPTH_TEST);
@@ -111,41 +157,11 @@ void Scene::draw()
 
     m_camera.update();
 
-    auto model_view = m_registry.view<glm::mat4, Renderer::Model*>();
-
-    struct ModelMatrix {
-        Renderer::Model* model;
-        std::vector<glm::mat4> model_matrices;
-    };
-    std::vector<ModelMatrix> models;
-
-    for (auto [entity2, model_matrix, model] : model_view.each()) {
-        for (auto& model_ : models) {
-            if (model == model_.model) {
-                model_.model_matrices.push_back(model_matrix);
-                goto end_model_matrix_label;
-            }
-        }
-        models.push_back({ model, { model_matrix } });
-    end_model_matrix_label:
-    }
-
-    auto draw_command = [&](Renderer::ShaderProgram& shader, bool shadowmap) {
-        for (auto& model : models) {
-            // std::println("Drawing model with {} instance count", model.model_matrices.size());
-            if (shadowmap) {
-                model.model->draw_untextured(shader, model.model_matrices);
-            } else {
-                model.model->draw(shader, model.model_matrices);
-            }
-        }
-    };
-
     auto directional_view = m_registry.view<Renderer::Light::Directional>();
     for (auto [entity, light] : directional_view.each()) {
         if (light.has_shadowmap()) {
             light.shadowmap_draw(m_shadowmap_shader, [&]() {
-                draw_command(m_shadowmap_shader, true);
+                instance_draw_internal(m_shadowmap_shader, true);
                 // for (auto [entity2, model_matrix, model] : model_view.each()) {
                 //     model->draw_untextured(m_shadowmap_shader, model_matrix);
                 // }
@@ -157,7 +173,7 @@ void Scene::draw()
     for (auto [entity, light] : point_view.each()) {
         if (light.has_shadowmap()) {
             light.shadowmap_draw(m_shadowmap_cubemap_shader, [&]() {
-                draw_command(m_shadowmap_cubemap_shader, true);
+                instance_draw_internal(m_shadowmap_cubemap_shader, true);
                 // for (auto [entity2, model_matrix, model] : model_view.each()) {
                 //     model->draw_untextured(m_shadowmap_cubemap_shader, model_matrix);
                 // }
@@ -186,7 +202,7 @@ void Scene::draw()
             i++;
         }
 
-        draw_command(m_forward->m_shader, false);
+        instance_draw_internal(m_forward->m_shader, false);
         // util_error("quick end");
         // for (auto [entity, model_matrix, model] : model_view.each()) {
         //     model->draw(m_forward->m_shader, model_matrix);
@@ -201,7 +217,7 @@ void Scene::draw()
         m_deferred->m_gpass_shader.set_mat4("proj", m_camera.get_proj());
         m_deferred->m_gpass_shader.set_mat4("view", m_camera.get_view());
 
-        draw_command(m_deferred->m_gpass_shader, false);
+        instance_draw_internal(m_deferred->m_gpass_shader, false);
         // for (auto [entity, model_matrix, model] : model_view.each()) {
         //     model->draw(m_deferred->m_gpass_shader, model_matrix);
         // }

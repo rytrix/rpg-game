@@ -67,6 +67,21 @@ private:
     entt::registry m_registry;
     Utils::Cache<const char*, Renderer::Model> m_model_cache;
 
+    struct ModelMatrix {
+        Renderer::Model* model;
+        std::vector<glm::mat4> model_matrices;
+
+        ModelMatrix(Renderer::Model* model, glm::mat4 matrix)
+            : model(model)
+            , model_matrices({ matrix })
+        {
+        }
+    };
+    std::vector<ModelMatrix> m_models_instance_draw_cache;
+    bool m_models_instance_draw_cache_needs_update = false;
+
+    void instance_draw_internal(Renderer::ShaderProgram& shader, bool shadowmap);
+
     bool m_physics_needs_optimize = false;
     std::unique_ptr<Physics::System> m_physics_system = nullptr;
 };
