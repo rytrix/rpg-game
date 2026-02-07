@@ -12,15 +12,19 @@ public:
     EntityBuilder& add_name(const char* name);
     EntityBuilder& add_model_path(const char* path);
     EntityBuilder& add_physics_command(const PhysicsFn& create_body_function);
-    EntityBuilder& add_point_light(Renderer::Light::PointInfo& info);
-    EntityBuilder& add_directional_light(Renderer::Light::DirectionalInfo& info);
+    EntityBuilder& add_phong_point_light(Renderer::Light::Phong::PointInfo& info);
+    EntityBuilder& add_phong_directional_light(Renderer::Light::Phong::DirectionalInfo& info);
+    EntityBuilder& add_pbr_point_light(Renderer::Light::Pbr::Point& info);
+    EntityBuilder& add_pbr_directional_light(Renderer::Light::Pbr::Directional& info);
     EntityBuilder& add_model_matrix(glm::mat4 model);
 
 private:
     const char* m_model_path = nullptr;
     PhysicsFn m_create_body = nullptr;
-    Renderer::Light::PointInfo* m_point_info = nullptr;
-    Renderer::Light::DirectionalInfo* m_directional_info = nullptr;
+    Renderer::Light::Phong::PointInfo* m_phong_point_info = nullptr;
+    Renderer::Light::Phong::DirectionalInfo* m_phong_directional_info = nullptr;
+    Renderer::Light::Pbr::Point* m_pbr_point = nullptr;
+    Renderer::Light::Pbr::Directional* m_pbr_directional = nullptr;
     glm::mat4 m_model_matrix { 1.0 };
     const char* m_name = nullptr;
 };

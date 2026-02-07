@@ -33,8 +33,12 @@ add_executable(${PROJECT_NAME}
     src/renderer/gbuffer.cpp
     src/renderer/shadowmap.cpp
     src/renderer/quad.cpp
-    src/renderer/light/point.cpp
-    src/renderer/light/directional.cpp
+
+    src/renderer/light/phong/point.cpp
+    src/renderer/light/phong/directional.cpp
+
+    src/renderer/light/pbr/point.cpp
+    src/renderer/light/pbr/directional.cpp
 )
 
 target_precompile_headers(${PROJECT_NAME} PUBLIC src/pch.hpp)

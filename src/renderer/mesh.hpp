@@ -76,12 +76,14 @@ private:
 
     Buffer m_cmd_buff;
     Buffer m_diff_ssbo;
+    Buffer m_metallic_roughness_ssbo;
     Buffer m_spec_ssbo;
     Buffer m_model_ssbo;
     GLuint m_instance_count = 1;
 
     std::vector<IndirectCommands> m_commands;
     std::vector<GLuint64> m_diffuse_textures;
+    std::vector<GLuint64> m_metallic_roughness_textures;
     std::vector<GLuint64> m_specular_textures;
 };
 

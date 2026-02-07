@@ -55,13 +55,23 @@ void Scene::add_entity(EntityBuilder& entity_builder)
         m_models_instance_draw_cache_needs_update = true;
     }
 
-    if (entity_builder.m_directional_info != nullptr) {
-        m_registry.emplace<Renderer::Light::Directional>(entity, *entity_builder.m_directional_info);
+    if (entity_builder.m_phong_directional_info != nullptr) {
+        m_registry.emplace<Renderer::Light::Phong::Directional>(entity, *entity_builder.m_phong_directional_info);
         m_shaders_need_update = true;
     }
 
-    if (entity_builder.m_point_info != nullptr) {
-        m_registry.emplace<Renderer::Light::Point>(entity, *entity_builder.m_point_info);
+    if (entity_builder.m_phong_point_info != nullptr) {
+        m_registry.emplace<Renderer::Light::Phong::Point>(entity, *entity_builder.m_phong_point_info);
+        m_shaders_need_update = true;
+    }
+
+    if (entity_builder.m_pbr_point != nullptr) {
+        m_registry.emplace<Renderer::Light::Pbr::Point>(entity, *entity_builder.m_pbr_point);
+        m_shaders_need_update = true;
+    }
+
+    if (entity_builder.m_pbr_directional != nullptr) {
+        m_registry.emplace<Renderer::Light::Pbr::Directional>(entity, *entity_builder.m_pbr_directional);
         m_shaders_need_update = true;
     }
 
@@ -157,8 +167,8 @@ void Scene::draw()
 
     m_camera.update();
 
-    auto directional_view = m_registry.view<Renderer::Light::Directional>();
-    for (auto [entity, light] : directional_view.each()) {
+    auto phong_directional_view = m_registry.view<Renderer::Light::Phong::Directional>();
+    for (auto [entity, light] : phong_directional_view.each()) {
         if (light.has_shadowmap()) {
             light.shadowmap_draw(m_shadowmap_shader, [&]() {
                 instance_draw_internal(m_shadowmap_shader, true);
@@ -169,8 +179,8 @@ void Scene::draw()
         }
     }
 
-    auto point_view = m_registry.view<Renderer::Light::Point>();
-    for (auto [entity, light] : point_view.each()) {
+    auto phong_point_view = m_registry.view<Renderer::Light::Phong::Point>();
+    for (auto [entity, light] : phong_point_view.each()) {
         if (light.has_shadowmap()) {
             light.shadowmap_draw(m_shadowmap_cubemap_shader, [&]() {
                 instance_draw_internal(m_shadowmap_cubemap_shader, true);
@@ -192,12 +202,25 @@ void Scene::draw()
         m_forward->m_shader.set_vec3("view_position", m_camera.get_pos());
 
         u32 i = 0;
-        for (auto [entity, light] : directional_view.each()) {
+        for (auto [entity, light] : phong_directional_view.each()) {
             light.set_uniforms(m_forward->m_shader, std::format("u_directional_light_{}", i).c_str());
             i++;
         }
         i = 0;
-        for (auto [entity, light] : point_view.each()) {
+        for (auto [entity, light] : phong_point_view.each()) {
+            light.set_uniforms(m_forward->m_shader, std::format("u_point_light_{}", i).c_str());
+            i++;
+        }
+
+        auto pbr_point_view = m_registry.view<Renderer::Light::Pbr::Point>();
+        auto pbr_directional_view = m_registry.view<Renderer::Light::Pbr::Directional>();
+        i = 0;
+        for (auto [entity, light] : pbr_directional_view.each()) {
+            light.set_uniforms(m_forward->m_shader, std::format("u_directional_light_{}", i).c_str());
+            i++;
+        }
+        i = 0;
+        for (auto [entity, light] : pbr_point_view.each()) {
             light.set_uniforms(m_forward->m_shader, std::format("u_point_light_{}", i).c_str());
             i++;
         }
@@ -233,12 +256,12 @@ void Scene::draw()
         m_deferred->m_lpass_shader.set_vec3("view_position", m_camera.get_pos());
 
         u32 i = 0;
-        for (auto [entity, light] : directional_view.each()) {
+        for (auto [entity, light] : phong_directional_view.each()) {
             light.set_uniforms(m_deferred->m_lpass_shader, std::format("u_directional_light_{}", i).c_str());
             i++;
         }
         i = 0;
-        for (auto [entity, light] : point_view.each()) {
+        for (auto [entity, light] : phong_point_view.each()) {
             light.set_uniforms(m_deferred->m_lpass_shader, std::format("u_point_light_{}", i).c_str());
             i++;
         }
@@ -259,6 +282,10 @@ void Scene::set_pass(bool forward)
 void Scene::draw_debug_imgui()
 {
     auto view = m_registry.view<glm::mat4, JPH::BodyID, JPH::EMotionType>();
+
+    if (ImGui::Button("Reload shaders")) {
+        m_shaders_need_update = true;
+    }
 
     if (ImGui::DragFloat("Camera Speed", &m_camera_speed, 0.1F, 1.0F, 20.0F)) {
         m_camera.set_speed(m_camera_speed);
@@ -303,9 +330,78 @@ void Scene::compile_shaders()
 
     LOG_INFO("Compiling shaders");
 
+    compile_pbr_shaders();
+
+    if (!m_shadowmap_shader.is_initialized()) {
+        auto shadowmap_info = Renderer::ShadowMap::get_shader_info();
+        m_shadowmap_shader.init(shadowmap_info.data(), shadowmap_info.size());
+    }
+
+    if (!m_shadowmap_cubemap_shader.is_initialized()) {
+        auto shadowmap_cubemap_info = Renderer::ShadowMap::get_shader_info_cubemap();
+        m_shadowmap_cubemap_shader.init(shadowmap_cubemap_info.data(), shadowmap_cubemap_info.size());
+    }
+
+    m_shaders_need_update = false;
+}
+
+void Scene::compile_pbr_shaders()
+{
     std::string light_uniforms;
     std::string light_functions;
-    auto directional_view = m_registry.view<Renderer::Light::Directional>();
+    auto directional_view = m_registry.view<Renderer::Light::Pbr::Directional>();
+
+    u32 i = 0;
+    for (auto [entity, light] : directional_view.each()) {
+        light_uniforms += std::format("uniform DirectionalLight u_directional_light_{};\n", i);
+        light_functions += std::format("lo += pbr_directional(u_directional_light_{}, albedo, roughness, metallic, normal, view);", i);
+        i++;
+    }
+    auto point_view = m_registry.view<Renderer::Light::Pbr::Point>();
+    i = 0;
+    for (auto [entity, light] : point_view.each()) {
+        light_uniforms += std::format("uniform PointLight u_point_light_{};\n", i);
+        light_functions += std::format("lo += pbr_point(u_point_light_{}, albedo, roughness, metallic, normal, view);", i);
+        i++;
+    }
+
+    if (m_forward_pass) {
+        std::string shader_source_frag;
+        const char* shader_source_vert;
+        if (Renderer::Extensions::is_extension_supported("GL_ARB_bindless_texture")) {
+            shader_source_frag = get_pbr_forward_pass_indirect(light_uniforms, light_functions);
+            shader_source_vert = "res/forward_pass/model_indirect.glsl.vert";
+        } else {
+            shader_source_frag = get_pbr_forward_pass_normal(light_uniforms, light_functions);
+            // shader_source_frag = "res/forward_pass/pbr_normal.glsl.frag";
+            shader_source_vert = "res/forward_pass/model_normal.glsl.vert";
+        }
+
+        std::array<Renderer::ShaderInfo, 2>
+            shader_info = {
+                Renderer::ShaderInfo {
+                    .is_file = true,
+                    .shader = shader_source_vert,
+                    .type = GL_VERTEX_SHADER,
+                },
+                Renderer::ShaderInfo {
+                    .is_file = false,
+                    .shader = shader_source_frag.c_str(),
+                    .type = GL_FRAGMENT_SHADER,
+                },
+            };
+        if (m_forward->m_shader.is_initialized()) {
+            m_forward->m_shader.~ShaderProgram();
+        }
+        m_forward->m_shader.init(shader_info.data(), shader_info.size());
+    }
+}
+
+void Scene::compile_phong_shaders()
+{
+    std::string light_uniforms;
+    std::string light_functions;
+    auto directional_view = m_registry.view<Renderer::Light::Phong::Directional>();
 
     u32 i = 0;
     for (auto [entity, light] : directional_view.each()) {
@@ -318,7 +414,7 @@ void Scene::compile_shaders()
         }
         i++;
     }
-    auto point_view = m_registry.view<Renderer::Light::Point>();
+    auto point_view = m_registry.view<Renderer::Light::Phong::Point>();
     i = 0;
     for (auto [entity, light] : point_view.each()) {
         if (light.has_shadowmap()) {
@@ -335,10 +431,11 @@ void Scene::compile_shaders()
         std::string shader_source_frag;
         const char* shader_source_vert;
         if (Renderer::Extensions::is_extension_supported("GL_ARB_bindless_texture")) {
-            shader_source_frag = get_forward_pass_indirect(light_uniforms, light_functions);
+            shader_source_frag = get_phong_forward_pass_indirect(light_uniforms, light_functions);
             shader_source_vert = "res/forward_pass/model_indirect.glsl.vert";
         } else {
-            shader_source_frag = get_forward_pass_normal(light_uniforms, light_functions);
+            shader_source_frag = get_phong_forward_pass_normal(light_uniforms, light_functions);
+            // shader_source_frag = "res/forward_pass/pbr_normal.glsl.frag";
             shader_source_vert = "res/forward_pass/model_normal.glsl.vert";
         }
 
@@ -350,7 +447,7 @@ void Scene::compile_shaders()
                     .type = GL_VERTEX_SHADER,
                 },
                 Renderer::ShaderInfo {
-                    .is_file = false,
+                    .is_file = true,
                     .shader = shader_source_frag.c_str(),
                     .type = GL_FRAGMENT_SHADER,
                 },
@@ -413,18 +510,6 @@ void Scene::compile_shaders()
         }
         m_deferred->m_lpass_shader.init(shader_info.data(), shader_info.size());
     }
-
-    if (!m_shadowmap_shader.is_initialized()) {
-        auto shadowmap_info = Renderer::ShadowMap::get_shader_info();
-        m_shadowmap_shader.init(shadowmap_info.data(), shadowmap_info.size());
-    }
-
-    if (!m_shadowmap_cubemap_shader.is_initialized()) {
-        auto shadowmap_cubemap_info = Renderer::ShadowMap::get_shader_info_cubemap();
-        m_shadowmap_cubemap_shader.init(shadowmap_cubemap_info.data(), shadowmap_cubemap_info.size());
-    }
-
-    m_shaders_need_update = false;
 }
 
 void Scene::init_pass()

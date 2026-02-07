@@ -3,7 +3,7 @@
 #include "../shader.hpp"
 #include "../shadowmap.hpp"
 
-namespace Renderer::Light {
+namespace Renderer::Light::Phong {
 
 struct DirectionalInfo {
     glm::vec3 direction {};
@@ -44,4 +44,4 @@ private:
     ShadowMap_Internal* m_shadowmap_internal = nullptr;
 };
 
-} // namespace Renderer::Light
+} // namespace Renderer::Light::Phong

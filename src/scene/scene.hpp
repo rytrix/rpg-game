@@ -31,6 +31,8 @@ public:
 
 private:
     void compile_shaders();
+    void compile_pbr_shaders();
+    void compile_phong_shaders();
 
     void init_pass();
 
