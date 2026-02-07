@@ -359,6 +359,10 @@ void main() {{
         vec4 metallic_roughness = texture(tex_metallic_roughness[DrawID], TexCoords);
         metallic = metallic_roughness.g;
         roughness = metallic_roughness.b;
+        ao = metallic_roughness.r;
+        // if (ao < 0.001) {{
+        //     ao = 1.0;
+        // }}
     }} else {{
         metallic = 0.0;
         roughness = 0.0;
@@ -428,6 +432,10 @@ void main() {{
     metallic = metallic_roughness.g;
     roughness = metallic_roughness.b;
     specular = texture(tex_specular, TexCoords).r;
+    ao = metallic_roughness.r;
+    // if (ao < 0.001) {{
+    //     ao = 1.0;
+    // }}
 
     vec3 lo = vec3(0.0);
 
