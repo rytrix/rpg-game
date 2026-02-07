@@ -281,8 +281,6 @@ void Scene::set_pass(bool forward)
 
 void Scene::draw_debug_imgui()
 {
-    auto view = m_registry.view<glm::mat4, JPH::BodyID, JPH::EMotionType>();
-
     if (ImGui::Button("Reload shaders")) {
         m_shaders_need_update = true;
     }
@@ -291,22 +289,78 @@ void Scene::draw_debug_imgui()
         m_camera.set_speed(m_camera_speed);
     }
 
-    u32 i = 0;
-    for (auto [entity, model_matrix, body, motion_type] : view.each()) {
-        if (motion_type != JPH::EMotionType::Static) {
-            const char* name = m_registry.get<const char*>(entity);
-            if (name == nullptr) {
+    constexpr float MAX_TRANSFORM = 32.0F;
+    constexpr float MIN_TRANSFORM = -32.0F;
+
+    constexpr float MAX_COLOR = 3000.0F;
+    constexpr float MIN_COLOR = 0.0F;
+
+    usize i = 0;
+    if (ImGui::CollapsingHeader("Entities")) {
+        auto view = m_registry.view<glm::mat4, JPH::BodyID, JPH::EMotionType>();
+        for (auto [entity, model_matrix, body, motion_type] : view.each()) {
+            if (motion_type != JPH::EMotionType::Static) {
+                ImGui::PushID(i);
+                const char** name_check = m_registry.try_get<const char*>(entity);
+                const char* name;
+                if (name_check == nullptr) {
+                    name = "no_name";
+                } else {
+                    name = *name_check;
+                }
+
+                if (ImGui::CollapsingHeader(std::format("{}_e{}", name, i).c_str())) {
+                    glm::vec4& cube_pos = model_matrix[3];
+                    ImGui::DragFloat3("XYZ", &cube_pos.x, 1.0F, MIN_TRANSFORM, MAX_TRANSFORM);
+                    m_physics_system->m_body_interface->SetPosition(
+                        body,
+                        vec3_to_vec3(cube_pos),
+                        JPH::EActivation::Activate);
+                }
+                ImGui::PopID();
+                i++;
+            }
+        }
+    }
+
+    if (ImGui::CollapsingHeader("Lights")) {
+        auto point_view = m_registry.view<Renderer::Light::Pbr::Point>();
+        auto directional_view = m_registry.view<Renderer::Light::Pbr::Directional>();
+
+        for (auto [entity, light] : point_view.each()) {
+            ImGui::PushID(i);
+            const char** name_check = m_registry.try_get<const char*>(entity);
+            const char* name;
+            if (name_check == nullptr) {
                 name = "no_name";
+            } else {
+                name = *name_check;
             }
 
-            if (ImGui::CollapsingHeader(std::format("{}_e{}", name, i).c_str())) {
-                glm::vec4& cube_pos = model_matrix[3];
-                ImGui::DragFloat3("XYZ", &cube_pos.x, 1.0F, -8.0f, 8.0f);
-                m_physics_system->m_body_interface->SetPosition(
-                    body,
-                    vec3_to_vec3(cube_pos),
-                    JPH::EActivation::Activate);
+            if (ImGui::CollapsingHeader(std::format("{}_PL{}", name, i).c_str())) {
+                ImGui::DragFloat3("XYZ", &light.position.x, 1.0F, MIN_TRANSFORM, MAX_TRANSFORM);
+                ImGui::DragFloat3("RGB", &light.color.x, 10.0F, MIN_COLOR, MAX_COLOR);
             }
+
+            ImGui::PopID();
+            i++;
+        }
+
+        for (auto [entity, light] : directional_view.each()) {
+            ImGui::PushID(i);
+            const char** name_check = m_registry.try_get<const char*>(entity);
+            const char* name;
+            if (name_check == nullptr) {
+                name = "no_name";
+            } else {
+                name = *name_check;
+            }
+
+            if (ImGui::CollapsingHeader(std::format("{}_DL{}", name, i).c_str())) {
+                ImGui::DragFloat3("XYZ", &light.direction.x, 1.0F, -1.0F, 1.0F);
+                ImGui::DragFloat3("RGB", &light.color.x, 10.0F, MIN_COLOR, MAX_COLOR);
+            }
+            ImGui::PopID();
             i++;
         }
     }
