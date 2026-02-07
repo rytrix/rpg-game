@@ -39,14 +39,21 @@ App::App()
         }
     });
 
+    // EntityBuilder e1;
+    // Renderer::Light::Phong::DirectionalInfo directional_info;
+    // directional_info.direction = glm::vec3(-0.2F, -1.0F, 0.3F);
+    // directional_info.ambient = glm::vec3(0.1);
+    // directional_info.diffuse = glm::vec3(0.5);
+    // directional_info.specular = glm::vec3(0.5);
+    // directional_info.shadowmap = false;
+    // e1.add_phong_directional_light(directional_info);
+    // m_scene->add_entity(e1);
+
     EntityBuilder e1;
-    Renderer::Light::DirectionalInfo directional_info;
-    directional_info.direction = glm::vec3(-0.2F, -1.0F, 0.3F);
-    directional_info.ambient = glm::vec3(0.1);
-    directional_info.diffuse = glm::vec3(0.5);
-    directional_info.specular = glm::vec3(0.5);
-    directional_info.shadowmap = false;
-    e1.add_directional_light(directional_info);
+    Renderer::Light::Pbr::Directional directional {};
+    directional.direction = glm::vec3(-0.2F, -1.0F, 0.3F);
+    directional.color = glm::vec3(1.0);
+    e1.add_pbr_directional_light(directional);
     m_scene->add_entity(e1);
 
     EntityBuilder e2;
@@ -58,6 +65,7 @@ App::App()
         JPH::TriangleList triangles;
         const auto* mesh = model->get_mesh();
         Physics::System::create_mesh_triangle_list_base_index(triangles, e2_model_matrix, mesh);
+        // Physics::System::create_mesh_triangle_list_base_index(triangles, mesh);
         JPH::BodyID plane_id = system->m_body_interface->CreateAndAddBody(
             JPH::BodyCreationSettings(
                 new JPH::MeshShapeSettings(triangles),
@@ -86,9 +94,9 @@ App::App()
     });
     m_scene->add_entity(e3);
 
-    for (int i = 0; i <= 5000; i++) {
+    for (int i = 0; i <= 20; i++) {
         e3.add_physics_command([](Physics::System* system, [[maybe_unused]] Renderer::Model* _model) -> std::pair<JPH::BodyID, JPH::EMotionType> {
-            float y = rand() % 200;
+            float y = rand() % 500;
             float x = rand() % 10 - 5;
             float z = rand() % 10 - 5;
             JPH::BodyCreationSettings cube_settings(
@@ -105,34 +113,64 @@ App::App()
         m_scene->add_entity(e3);
     }
 
+    EntityBuilder e6;
+    e6.add_name("sphere");
+    e6.add_model_path("res/models/icosphere/icosphere.obj");
+    e6.add_physics_command([](Physics::System* system, [[maybe_unused]] Renderer::Model* _model) -> std::pair<JPH::BodyID, JPH::EMotionType> {
+        JPH::BodyCreationSettings cube_settings(
+            new JPH::SphereShape(1.0),
+            JPH::RVec3(-7.05, 20.0, -5.5),
+            JPH::Quat::sIdentity(),
+            JPH::EMotionType::Dynamic,
+            Physics::Layers::MOVING);
+        auto body = system->m_body_interface->CreateAndAddBody(
+            cube_settings,
+            JPH::EActivation::Activate);
+        return { body, JPH::EMotionType::Dynamic };
+    });
+    m_scene->add_entity(e6);
+
+    // EntityBuilder e4;
+    // Renderer::Light::PointInfo point_info;
+    // point_info.position = glm::vec3(2.0F, 2.0F, 2.0F);
+    // point_info.ambient = glm::vec3(0.00F);
+    // point_info.diffuse = glm::vec3(0.5F);
+    // point_info.specular = glm::vec3(0.5F);
+    // point_info.constant = 1.0F;
+    // point_info.linear = 0.022F;
+    // point_info.quadratic = 0.0019F;
+    // point_info.shadowmap = false;
+    // point_info.near = 0.1F;
+    // point_info.far = 25.0F;
+    // e4.add_point_light(point_info);
+    // m_scene->add_entity(e4);
+
     EntityBuilder e4;
-    Renderer::Light::PointInfo point_info;
-    point_info.position = glm::vec3(2.0F, 2.0F, 2.0F);
-    point_info.ambient = glm::vec3(0.00F);
-    point_info.diffuse = glm::vec3(0.5F);
-    point_info.specular = glm::vec3(0.5F);
-    point_info.constant = 1.0F;
-    point_info.linear = 0.022F;
-    point_info.quadratic = 0.0019F;
-    point_info.shadowmap = false;
-    point_info.near = 0.1F;
-    point_info.far = 25.0F;
-    e4.add_point_light(point_info);
+    Renderer::Light::Pbr::Point point {};
+    point.position = glm::vec3(6.0F, 6.0F, 8.0F);
+    point.color = glm::vec3(1000.0, 1000.0, 2000.0);
+    e4.add_pbr_point_light(point);
     m_scene->add_entity(e4);
 
     EntityBuilder e5;
-    point_info.position = glm::vec3(-2.0F, 2.0F, -2.0F);
-    point_info.ambient = glm::vec3(0.00F);
-    point_info.diffuse = glm::vec3(0.5F);
-    point_info.specular = glm::vec3(0.5F);
-    point_info.constant = 1.0F;
-    point_info.linear = 0.022F;
-    point_info.quadratic = 0.0019F;
-    point_info.shadowmap = false;
-    point_info.near = 0.1F;
-    point_info.far = 25.0F;
-    e5.add_point_light(point_info);
+    point.position = glm::vec3(6.0F, 6.0F, -8.0F);
+    point.color = glm::vec3(2000.0, 1000.0, 1000.0);
+    e5.add_pbr_point_light(point);
     m_scene->add_entity(e5);
+
+    // EntityBuilder e5;
+    // point_info.position = glm::vec3(-2.0F, 2.0F, -2.0F);
+    // point_info.ambient = glm::vec3(0.00F);
+    // point_info.diffuse = glm::vec3(0.5F);
+    // point_info.specular = glm::vec3(0.5F);
+    // point_info.constant = 1.0F;
+    // point_info.linear = 0.022F;
+    // point_info.quadratic = 0.0019F;
+    // point_info.shadowmap = false;
+    // point_info.near = 0.1F;
+    // point_info.far = 25.0F;
+    // e5.add_point_light(point_info);
+    // m_scene->add_entity(e5);
 
     m_scene->optimize();
     m_scene->update();

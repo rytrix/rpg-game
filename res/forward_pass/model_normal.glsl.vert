@@ -11,7 +11,7 @@ out vec2 TexCoords;
 uniform mat4 view;
 uniform mat4 proj;
 
-layout(binding = 3, std430) readonly buffer ssbo3 {
+layout(binding = 1, std430) readonly buffer ssbo0 {
     mat4 models[];
 };
 

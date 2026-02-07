@@ -1,6 +1,6 @@
 #include "point.hpp"
 
-namespace Renderer::Light {
+namespace Renderer::Light::Phong {
 
 Point::Point(PointInfo& info)
 {
@@ -100,4 +100,4 @@ bool Point::has_shadowmap()
     return m_info.shadowmap;
 }
 
-} // namespace Renderer::Light
+} // namespace Renderer::Light::Phong

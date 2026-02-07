@@ -58,7 +58,7 @@ void Mesh::update_model_ssbos(const std::vector<glm::mat4>& model_matrices)
         }
     }
 
-    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 3, m_model_ssbo.get_id());
+    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, m_model_ssbo.get_id());
 }
 
 void Mesh::draw()
@@ -99,9 +99,11 @@ void Mesh::draw(ShaderProgram& shader)
     m_vao.bind();
 
     if (Renderer::Extensions::is_extension_supported("GL_ARB_bindless_texture")) {
-        glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, m_diff_ssbo.get_id());
-        glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 2, m_spec_ssbo.get_id());
+        glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 2, m_diff_ssbo.get_id());
+        glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 3, m_metallic_roughness_ssbo.get_id());
+        glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 4, m_spec_ssbo.get_id());
         shader.set_int("diffuse_max_textures", m_diffuse_textures.size());
+        shader.set_int("metallic_roughness_max_textures", m_metallic_roughness_textures.size());
         shader.set_int("specular_max_textures", m_specular_textures.size());
 
         m_cmd_buff.bind_buffer(GL_DRAW_INDIRECT_BUFFER);
@@ -117,13 +119,20 @@ void Mesh::draw(ShaderProgram& shader)
     } else {
         usize texture_index = 0;
         for (usize i = 0; i < m_commands.size(); i++) {
-            // 1 diffuse 1 specular (at most.. or its broken)
-            if (m_textures[texture_index].m_type == aiTextureType_DIFFUSE) {
+            // 1 diffuse 1 metallic_roughness 1 specular (at most.. or its broken)
+            if (texture_index < m_textures.size() && m_textures[texture_index].m_type == aiTextureType_DIFFUSE) {
                 GLuint texture_unit = Texture::get_texture_unit();
                 m_textures[texture_index].m_tex->bind(texture_unit);
                 shader.set_int("diffuse", static_cast<int>(texture_unit));
                 texture_index++;
-            } else if (m_textures[texture_index].m_type == aiTextureType_SPECULAR) {
+            }
+            if (texture_index < m_textures.size() && m_textures[texture_index].m_type == aiTextureType_GLTF_METALLIC_ROUGHNESS) {
+                GLuint texture_unit = Texture::get_texture_unit();
+                m_textures[texture_index].m_tex->bind(texture_unit);
+                shader.set_int("metallic_roughness", static_cast<int>(texture_unit));
+                texture_index++;
+            }
+            if (texture_index < m_textures.size() && m_textures[texture_index].m_type == aiTextureType_SPECULAR) {
                 GLuint texture_unit = Texture::get_texture_unit();
                 m_textures[texture_index].m_tex->bind(texture_unit);
                 shader.set_int("specular", static_cast<int>(texture_unit));
@@ -138,6 +147,8 @@ void Mesh::draw(ShaderProgram& shader)
                 m_commands[i].instance_count,
                 m_commands[i].base_vertex,
                 m_commands[i].base_instance);
+
+            Texture::reset_texture_units();
         }
     }
 }
@@ -179,17 +190,26 @@ void Mesh::setup_mesh()
 
         m_diff_ssbo.init();
         m_spec_ssbo.init();
+        m_metallic_roughness_ssbo.init();
 
         usize texture_index = 0;
         for (usize i = 0; i < m_commands.size(); i++) {
-            // 1 diffuse 1 specular (at most.. or its broken)
-            if (m_textures[texture_index].m_type == aiTextureType_DIFFUSE) {
+            // 1 diffuse 1 metallic_roughness 1 specular (at most.. or its broken)
+            if (texture_index < m_textures.size() && m_textures[texture_index].m_type == aiTextureType_DIFFUSE) {
                 m_diffuse_textures.emplace_back(m_textures[texture_index].m_tex->get_bindless_texture_id());
                 if (!m_textures[texture_index].m_tex->is_bindless_texture_mapped()) {
                     m_textures[texture_index].m_tex->map_bindless_texture();
                 }
                 texture_index++;
-            } else if (m_textures[texture_index].m_type == aiTextureType_SPECULAR) {
+            }
+            if (texture_index < m_textures.size() && m_textures[texture_index].m_type == aiTextureType_GLTF_METALLIC_ROUGHNESS) {
+                m_metallic_roughness_textures.emplace_back(m_textures[texture_index].m_tex->get_bindless_texture_id());
+                if (!m_textures[texture_index].m_tex->is_bindless_texture_mapped()) {
+                    m_textures[texture_index].m_tex->map_bindless_texture();
+                }
+                texture_index++;
+            }
+            if (texture_index < m_textures.size() && m_textures[texture_index].m_type == aiTextureType_SPECULAR) {
                 m_specular_textures.emplace_back(m_textures[texture_index].m_tex->get_bindless_texture_id());
                 if (!m_textures[texture_index].m_tex->is_bindless_texture_mapped()) {
                     m_textures[texture_index].m_tex->map_bindless_texture();
@@ -200,6 +220,9 @@ void Mesh::setup_mesh()
 
         if (m_diffuse_textures.size() > 0) {
             m_diff_ssbo.buffer_storage(m_diffuse_textures.size() * sizeof(GLuint64), m_diffuse_textures.data(), GL_DYNAMIC_STORAGE_BIT);
+        }
+        if (m_metallic_roughness_textures.size() > 0) {
+            m_metallic_roughness_ssbo.buffer_storage(m_metallic_roughness_textures.size() * sizeof(GLuint64), m_metallic_roughness_textures.data(), GL_DYNAMIC_STORAGE_BIT);
         }
         if (m_specular_textures.size() > 0) {
             m_spec_ssbo.buffer_storage(m_specular_textures.size() * sizeof(GLuint64), m_specular_textures.data(), GL_DYNAMIC_STORAGE_BIT);

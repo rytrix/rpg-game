@@ -1,6 +1,6 @@
 #include "directional.hpp"
 
-namespace Renderer::Light {
+namespace Renderer::Light::Phong {
 
 Directional::Directional(DirectionalInfo& info)
 {
@@ -87,4 +87,4 @@ bool Directional::has_shadowmap()
     return m_info.shadowmap;
 }
 
-} // namespace Renderer::Light
+} // namespace Renderer::Light::Phong

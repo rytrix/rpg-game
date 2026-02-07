@@ -10,7 +10,7 @@ static constexpr JPH::Vec3 vec3_to_vec3(glm::vec3 vec)
     return { vec.x, vec.y, vec.z };
 }
 
-static constexpr JPH::DVec3 dvec3_to_vec3(glm::vec3 vec)
+static constexpr JPH::DVec3 vec3_to_dvec3(glm::vec3 vec)
 {
     return { static_cast<double>(vec.x), static_cast<double>(vec.y), static_cast<double>(vec.z) };
 }

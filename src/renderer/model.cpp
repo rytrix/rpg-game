@@ -55,13 +55,6 @@ void Model::draw(ShaderProgram& shader, const std::vector<glm::mat4>& model)
     m_mesh.draw(shader);
 }
 
-// TODO
-// const std::deque<Mesh>* Model::get_meshes()
-// {
-//     util_assert(initialized == true, "Model has not been initialized");
-//     return &m_meshes;
-// }
-
 const Mesh* Model::get_mesh()
 {
     util_assert(initialized == true, "Model has not been initialized");
@@ -127,6 +120,9 @@ void Model::process_mesh(aiMesh* mesh, const aiScene* scene)
         m_mesh.m_textures.insert(m_mesh.m_textures.end(), diffuseMaps.begin(), diffuseMaps.end());
         // textures.insert(textures.end(), diffuseMaps.begin(), diffuseMaps.end());
 
+        std::vector<TextureRef> metallicRoughnessMaps = load_material_textures(material, aiTextureType_GLTF_METALLIC_ROUGHNESS);
+        m_mesh.m_textures.insert(m_mesh.m_textures.end(), metallicRoughnessMaps.begin(), metallicRoughnessMaps.end());
+
         std::vector<TextureRef> specularMaps = load_material_textures(material, aiTextureType_SPECULAR);
         // std::println("specular size = {}", specularMaps.size());
         m_mesh.m_textures.insert(m_mesh.m_textures.end(), specularMaps.begin(), specularMaps.end());
@@ -140,6 +136,22 @@ void Model::process_mesh(aiMesh* mesh, const aiScene* scene)
         base_vertex);
 
     // m_meshes.emplace_back(std::move(vertices), std::move(indices), std::move(textures));
+}
+
+const char* aiTextureType_to_str(aiTextureType type)
+{
+    switch (type) {
+        case aiTextureType_DIFFUSE:
+            return "diffuse";
+        case aiTextureType_DIFFUSE_ROUGHNESS:
+            return "diffuse_roughness";
+        case aiTextureType_GLTF_METALLIC_ROUGHNESS:
+            return "gltf_metallic_roughness";
+        case aiTextureType_SPECULAR:
+            return "specular";
+        default:
+            return "unknown";
+    }
 }
 
 std::vector<TextureRef> Model::load_material_textures(aiMaterial* mat, aiTextureType type)
@@ -157,7 +169,7 @@ std::vector<TextureRef> Model::load_material_textures(aiMaterial* mat, aiTexture
         texture_info.file_path = texture_path.c_str();
         texture_info.flip = false;
 
-        LOG_INFO(std::format("Loading {}", texture_path));
+        LOG_INFO(std::format("Loading {} type {}", texture_path, aiTextureType_to_str(type)));
 
         Texture& texture = m_texture_cache.get_or_create(texture_path, texture_info);
         textures.emplace_back(&texture, type);
