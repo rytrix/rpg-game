@@ -202,7 +202,7 @@ void Model::init_placeholder_textures()
     placeholder_texture_albedo = new Texture(texture_info);
     placeholder_texture_albedo->sub_image(subimage_info);
 
-    std::array<u8, 4> data_metallic = { 0, 0, 0, 0 };
+    std::array<u8, 4> data_metallic = { 255, 0, 0, 0 };
     subimage_info.pixels = data_metallic.data();
     placeholder_texture_metallic = new Texture(texture_info);
     placeholder_texture_metallic->sub_image(subimage_info);
