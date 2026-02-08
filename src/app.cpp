@@ -39,16 +39,6 @@ App::App()
         }
     });
 
-    // EntityBuilder e1;
-    // Renderer::Light::Phong::DirectionalInfo directional_info;
-    // directional_info.direction = glm::vec3(-0.2F, -1.0F, 0.3F);
-    // directional_info.ambient = glm::vec3(0.1);
-    // directional_info.diffuse = glm::vec3(0.5);
-    // directional_info.specular = glm::vec3(0.5);
-    // directional_info.shadowmap = false;
-    // e1.add_phong_directional_light(directional_info);
-    // m_scene->add_entity(e1);
-
     EntityBuilder e1;
     Renderer::Light::Pbr::Directional directional {};
     directional.direction = glm::vec3(-0.2F, -1.0F, 0.3F);
@@ -130,21 +120,6 @@ App::App()
     });
     m_scene->add_entity(e6);
 
-    // EntityBuilder e4;
-    // Renderer::Light::PointInfo point_info;
-    // point_info.position = glm::vec3(2.0F, 2.0F, 2.0F);
-    // point_info.ambient = glm::vec3(0.00F);
-    // point_info.diffuse = glm::vec3(0.5F);
-    // point_info.specular = glm::vec3(0.5F);
-    // point_info.constant = 1.0F;
-    // point_info.linear = 0.022F;
-    // point_info.quadratic = 0.0019F;
-    // point_info.shadowmap = false;
-    // point_info.near = 0.1F;
-    // point_info.far = 25.0F;
-    // e4.add_point_light(point_info);
-    // m_scene->add_entity(e4);
-
     EntityBuilder e4;
     Renderer::Light::Pbr::Point point {};
     point.position = glm::vec3(6.0F, 6.0F, 8.0F);
@@ -157,20 +132,6 @@ App::App()
     point.color = glm::vec3(50.0, 25.0, 25.0);
     e5.add_pbr_point_light(point);
     m_scene->add_entity(e5);
-
-    // EntityBuilder e5;
-    // point_info.position = glm::vec3(-2.0F, 2.0F, -2.0F);
-    // point_info.ambient = glm::vec3(0.00F);
-    // point_info.diffuse = glm::vec3(0.5F);
-    // point_info.specular = glm::vec3(0.5F);
-    // point_info.constant = 1.0F;
-    // point_info.linear = 0.022F;
-    // point_info.quadratic = 0.0019F;
-    // point_info.shadowmap = false;
-    // point_info.near = 0.1F;
-    // point_info.far = 25.0F;
-    // e5.add_point_light(point_info);
-    // m_scene->add_entity(e5);
 
     m_scene->optimize();
     m_scene->update();
