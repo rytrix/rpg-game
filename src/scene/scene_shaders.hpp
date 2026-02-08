@@ -371,20 +371,18 @@ void main() {{
     float ao = 1.0;
     vec3 view = normalize(view_position - FragPos);
 
+    vec4 diffuse = texture(tex_diffuse[DrawID], TexCoords);
+    if (diffuse.a < 0.01) {{
+        discard;
+    }}
     if (DrawID < diffuse_max_textures) {{
-        albedo.rgb = texture(tex_diffuse[DrawID], TexCoords).rgb;
-    }} else {{
-        albedo.rgb = vec3(0.0);
+        albedo.rgb = diffuse.rgb;
     }}
 
     if (DrawID < metallic_roughness_max_textures) {{
         vec4 metallic_roughness = texture(tex_metallic_roughness[DrawID], TexCoords);
         metallic = metallic_roughness.b;
         roughness = metallic_roughness.g;
-        // ao = metallic_roughness.r;
-    }} else {{
-        metallic = 0.0;
-        roughness = 0.0;
     }}
 
     vec3 lo = vec3(0.0);
@@ -397,7 +395,7 @@ void main() {{
     color = color / (color + vec3(1.0));
     color = pow(color, vec3(1.0/2.2));
 
-    FragColor = vec4(color, 1.0);
+    FragColor = vec4(color, diffuse.a);
 }})",
         PBR_LIGHTING_SHADER_CODE,
         light_uniforms,
@@ -411,7 +409,6 @@ constexpr std::string get_pbr_forward_pass_normal(const std::string& light_unifo
     std::string shader_source = std::format(
         R"(
 #version 460 core
-#extension GL_ARB_bindless_texture : require
 
 out vec4 FragColor;
 
@@ -436,7 +433,7 @@ vec3 calc_bumped_normal()
     tangent = normalize(tangent - dot(tangent, normal) * normal);
     vec3 bitangent = cross(tangent, normal);
 
-    vec3 bump_map_normal = texture(tex_normals[DrawID], TexCoords).xyz;
+    vec3 bump_map_normal = texture(tex_normals, TexCoords).xyz;
     bump_map_normal = 2.0 * bump_map_normal - vec3(1.0, 1.0, 1.0);
 
     vec3 new_normal;
@@ -460,12 +457,14 @@ void main() {{
     float ao = 1.0;
     vec3 view = normalize(view_position - FragPos);
 
-    albedo = texture(tex_diffuse, TexCoords).rgb;
+    vec4 diffuse = texture(tex_diffuse, TexCoords);
+    if (diffuse.a < 0.01) {{
+        discard;
+    }}
+    albedo.rgb = diffuse.rgb;
     vec4 metallic_roughness = texture(tex_metallic_roughness, TexCoords);
-    metallic = metallic_roughness.g;
-    roughness = metallic_roughness.b;
-    specular = texture(tex_specular, TexCoords).r;
-    // ao = metallic_roughness.r;
+    metallic = metallic_roughness.b;
+    roughness = metallic_roughness.g;
 
     vec3 lo = vec3(0.0);
 
@@ -477,7 +476,7 @@ void main() {{
     color = color / (color + vec3(1.0));
     color = pow(color, vec3(1.0/2.2));
 
-    FragColor = vec4(color, 1.0);
+    FragColor = vec4(color, diffuse.a);
 }})",
         PBR_LIGHTING_SHADER_CODE,
         light_uniforms,
