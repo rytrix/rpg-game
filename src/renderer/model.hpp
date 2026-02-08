@@ -24,11 +24,14 @@ public:
     // const std::deque<Mesh>* get_meshes();
     const Mesh* get_mesh();
 
+    // Doesn't need to be called it will lazy load (or do before model loading if it is multi-threaded)
+    static void init_placeholder_textures();
+    // Call this before the opengl context is killed (or don't the os will clean it up)
+    static void destroy_placeholder_textures();
 private:
     bool initialized = false;
 
     Utils::Cache<std::string, Texture> m_texture_cache;
-    // std::deque<Mesh> m_meshes;
     Mesh m_mesh;
     std::string m_directory;
 
