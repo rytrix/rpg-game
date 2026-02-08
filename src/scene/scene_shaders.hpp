@@ -364,7 +364,7 @@ void main() {{
     // vec3 normal = normalize(Normal);
     vec3 normal = calc_bumped_normal();
 
-    vec3 albedo = vec3(0.0);
+    vec3 albedo = vec3(1.0);
     float metallic = 0.0;
     float roughness = 0.0;
     float specular = 0.0;
@@ -375,15 +375,12 @@ void main() {{
     if (diffuse.a < 0.01) {{
         discard;
     }}
-    if (DrawID < diffuse_max_textures) {{
-        albedo.rgb = diffuse.rgb;
-    }}
+    albedo.rgb = diffuse.rgb;
 
-    if (DrawID < metallic_roughness_max_textures) {{
-        vec4 metallic_roughness = texture(tex_metallic_roughness[DrawID], TexCoords);
-        metallic = metallic_roughness.b;
-        roughness = metallic_roughness.g;
-    }}
+    vec4 metallic_roughness = texture(tex_metallic_roughness[DrawID], TexCoords);
+    ao = metallic_roughness.r;
+    metallic = metallic_roughness.b;
+    roughness = metallic_roughness.g;
 
     vec3 lo = vec3(0.0);
 
@@ -450,7 +447,7 @@ vec3 calc_bumped_normal()
 void main() {{
     // vec3 normal = normalize(Normal);
     vec3 normal = calc_bumped_normal();
-    vec3 albedo = vec3(0.0);
+    vec3 albedo = vec3(1.0);
     float metallic = 0.0;
     float roughness = 0.0;
     float specular = 0.0;
@@ -463,6 +460,7 @@ void main() {{
     }}
     albedo.rgb = diffuse.rgb;
     vec4 metallic_roughness = texture(tex_metallic_roughness, TexCoords);
+    ao = metallic_roughness.r;
     metallic = metallic_roughness.b;
     roughness = metallic_roughness.g;
 
