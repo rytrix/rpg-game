@@ -10,11 +10,10 @@
 namespace Renderer {
 
 struct TextureRef {
-    Texture* m_tex;
-    aiTextureType m_type;
+    Texture* m_tex = nullptr;
+    aiTextureType m_type = aiTextureType_DIFFUSE;
 };
 
-#pragma pack(push, 1)
 struct IndirectCommands {
     GLuint count;
     GLuint instance_count;
@@ -22,7 +21,6 @@ struct IndirectCommands {
     GLint base_vertex;
     GLuint base_instance;
 };
-#pragma pack(pop)
 
 class Mesh : public NoCopyNoMove {
     friend class Model;
@@ -32,17 +30,23 @@ public:
         glm::vec3 m_pos;
         glm::vec3 m_norm;
         glm::vec2 m_tex;
+        glm::vec3 m_tang;
+    };
+
+    struct BaseVertex {
+        GLsizei m_count {};
+        GLsizei m_base {};
+        GLuint m_offset {};
+
+        BaseVertex(GLsizei count, GLsizei base)
+            : m_count(count)
+            , m_base(base)
+        {
+        }
     };
 
     Mesh() = default;
-    Mesh(std::vector<Vertex>&& verticies,
-        std::vector<u32>&& indicies,
-        std::vector<TextureRef>&& textures);
     ~Mesh();
-
-    void init(std::vector<Vertex>&& verticies,
-        std::vector<u32>&& indicies,
-        std::vector<TextureRef>&& textures);
 
     void update_model_ssbos(const std::vector<glm::mat4>& model_matrices);
 
@@ -51,18 +55,12 @@ public:
 
     std::vector<Vertex> m_vertices;
     std::vector<u32> m_indices;
-    std::vector<TextureRef> m_textures;
 
-    struct BaseVertex {
-        GLsizei m_count;
-        GLsizei m_base;
+    std::vector<Texture*> m_diffuse_textures;
+    std::vector<Texture*> m_metallic_roughness_textures;
+    std::vector<Texture*> m_normal_textures;
+    // std::vector<Texture*> m_textures;
 
-        BaseVertex(GLsizei count, GLsizei base)
-            : m_count(count)
-            , m_base(base)
-        {
-        }
-    };
     std::vector<BaseVertex> m_base_vertices;
 
 private:
@@ -74,17 +72,20 @@ private:
     Buffer m_vbo;
     Buffer m_ebo;
 
+    GLuint m_instance_count = 1;
+
+    Buffer m_model_ssbo;
+
+    // Indirect info
     Buffer m_cmd_buff;
     Buffer m_diff_ssbo;
     Buffer m_metallic_roughness_ssbo;
-    Buffer m_spec_ssbo;
-    Buffer m_model_ssbo;
-    GLuint m_instance_count = 1;
+    Buffer m_normals_ssbo;
 
     std::vector<IndirectCommands> m_commands;
-    std::vector<GLuint64> m_diffuse_textures;
-    std::vector<GLuint64> m_metallic_roughness_textures;
-    std::vector<GLuint64> m_specular_textures;
+    std::vector<GLuint64> m_diffuse_bindless_ids;
+    std::vector<GLuint64> m_metallic_roughness_bindless_ids;
+    std::vector<GLuint64> m_normal_bindless_ids;
 };
 
 } // namespace Renderer

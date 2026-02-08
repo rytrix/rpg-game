@@ -315,6 +315,7 @@ out vec4 FragColor;
 in vec2 TexCoords;
 in vec3 Normal;
 in vec3 FragPos;
+in vec3 Tangent;
 in flat int DrawID;
 
 // Lighting code
@@ -329,19 +330,40 @@ layout(binding = 3, std430) readonly buffer ssbo2 {{
 }};
 
 layout(binding = 4, std430) readonly buffer ssbo3 {{
-    sampler2D tex_specular[];
+    sampler2D tex_normals[];
 }};
 
 uniform int diffuse_max_textures;
 uniform int metallic_roughness_max_textures;
-uniform int specular_max_textures;
+uniform int normals_max_textures;
+
 uniform vec3 view_position;
+
+vec3 calc_bumped_normal()
+{{
+    vec3 normal = normalize(Normal);
+    vec3 tangent = normalize(Tangent);
+    tangent = normalize(tangent - dot(tangent, normal) * normal);
+    vec3 bitangent = cross(tangent, normal);
+
+    vec3 bump_map_normal = texture(tex_normals[DrawID], TexCoords).xyz;
+    bump_map_normal = 2.0 * bump_map_normal - vec3(1.0, 1.0, 1.0);
+
+    vec3 new_normal;
+    mat3 TBN = mat3(tangent, bitangent, normal);
+    new_normal = TBN * bump_map_normal;
+    new_normal = normalize(new_normal);
+
+    return new_normal;
+}}
 
 // Light uniforms
 {}
 
 void main() {{
-    vec3 normal = normalize(Normal);
+    // vec3 normal = normalize(Normal);
+    vec3 normal = calc_bumped_normal();
+
     vec3 albedo = vec3(0.0);
     float metallic = 0.0;
     float roughness = 0.0;
@@ -357,21 +379,12 @@ void main() {{
 
     if (DrawID < metallic_roughness_max_textures) {{
         vec4 metallic_roughness = texture(tex_metallic_roughness[DrawID], TexCoords);
-        metallic = metallic_roughness.g;
-        roughness = metallic_roughness.b;
-        ao = metallic_roughness.r;
-        // if (ao < 0.001) {{
-        //     ao = 1.0;
-        // }}
+        metallic = metallic_roughness.b;
+        roughness = metallic_roughness.g;
+        // ao = metallic_roughness.r;
     }} else {{
         metallic = 0.0;
         roughness = 0.0;
-    }}
-
-    if (DrawID < specular_max_textures) {{
-        specular = texture(tex_specular[DrawID], TexCoords).r;
-    }} else {{
-        specular = 0.0;
     }}
 
     vec3 lo = vec3(0.0);
@@ -405,21 +418,41 @@ out vec4 FragColor;
 in vec2 TexCoords;
 in vec3 Normal;
 in vec3 FragPos;
+in vec3 Tangent;
 
 // Lighting code
 {}
 
 uniform sampler2D tex_diffuse;
 uniform sampler2D tex_metallic_roughness;
-uniform sampler2D tex_specular;
+uniform sampler2D tex_normals;
 
 uniform vec3 view_position;
+
+vec3 calc_bumped_normal()
+{{
+    vec3 normal = normalize(Normal);
+    vec3 tangent = normalize(Tangent);
+    tangent = normalize(tangent - dot(tangent, normal) * normal);
+    vec3 bitangent = cross(tangent, normal);
+
+    vec3 bump_map_normal = texture(tex_normals[DrawID], TexCoords).xyz;
+    bump_map_normal = 2.0 * bump_map_normal - vec3(1.0, 1.0, 1.0);
+
+    vec3 new_normal;
+    mat3 TBN = mat3(tangent, bitangent, normal);
+    new_normal = TBN * bump_map_normal;
+    new_normal = normalize(new_normal);
+
+    return new_normal;
+}}
 
 // Light uniforms
 {}
 
 void main() {{
-    vec3 normal = normalize(Normal);
+    // vec3 normal = normalize(Normal);
+    vec3 normal = calc_bumped_normal();
     vec3 albedo = vec3(0.0);
     float metallic = 0.0;
     float roughness = 0.0;
@@ -432,10 +465,7 @@ void main() {{
     metallic = metallic_roughness.g;
     roughness = metallic_roughness.b;
     specular = texture(tex_specular, TexCoords).r;
-    ao = metallic_roughness.r;
-    // if (ao < 0.001) {{
-    //     ao = 1.0;
-    // }}
+    // ao = metallic_roughness.r;
 
     vec3 lo = vec3(0.0);
 
