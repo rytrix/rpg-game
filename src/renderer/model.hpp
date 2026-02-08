@@ -34,7 +34,11 @@ private:
 
     void process_node(aiNode* node, const aiScene* scene);
     void process_mesh(aiMesh* mesh, const aiScene* scene);
-    std::vector<TextureRef> load_material_textures(aiMaterial* mat, aiTextureType type);
+    Texture* load_material_textures(aiMaterial* mat, aiTextureType type);
+
+    static Texture* get_placeholder_texture_albedo();
+    static Texture* get_placeholder_texture_normal();
+    static Texture* get_placeholder_texture_metallic();
 };
 
 } // namespace Renderer

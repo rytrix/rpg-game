@@ -40,6 +40,7 @@
 #include <numbers>
 #include <random>
 #include <stdexcept>
+#include <stdfloat>
 #include <utility>
 #include <vector>
 

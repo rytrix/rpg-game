@@ -21,12 +21,17 @@ void Model::init(const char* file_path)
     util_assert(std::filesystem::exists(file_path), std::format("Model \"{}\" is an invalid path", file_path));
 
     Assimp::Importer importer;
-    const aiScene* scene = importer.ReadFile(file_path, aiProcess_Triangulate | aiProcess_FlipUVs);
+    const aiScene* scene = importer.ReadFile(file_path, aiProcess_Triangulate | aiProcess_FlipUVs | aiProcess_CalcTangentSpace);
     m_directory = m_directory.substr(0, m_directory.find_last_of('/'));
 
     util_assert(scene->mRootNode != nullptr, "Model::Model: Root node is nullptr");
     process_node(scene->mRootNode, scene);
 
+    usize offset = 0;
+    for (usize i = 0; i < m_mesh.m_base_vertices.size(); i++) {
+        m_mesh.m_base_vertices.at(i).m_offset = offset;
+        offset += m_mesh.m_base_vertices.at(i).m_count;
+    }
     m_mesh.setup_mesh();
 
     initialized = true;
@@ -77,12 +82,8 @@ void Model::process_node(aiNode* node, const aiScene* scene)
 
 void Model::process_mesh(aiMesh* mesh, const aiScene* scene)
 {
-    // std::vector<Mesh::Vertex> vertices;
-    // std::vector<u32> indices;
-    // std::vector<TextureRef> textures;
-
-    GLsizei base_vertex = static_cast<GLsizei>(m_mesh.m_vertices.size());
-    GLsizei count = static_cast<GLsizei>(m_mesh.m_indices.size());
+    auto base_vertex = static_cast<GLsizei>(m_mesh.m_vertices.size());
+    auto count = static_cast<GLsizei>(m_mesh.m_indices.size());
 
     for (u32 i = 0; i < mesh->mNumVertices; i++) {
         Mesh::Vertex vertex {};
@@ -93,6 +94,10 @@ void Model::process_mesh(aiMesh* mesh, const aiScene* scene)
         vertex.m_norm.x = mesh->mNormals[i].x;
         vertex.m_norm.y = mesh->mNormals[i].y;
         vertex.m_norm.z = mesh->mNormals[i].z;
+
+        vertex.m_tang.x = mesh->mTangents[i].x;
+        vertex.m_tang.y = mesh->mTangents[i].y;
+        vertex.m_tang.z = mesh->mTangents[i].z;
 
         if (mesh->HasTextureCoords(0)) {
             vertex.m_tex.x = mesh->mTextureCoords[0][i].x;
@@ -108,25 +113,35 @@ void Model::process_mesh(aiMesh* mesh, const aiScene* scene)
 
         for (u32 j = 0; j < face.mNumIndices; j++) {
             m_mesh.m_indices.push_back(face.mIndices[j]);
-            // indices.push_back(face.mIndices[j]);
         }
     }
 
     if (scene->HasMaterials()) {
         aiMaterial* material = scene->mMaterials[mesh->mMaterialIndex];
 
-        std::vector<TextureRef> diffuseMaps = load_material_textures(material, aiTextureType_DIFFUSE);
-        // std::println("diffuse size = {}", diffuseMaps.size());
-        m_mesh.m_textures.insert(m_mesh.m_textures.end(), diffuseMaps.begin(), diffuseMaps.end());
-        // textures.insert(textures.end(), diffuseMaps.begin(), diffuseMaps.end());
+        Texture* diffuse_map = load_material_textures(material, aiTextureType_DIFFUSE);
+        if (diffuse_map == nullptr) {
+            m_mesh.m_diffuse_textures.push_back(get_placeholder_texture_albedo());
+        } else {
+            m_mesh.m_diffuse_textures.push_back(diffuse_map);
+        }
 
-        std::vector<TextureRef> metallicRoughnessMaps = load_material_textures(material, aiTextureType_GLTF_METALLIC_ROUGHNESS);
-        m_mesh.m_textures.insert(m_mesh.m_textures.end(), metallicRoughnessMaps.begin(), metallicRoughnessMaps.end());
+        Texture* metallic_roughness_map = load_material_textures(material, aiTextureType_GLTF_METALLIC_ROUGHNESS);
+        if (metallic_roughness_map == nullptr) {
+            m_mesh.m_metallic_roughness_textures.push_back(get_placeholder_texture_metallic());
+        } else {
+            m_mesh.m_metallic_roughness_textures.push_back(metallic_roughness_map);
+        }
 
-        std::vector<TextureRef> specularMaps = load_material_textures(material, aiTextureType_SPECULAR);
-        // std::println("specular size = {}", specularMaps.size());
-        m_mesh.m_textures.insert(m_mesh.m_textures.end(), specularMaps.begin(), specularMaps.end());
-        // textures.insert(textures.end(), specularMaps.begin(), specularMaps.end());
+        Texture* normal_map = load_material_textures(material, aiTextureType_NORMALS);
+        if (normal_map == nullptr) {
+            m_mesh.m_normal_textures.push_back(get_placeholder_texture_normal());
+        } else {
+            m_mesh.m_normal_textures.push_back(normal_map);
+        }
+
+        // Texture* ao_map = load_material_textures(material, aiTextureType_AMBIENT_OCCLUSION);
+        // m_mesh.m_textures.push_back(ao_map);
     }
 
     count = static_cast<GLsizei>(m_mesh.m_indices.size()) - count;
@@ -134,34 +149,13 @@ void Model::process_mesh(aiMesh* mesh, const aiScene* scene)
     m_mesh.m_base_vertices.emplace_back(
         count,
         base_vertex);
-
-    // m_meshes.emplace_back(std::move(vertices), std::move(indices), std::move(textures));
 }
 
-const char* aiTextureType_to_str(aiTextureType type)
+Texture* Model::load_material_textures(aiMaterial* mat, aiTextureType type)
 {
-    switch (type) {
-        case aiTextureType_DIFFUSE:
-            return "diffuse";
-        case aiTextureType_DIFFUSE_ROUGHNESS:
-            return "diffuse_roughness";
-        case aiTextureType_GLTF_METALLIC_ROUGHNESS:
-            return "gltf_metallic_roughness";
-        case aiTextureType_SPECULAR:
-            return "specular";
-        default:
-            return "unknown";
-    }
-}
-
-std::vector<TextureRef> Model::load_material_textures(aiMaterial* mat, aiTextureType type)
-{
-    std::vector<TextureRef> textures;
-
-    // std::println("{} Material texture count {}", type_name, mat->GetTextureCount(type));
-    for (unsigned int i = 0; i < mat->GetTextureCount(type); i++) {
+    if (mat->GetTextureCount(type) > 0) {
         aiString str;
-        mat->GetTexture(type, i, &str);
+        mat->GetTexture(type, 0, &str);
         std::string texture_path = (m_directory + "/" + str.C_Str());
 
         TextureInfo texture_info;
@@ -169,13 +163,121 @@ std::vector<TextureRef> Model::load_material_textures(aiMaterial* mat, aiTexture
         texture_info.file_path = texture_path.c_str();
         texture_info.flip = false;
 
-        LOG_INFO(std::format("Loading {} type {}", texture_path, aiTextureType_to_str(type)));
+        LOG_INFO(std::format("Loading {} type {}", texture_path, aiTextureTypeToString(type)));
 
         Texture& texture = m_texture_cache.get_or_create(texture_path, texture_info);
-        textures.emplace_back(&texture, type);
+        return &texture;
+    } else {
+        return nullptr;
     }
 
-    return textures;
+    // std::vector<TextureRef> textures;
+
+    // std::println("{} Material texture count {}", aiTextureTypeToString(type), mat->GetTextureCount(type));
+    // for (u32 i = 0; i < mat->GetTextureCount(type); i++) {
+    //     aiString str;
+    //     mat->GetTexture(type, i, &str);
+    //     std::string texture_path = (m_directory + "/" + str.C_Str());
+
+    //     TextureInfo texture_info;
+    //     texture_info.from_file = GL_TRUE;
+    //     texture_info.file_path = texture_path.c_str();
+    //     texture_info.flip = false;
+
+    //     LOG_INFO(std::format("Loading {} type {}", texture_path, aiTextureTypeToString(type)));
+
+    //     Texture& texture = m_texture_cache.get_or_create(texture_path, texture_info);
+    //     textures.emplace_back(&texture, type);
+    // }
+
+    // return textures;
+}
+
+Texture* Model::get_placeholder_texture_albedo()
+{
+    TextureSize size = {
+        .width = 1,
+        .height = 1,
+        .depth = 0,
+    };
+    TextureInfo texture_info;
+    texture_info.size = size;
+    texture_info.from_file = GL_FALSE;
+    texture_info.mipmaps = false;
+    texture_info.flip = false;
+    texture_info.internal_format = GL_RGBA8;
+
+    TextureSubimageInfo subimage_info;
+    subimage_info.size = size;
+    subimage_info.format = GL_RGBA;
+    subimage_info.type = GL_UNSIGNED_BYTE;
+
+    std::array<u8, 4> data = { 255, 255, 255, 255 };
+    subimage_info.pixels = data.data();
+
+    // TODO this gets destroyed after the opengl context is killed so yeah..
+    static auto texture = std::make_unique<Texture>(texture_info);
+    texture->sub_image(subimage_info);
+
+    return texture.get();
+}
+
+Texture* Model::get_placeholder_texture_normal()
+{
+    TextureSize size = {
+        .width = 1,
+        .height = 1,
+        .depth = 0,
+    };
+    TextureInfo texture_info;
+    texture_info.size = size;
+    texture_info.from_file = GL_FALSE;
+    texture_info.mipmaps = false;
+    texture_info.flip = false;
+    texture_info.internal_format = GL_RGBA8;
+
+    TextureSubimageInfo subimage_info;
+    subimage_info.size = size;
+    subimage_info.format = GL_RGBA;
+    subimage_info.type = GL_FLOAT;
+
+    std::array<float, 4> data = { 0.5F, 0.5F, 1.0F, 0.0F };
+    subimage_info.pixels = data.data();
+
+    // TODO this gets destroyed after the opengl context is killed so yeah..
+    static auto texture = std::make_unique<Texture>(texture_info);
+    texture->sub_image(subimage_info);
+
+    return texture.get();
+}
+
+Texture* Model::get_placeholder_texture_metallic()
+{
+    TextureSize size = {
+        .width = 1,
+        .height = 1,
+        .depth = 0,
+    };
+    TextureInfo texture_info;
+    texture_info.size = size;
+    texture_info.from_file = GL_FALSE;
+    texture_info.mipmaps = false;
+    texture_info.flip = false;
+    texture_info.internal_format = GL_RGBA8;
+
+    TextureSubimageInfo subimage_info;
+    subimage_info.size = size;
+    subimage_info.format = GL_RGBA;
+    subimage_info.type = GL_UNSIGNED_BYTE;
+
+    std::array<u8, 4> data = { 0, 0, 0, 0 };
+    subimage_info.pixels = data.data();
+
+    // TODO this gets destroyed after the opengl context is killed so yeah..
+    static auto texture = std::make_unique<Texture>(texture_info);
+    texture->sub_image(subimage_info);
+
+    return texture.get();
 }
 
 } // namespace Renderer

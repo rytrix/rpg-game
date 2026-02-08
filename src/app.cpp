@@ -148,13 +148,13 @@ App::App()
     EntityBuilder e4;
     Renderer::Light::Pbr::Point point {};
     point.position = glm::vec3(6.0F, 6.0F, 8.0F);
-    point.color = glm::vec3(1000.0, 1000.0, 2000.0);
+    point.color = glm::vec3(500.0, 500.0, 1000.0);
     e4.add_pbr_point_light(point);
     m_scene->add_entity(e4);
 
     EntityBuilder e5;
     point.position = glm::vec3(6.0F, 6.0F, -8.0F);
-    point.color = glm::vec3(2000.0, 1000.0, 1000.0);
+    point.color = glm::vec3(1000.0, 500.0, 500.0);
     e5.add_pbr_point_light(point);
     m_scene->add_entity(e5);
 

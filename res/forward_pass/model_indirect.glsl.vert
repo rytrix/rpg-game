@@ -2,10 +2,12 @@
 layout (location = 0) in vec3 inPos;
 layout (location = 1) in vec3 inNormal;
 layout (location = 2) in vec2 inTexCoords;
+layout (location = 3) in vec3 inTangent;
 
 out vec3 Normal;
 out vec3 FragPos;
 out vec2 TexCoords;
+out vec3 Tangent;
 out flat int DrawID;
 
 // uniform mat4 model;
@@ -22,11 +24,13 @@ void main()
     vec4 world_pos = model * vec4(inPos, 1.0);
     TexCoords = inTexCoords;
 
-    Normal = mat3(transpose(inverse(model))) * inNormal;
+    mat3 transposed_model = mat3(transpose(inverse(model)));
+    Normal = transposed_model * inNormal;
+    Tangent = transposed_model * inTangent;
 
     FragPos = world_pos.xyz;
 
-    gl_Position = proj * view * world_pos;
-
     DrawID = gl_DrawID;
+
+    gl_Position = proj * view * world_pos;
 }
