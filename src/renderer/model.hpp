@@ -21,7 +21,6 @@ public:
     void draw_untextured(ShaderProgram& shader, const std::vector<glm::mat4>& model);
     void draw(ShaderProgram& shader, const std::vector<glm::mat4>& model);
 
-    // const std::deque<Mesh>* get_meshes();
     const Mesh* get_mesh();
 
     // Doesn't need to be called it will lazy load (or do before model loading if it is multi-threaded)
@@ -37,7 +36,7 @@ private:
 
     void process_node(aiNode* node, const aiScene* scene);
     void process_mesh(aiMesh* mesh, const aiScene* scene);
-    Texture* load_material_textures(aiMaterial* mat, aiTextureType type);
+    Texture* load_material_texture(aiMaterial* mat, aiTextureType type);
 
     static Texture* get_placeholder_texture_albedo();
     static Texture* get_placeholder_texture_normal();
