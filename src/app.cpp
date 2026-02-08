@@ -52,7 +52,7 @@ App::App()
     EntityBuilder e1;
     Renderer::Light::Pbr::Directional directional {};
     directional.direction = glm::vec3(-0.2F, -1.0F, 0.3F);
-    directional.color = glm::vec3(1.0);
+    directional.color = glm::vec3(0.8);
     e1.add_pbr_directional_light(directional);
     m_scene->add_entity(e1);
 
@@ -148,13 +148,13 @@ App::App()
     EntityBuilder e4;
     Renderer::Light::Pbr::Point point {};
     point.position = glm::vec3(6.0F, 6.0F, 8.0F);
-    point.color = glm::vec3(500.0, 500.0, 1000.0);
+    point.color = glm::vec3(10.0, 10.0, 10.0);
     e4.add_pbr_point_light(point);
     m_scene->add_entity(e4);
 
     EntityBuilder e5;
     point.position = glm::vec3(6.0F, 6.0F, -8.0F);
-    point.color = glm::vec3(1000.0, 500.0, 500.0);
+    point.color = glm::vec3(50.0, 25.0, 25.0);
     e5.add_pbr_point_light(point);
     m_scene->add_entity(e5);
 
