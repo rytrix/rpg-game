@@ -68,13 +68,11 @@ const Mesh* Model::get_mesh()
 
 void Model::process_node(aiNode* node, const aiScene* scene)
 {
-    // std::println("node->mNumMeshes: {}", node->mNumMeshes);
     for (u32 i = 0; i < node->mNumMeshes; i++) {
         aiMesh* mesh = scene->mMeshes[node->mMeshes[i]];
         process_mesh(mesh, scene);
     }
 
-    // std::println("node->mNumChildren: {}", node->mNumChildren);
     for (u32 i = 0; i < node->mNumChildren; i++) {
         process_node(node->mChildren[i], scene);
     }
@@ -105,7 +103,6 @@ void Model::process_mesh(aiMesh* mesh, const aiScene* scene)
         }
 
         m_mesh.m_vertices.push_back(vertex);
-        // vertices.push_back(vertex);
     }
 
     for (u32 i = 0; i < mesh->mNumFaces; i++) {
@@ -119,22 +116,25 @@ void Model::process_mesh(aiMesh* mesh, const aiScene* scene)
     if (scene->HasMaterials()) {
         aiMaterial* material = scene->mMaterials[mesh->mMaterialIndex];
 
-        Texture* diffuse_map = load_material_textures(material, aiTextureType_DIFFUSE);
+        Texture* diffuse_map = load_material_texture(material, aiTextureType_DIFFUSE);
         if (diffuse_map == nullptr) {
+            LOG_WARN("Using default albedo texture map");
             m_mesh.m_diffuse_textures.push_back(get_placeholder_texture_albedo());
         } else {
             m_mesh.m_diffuse_textures.push_back(diffuse_map);
         }
 
-        Texture* metallic_roughness_map = load_material_textures(material, aiTextureType_GLTF_METALLIC_ROUGHNESS);
+        Texture* metallic_roughness_map = load_material_texture(material, aiTextureType_GLTF_METALLIC_ROUGHNESS);
         if (metallic_roughness_map == nullptr) {
+            LOG_WARN("Using default metallic texture map");
             m_mesh.m_metallic_roughness_textures.push_back(get_placeholder_texture_metallic());
         } else {
             m_mesh.m_metallic_roughness_textures.push_back(metallic_roughness_map);
         }
 
-        Texture* normal_map = load_material_textures(material, aiTextureType_NORMALS);
+        Texture* normal_map = load_material_texture(material, aiTextureType_NORMALS);
         if (normal_map == nullptr) {
+            LOG_WARN("Using default normal texture map");
             m_mesh.m_normal_textures.push_back(get_placeholder_texture_normal());
         } else {
             m_mesh.m_normal_textures.push_back(normal_map);
@@ -151,7 +151,7 @@ void Model::process_mesh(aiMesh* mesh, const aiScene* scene)
         base_vertex);
 }
 
-Texture* Model::load_material_textures(aiMaterial* mat, aiTextureType type)
+Texture* Model::load_material_texture(aiMaterial* mat, aiTextureType type)
 {
     if (mat->GetTextureCount(type) > 0) {
         aiString str;
@@ -170,114 +170,84 @@ Texture* Model::load_material_textures(aiMaterial* mat, aiTextureType type)
     } else {
         return nullptr;
     }
+}
 
-    // std::vector<TextureRef> textures;
+namespace {
+    Texture* placeholder_texture_albedo = nullptr;
+    Texture* placeholder_texture_metallic = nullptr;
+    Texture* placeholder_texture_normal = nullptr;
+}
 
-    // std::println("{} Material texture count {}", aiTextureTypeToString(type), mat->GetTextureCount(type));
-    // for (u32 i = 0; i < mat->GetTextureCount(type); i++) {
-    //     aiString str;
-    //     mat->GetTexture(type, i, &str);
-    //     std::string texture_path = (m_directory + "/" + str.C_Str());
+void Model::init_placeholder_textures()
+{
+    TextureSize size = {
+        .width = 1,
+        .height = 1,
+        .depth = 0,
+    };
+    TextureInfo texture_info;
+    texture_info.size = size;
+    texture_info.from_file = GL_FALSE;
+    texture_info.mipmaps = false;
+    texture_info.flip = false;
+    texture_info.internal_format = GL_RGBA8;
 
-    //     TextureInfo texture_info;
-    //     texture_info.from_file = GL_TRUE;
-    //     texture_info.file_path = texture_path.c_str();
-    //     texture_info.flip = false;
+    TextureSubimageInfo subimage_info;
+    subimage_info.size = size;
+    subimage_info.format = GL_RGBA;
+    subimage_info.type = GL_UNSIGNED_BYTE;
 
-    //     LOG_INFO(std::format("Loading {} type {}", texture_path, aiTextureTypeToString(type)));
+    std::array<u8, 4> data_albedo = { 255, 255, 255, 255 };
+    subimage_info.pixels = data_albedo.data();
+    placeholder_texture_albedo = new Texture(texture_info);
+    placeholder_texture_albedo->sub_image(subimage_info);
 
-    //     Texture& texture = m_texture_cache.get_or_create(texture_path, texture_info);
-    //     textures.emplace_back(&texture, type);
-    // }
+    std::array<u8, 4> data_metallic = { 0, 0, 0, 0 };
+    subimage_info.pixels = data_metallic.data();
+    placeholder_texture_metallic = new Texture(texture_info);
+    placeholder_texture_metallic->sub_image(subimage_info);
 
-    // return textures;
+    subimage_info.format = GL_RGBA;
+    subimage_info.type = GL_FLOAT;
+
+    std::array<float, 4> data_normal = { 0.5F, 0.5F, 1.0F, 0.0F };
+    subimage_info.pixels = data_normal.data();
+    placeholder_texture_normal = new Texture(texture_info);
+    placeholder_texture_normal->sub_image(subimage_info);
+}
+
+void Model::destroy_placeholder_textures()
+{
+    delete placeholder_texture_albedo;
+    delete placeholder_texture_metallic;
+    delete placeholder_texture_normal;
+    placeholder_texture_albedo = nullptr;
+    placeholder_texture_metallic = nullptr;
+    placeholder_texture_normal = nullptr;
 }
 
 Texture* Model::get_placeholder_texture_albedo()
 {
-    TextureSize size = {
-        .width = 1,
-        .height = 1,
-        .depth = 0,
-    };
-    TextureInfo texture_info;
-    texture_info.size = size;
-    texture_info.from_file = GL_FALSE;
-    texture_info.mipmaps = false;
-    texture_info.flip = false;
-    texture_info.internal_format = GL_RGBA8;
-
-    TextureSubimageInfo subimage_info;
-    subimage_info.size = size;
-    subimage_info.format = GL_RGBA;
-    subimage_info.type = GL_UNSIGNED_BYTE;
-
-    std::array<u8, 4> data = { 255, 255, 255, 255 };
-    subimage_info.pixels = data.data();
-
-    // TODO this gets destroyed after the opengl context is killed so yeah..
-    static auto texture = std::make_unique<Texture>(texture_info);
-    texture->sub_image(subimage_info);
-
-    return texture.get();
+    if (placeholder_texture_albedo == nullptr) {
+        init_placeholder_textures();
+    }
+    return placeholder_texture_albedo;
 }
 
 Texture* Model::get_placeholder_texture_normal()
 {
-    TextureSize size = {
-        .width = 1,
-        .height = 1,
-        .depth = 0,
-    };
-    TextureInfo texture_info;
-    texture_info.size = size;
-    texture_info.from_file = GL_FALSE;
-    texture_info.mipmaps = false;
-    texture_info.flip = false;
-    texture_info.internal_format = GL_RGBA8;
-
-    TextureSubimageInfo subimage_info;
-    subimage_info.size = size;
-    subimage_info.format = GL_RGBA;
-    subimage_info.type = GL_FLOAT;
-
-    std::array<float, 4> data = { 0.5F, 0.5F, 1.0F, 0.0F };
-    subimage_info.pixels = data.data();
-
-    // TODO this gets destroyed after the opengl context is killed so yeah..
-    static auto texture = std::make_unique<Texture>(texture_info);
-    texture->sub_image(subimage_info);
-
-    return texture.get();
+    if (placeholder_texture_normal == nullptr) {
+        init_placeholder_textures();
+    }
+    return placeholder_texture_normal;
 }
 
 Texture* Model::get_placeholder_texture_metallic()
 {
-    TextureSize size = {
-        .width = 1,
-        .height = 1,
-        .depth = 0,
-    };
-    TextureInfo texture_info;
-    texture_info.size = size;
-    texture_info.from_file = GL_FALSE;
-    texture_info.mipmaps = false;
-    texture_info.flip = false;
-    texture_info.internal_format = GL_RGBA8;
-
-    TextureSubimageInfo subimage_info;
-    subimage_info.size = size;
-    subimage_info.format = GL_RGBA;
-    subimage_info.type = GL_UNSIGNED_BYTE;
-
-    std::array<u8, 4> data = { 0, 0, 0, 0 };
-    subimage_info.pixels = data.data();
-
-    // TODO this gets destroyed after the opengl context is killed so yeah..
-    static auto texture = std::make_unique<Texture>(texture_info);
-    texture->sub_image(subimage_info);
-
-    return texture.get();
+    if (placeholder_texture_metallic == nullptr) {
+        init_placeholder_textures();
+    }
+    return placeholder_texture_metallic;
 }
 
 } // namespace Renderer

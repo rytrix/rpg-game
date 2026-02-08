@@ -140,6 +140,7 @@ App::App()
 App::~App()
 {
     delete m_scene;
+    Renderer::Model::destroy_placeholder_textures();
     Physics::Engine::cleanup_singletons();
 }
 
