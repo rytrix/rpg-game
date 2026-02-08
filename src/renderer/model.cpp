@@ -68,13 +68,11 @@ const Mesh* Model::get_mesh()
 
 void Model::process_node(aiNode* node, const aiScene* scene)
 {
-    // std::println("node->mNumMeshes: {}", node->mNumMeshes);
     for (u32 i = 0; i < node->mNumMeshes; i++) {
         aiMesh* mesh = scene->mMeshes[node->mMeshes[i]];
         process_mesh(mesh, scene);
     }
 
-    // std::println("node->mNumChildren: {}", node->mNumChildren);
     for (u32 i = 0; i < node->mNumChildren; i++) {
         process_node(node->mChildren[i], scene);
     }
@@ -105,7 +103,6 @@ void Model::process_mesh(aiMesh* mesh, const aiScene* scene)
         }
 
         m_mesh.m_vertices.push_back(vertex);
-        // vertices.push_back(vertex);
     }
 
     for (u32 i = 0; i < mesh->mNumFaces; i++) {
@@ -119,7 +116,7 @@ void Model::process_mesh(aiMesh* mesh, const aiScene* scene)
     if (scene->HasMaterials()) {
         aiMaterial* material = scene->mMaterials[mesh->mMaterialIndex];
 
-        Texture* diffuse_map = load_material_textures(material, aiTextureType_DIFFUSE);
+        Texture* diffuse_map = load_material_texture(material, aiTextureType_DIFFUSE);
         if (diffuse_map == nullptr) {
             LOG_WARN("Using default albedo texture map");
             m_mesh.m_diffuse_textures.push_back(get_placeholder_texture_albedo());
@@ -127,7 +124,7 @@ void Model::process_mesh(aiMesh* mesh, const aiScene* scene)
             m_mesh.m_diffuse_textures.push_back(diffuse_map);
         }
 
-        Texture* metallic_roughness_map = load_material_textures(material, aiTextureType_GLTF_METALLIC_ROUGHNESS);
+        Texture* metallic_roughness_map = load_material_texture(material, aiTextureType_GLTF_METALLIC_ROUGHNESS);
         if (metallic_roughness_map == nullptr) {
             LOG_WARN("Using default metallic texture map");
             m_mesh.m_metallic_roughness_textures.push_back(get_placeholder_texture_metallic());
@@ -135,7 +132,7 @@ void Model::process_mesh(aiMesh* mesh, const aiScene* scene)
             m_mesh.m_metallic_roughness_textures.push_back(metallic_roughness_map);
         }
 
-        Texture* normal_map = load_material_textures(material, aiTextureType_NORMALS);
+        Texture* normal_map = load_material_texture(material, aiTextureType_NORMALS);
         if (normal_map == nullptr) {
             LOG_WARN("Using default normal texture map");
             m_mesh.m_normal_textures.push_back(get_placeholder_texture_normal());
@@ -154,7 +151,7 @@ void Model::process_mesh(aiMesh* mesh, const aiScene* scene)
         base_vertex);
 }
 
-Texture* Model::load_material_textures(aiMaterial* mat, aiTextureType type)
+Texture* Model::load_material_texture(aiMaterial* mat, aiTextureType type)
 {
     if (mat->GetTextureCount(type) > 0) {
         aiString str;
@@ -173,27 +170,6 @@ Texture* Model::load_material_textures(aiMaterial* mat, aiTextureType type)
     } else {
         return nullptr;
     }
-
-    // std::vector<TextureRef> textures;
-
-    // std::println("{} Material texture count {}", aiTextureTypeToString(type), mat->GetTextureCount(type));
-    // for (u32 i = 0; i < mat->GetTextureCount(type); i++) {
-    //     aiString str;
-    //     mat->GetTexture(type, i, &str);
-    //     std::string texture_path = (m_directory + "/" + str.C_Str());
-
-    //     TextureInfo texture_info;
-    //     texture_info.from_file = GL_TRUE;
-    //     texture_info.file_path = texture_path.c_str();
-    //     texture_info.flip = false;
-
-    //     LOG_INFO(std::format("Loading {} type {}", texture_path, aiTextureTypeToString(type)));
-
-    //     Texture& texture = m_texture_cache.get_or_create(texture_path, texture_info);
-    //     textures.emplace_back(&texture, type);
-    // }
-
-    // return textures;
 }
 
 namespace {
