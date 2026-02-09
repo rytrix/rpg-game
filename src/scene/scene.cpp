@@ -146,7 +146,6 @@ void Scene::physics()
 void Scene::instance_draw_internal(Renderer::ShaderProgram& shader, bool shadowmap)
 {
     for (auto& model : m_models_instance_draw_cache) {
-        // std::println("Drawing model with {} instance count", model.model_matrices.size());
         if (shadowmap) {
             model.model->draw_untextured(shader, model.model_matrices);
         } else {
@@ -176,9 +175,6 @@ void Scene::draw()
         if (light.has_shadowmap()) {
             light.shadowmap_draw(m_shadowmap_shader, [&]() {
                 instance_draw_internal(m_shadowmap_shader, true);
-                // for (auto [entity2, model_matrix, model] : model_view.each()) {
-                //     model->draw_untextured(m_shadowmap_shader, model_matrix);
-                // }
             });
         }
     }
@@ -188,9 +184,6 @@ void Scene::draw()
         if (light.has_shadowmap()) {
             light.shadowmap_draw(m_shadowmap_cubemap_shader, [&]() {
                 instance_draw_internal(m_shadowmap_cubemap_shader, true);
-                // for (auto [entity2, model_matrix, model] : model_view.each()) {
-                //     model->draw_untextured(m_shadowmap_cubemap_shader, model_matrix);
-                // }
             });
         }
     }
@@ -230,10 +223,6 @@ void Scene::draw()
         }
 
         instance_draw_internal(m_forward->m_shader, false);
-        // util_error("quick end");
-        // for (auto [entity, model_matrix, model] : model_view.each()) {
-        //     model->draw(m_forward->m_shader, model_matrix);
-        // }
     } else {
         // Geometry pass
         m_deferred->m_gpass.bind();
@@ -245,9 +234,6 @@ void Scene::draw()
         m_deferred->m_gpass_shader.set_mat4("view", m_camera.get_view());
 
         instance_draw_internal(m_deferred->m_gpass_shader, false);
-        // for (auto [entity, model_matrix, model] : model_view.each()) {
-        //     model->draw(m_deferred->m_gpass_shader, model_matrix);
-        // }
 
         // m_gpass.blit_depth_buffer();
         m_deferred->m_gpass.unbind();
