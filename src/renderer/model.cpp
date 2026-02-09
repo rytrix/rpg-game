@@ -21,7 +21,7 @@ void Model::init(const char* file_path)
     util_assert(std::filesystem::exists(file_path), std::format("Model \"{}\" is an invalid path", file_path));
 
     Assimp::Importer importer;
-    const aiScene* scene = importer.ReadFile(file_path, aiProcess_Triangulate | aiProcess_FlipUVs | aiProcess_CalcTangentSpace);
+    const aiScene* scene = importer.ReadFile(file_path, aiProcess_Triangulate | aiProcess_FlipUVs | aiProcess_CalcTangentSpace | aiProcess_JoinIdenticalVertices);
     m_directory = m_directory.substr(0, m_directory.find_last_of('/'));
 
     util_assert(scene->mRootNode != nullptr, "Model::Model: Root node is nullptr");

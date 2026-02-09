@@ -7,6 +7,8 @@ App::App()
     m_window.init(m_window_title, 800, 600);
     m_window.set_relative_mode(m_capture_mouse);
 
+    Renderer::Model::init_placeholder_textures();
+
     m_scene = new Scene(m_window);
 
     m_camera = &m_scene->get_camera();
@@ -84,7 +86,7 @@ App::App()
     });
     m_scene->add_entity(e3);
 
-    for (int i = 0; i <= 20; i++) {
+    for (int i = 0; i <= 500; i++) {
         e3.add_physics_command([](Physics::System* system, [[maybe_unused]] Renderer::Model* _model) -> std::pair<JPH::BodyID, JPH::EMotionType> {
             float y = rand() % 500;
             float x = rand() % 10 - 5;

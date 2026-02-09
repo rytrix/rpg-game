@@ -23,7 +23,6 @@ namespace {
 
 bool is_extension_supported(const char* extension)
 {
-    // return false;
     return get_opengl_extensions()->contains(extension);
 }
 

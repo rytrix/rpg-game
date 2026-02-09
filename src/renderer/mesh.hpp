@@ -59,7 +59,6 @@ public:
     std::vector<Texture*> m_diffuse_textures;
     std::vector<Texture*> m_metallic_roughness_textures;
     std::vector<Texture*> m_normal_textures;
-    // std::vector<Texture*> m_textures;
 
     std::vector<BaseVertex> m_base_vertices;
 
