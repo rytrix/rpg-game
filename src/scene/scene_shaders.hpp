@@ -208,6 +208,14 @@ struct DirectionalLight {
     vec3 color;
 };
 
+struct SpotLight {
+    vec3 position;
+    vec3 direction;
+    vec3 color;
+    float inner_cutoff;
+    float outer_cutoff;
+};
+
 const float PI = 3.14159265359;
 
 float distribution_ggx(float NdotH, float roughness)
@@ -264,24 +272,6 @@ vec3 pbr_base(
     return (kD * albedo / PI + specular) * radiance * NdotL;
 }
 
-vec3 pbr_directional(
-    DirectionalLight light, 
-    vec3 albedo,
-    float roughness,
-    float metallic,
-    vec3 N,
-    vec3 V)
-{
-    vec3 base_reflectivity = mix(vec3(0.04), albedo, metallic);
-
-    vec3 L = normalize(-light.direction);
-    vec3 H = normalize(V + L);
-    
-    vec3 radiance = light.color;
-
-    return pbr_base(albedo, roughness, metallic, base_reflectivity, radiance, N, V, L, H);
-}
-
 vec3 pbr_point(
     PointLight light, 
     vec3 albedo,
@@ -300,6 +290,50 @@ vec3 pbr_point(
     vec3 radiance = light.color * attenuation;
 
     return pbr_base(albedo, roughness, metallic, base_reflectivity, radiance, N, V, L, H);
+}
+
+vec3 pbr_directional(
+    DirectionalLight light, 
+    vec3 albedo,
+    float roughness,
+    float metallic,
+    vec3 N,
+    vec3 V)
+{
+    vec3 base_reflectivity = mix(vec3(0.04), albedo, metallic);
+
+    vec3 L = normalize(-light.direction);
+    vec3 H = normalize(V + L);
+    
+    vec3 radiance = light.color;
+
+    return pbr_base(albedo, roughness, metallic, base_reflectivity, radiance, N, V, L, H);
+}
+
+vec3 pbr_spot(
+    SpotLight light, 
+    vec3 albedo,
+    float roughness,
+    float metallic,
+    vec3 N,
+    vec3 V)
+{
+    vec3 light_dir = normalize(light.position - FragPos);
+    float theta = dot(light_dir, normalize(-light.direction));
+    
+    float epsilon = light.inner_cutoff - light.outer_cutoff;
+    float intensity = clamp((theta - light.outer_cutoff) / epsilon, 0.0, 1.0);
+
+    vec3 base_reflectivity = mix(vec3(0.04), albedo, metallic);
+
+    vec3 L = normalize(light.position - FragPos);
+    vec3 H = normalize(V + L);
+    
+    float light_distance = length(light.position - FragPos);
+    float attenuation = 1.0 / (light_distance * light_distance);
+    vec3 radiance = light.color * attenuation;
+
+    return pbr_base(albedo, roughness, metallic, base_reflectivity, radiance, N, V, L, H) * intensity;
 }
 )";
 

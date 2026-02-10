@@ -75,6 +75,11 @@ void Scene::add_entity(EntityBuilder& entity_builder)
         m_shaders_need_update = true;
     }
 
+    if (entity_builder.m_pbr_spot != nullptr) {
+        m_registry.emplace<Renderer::Light::Pbr::Spot>(entity, *entity_builder.m_pbr_spot);
+        m_shaders_need_update = true;
+    }
+
     m_registry.emplace<glm::mat4>(entity, entity_builder.m_model_matrix);
 }
 
@@ -195,23 +200,12 @@ void Scene::draw()
         m_forward->m_shader.bind();
         m_forward->m_shader.set_mat4("proj", m_camera.get_proj());
         m_forward->m_shader.set_mat4("view", m_camera.get_view());
-
         m_forward->m_shader.set_vec3("view_position", m_camera.get_pos());
-
-        u32 i = 0;
-        for (auto [entity, light] : phong_directional_view.each()) {
-            light.set_uniforms(m_forward->m_shader, std::format("u_directional_light_{}", i).c_str());
-            i++;
-        }
-        i = 0;
-        for (auto [entity, light] : phong_point_view.each()) {
-            light.set_uniforms(m_forward->m_shader, std::format("u_point_light_{}", i).c_str());
-            i++;
-        }
 
         auto pbr_point_view = m_registry.view<Renderer::Light::Pbr::Point>();
         auto pbr_directional_view = m_registry.view<Renderer::Light::Pbr::Directional>();
-        i = 0;
+        auto pbr_spot_view = m_registry.view<Renderer::Light::Pbr::Spot>();
+        u32 i = 0;
         for (auto [entity, light] : pbr_directional_view.each()) {
             light.set_uniforms(m_forward->m_shader, std::format("u_directional_light_{}", i).c_str());
             i++;
@@ -219,6 +213,11 @@ void Scene::draw()
         i = 0;
         for (auto [entity, light] : pbr_point_view.each()) {
             light.set_uniforms(m_forward->m_shader, std::format("u_point_light_{}", i).c_str());
+            i++;
+        }
+        i = 0;
+        for (auto [entity, light] : pbr_spot_view.each()) {
+            light.set_uniforms(m_forward->m_shader, std::format("u_spot_light_{}", i).c_str());
             i++;
         }
 
@@ -235,11 +234,11 @@ void Scene::draw()
 
         instance_draw_internal(m_deferred->m_gpass_shader, false);
 
-        // m_gpass.blit_depth_buffer();
+        m_deferred->m_gpass.blit_depth_buffer();
         m_deferred->m_gpass.unbind();
 
         // Lighting pass
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+        glClear(GL_COLOR_BUFFER_BIT);
         m_deferred->m_lpass_shader.bind();
 
         m_deferred->m_gpass.set_uniforms(m_deferred->m_lpass_shader);
@@ -316,6 +315,7 @@ void Scene::draw_debug_imgui()
     if (ImGui::CollapsingHeader("Lights")) {
         auto point_view = m_registry.view<Renderer::Light::Pbr::Point>();
         auto directional_view = m_registry.view<Renderer::Light::Pbr::Directional>();
+        auto spot_view = m_registry.view<Renderer::Light::Pbr::Spot>();
 
         for (auto [entity, light] : point_view.each()) {
             ImGui::PushID(i);
@@ -349,6 +349,27 @@ void Scene::draw_debug_imgui()
             if (ImGui::CollapsingHeader(std::format("{}_DL{}", name, i).c_str())) {
                 ImGui::DragFloat3("XYZ", &light.direction.x, 1.0F, -1.0F, 1.0F);
                 ImGui::DragFloat3("RGB", &light.color.x, 10.0F, MIN_COLOR, MAX_COLOR);
+            }
+            ImGui::PopID();
+            i++;
+        }
+
+        for (auto [entity, light] : spot_view.each()) {
+            ImGui::PushID(i);
+            const char** name_check = m_registry.try_get<const char*>(entity);
+            const char* name;
+            if (name_check == nullptr) {
+                name = "no_name";
+            } else {
+                name = *name_check;
+            }
+
+            if (ImGui::CollapsingHeader(std::format("{}_SL{}", name, i).c_str())) {
+                ImGui::DragFloat3("Position XYZ", &light.position.x, 1.0F, MIN_TRANSFORM, MAX_TRANSFORM);
+                ImGui::DragFloat3("Direction XYZ", &light.direction.x, 1.0F, -1.0F, 1.0F);
+                ImGui::DragFloat3("RGB", &light.color.x, 10.0F, MIN_COLOR, MAX_COLOR);
+                ImGui::DragFloat("inner_cutoff", &light.inner_cutoff);
+                ImGui::DragFloat("outer_cutoff", &light.outer_cutoff);
             }
             ImGui::PopID();
             i++;
@@ -406,6 +427,13 @@ void Scene::compile_pbr_shaders()
     for (auto [entity, light] : point_view.each()) {
         light_uniforms += std::format("uniform PointLight u_point_light_{};\n", i);
         light_functions += std::format("lo += pbr_point(u_point_light_{}, albedo, roughness, metallic, normal, view);", i);
+        i++;
+    }
+    auto spot_view = m_registry.view<Renderer::Light::Pbr::Spot>();
+    i = 0;
+    for (auto [entity, light] : spot_view.each()) {
+        light_uniforms += std::format("uniform SpotLight u_spot_light_{};\n", i);
+        light_functions += std::format("lo += pbr_spot(u_spot_light_{}, albedo, roughness, metallic, normal, view);", i);
         i++;
     }
 

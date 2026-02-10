@@ -42,6 +42,12 @@ EntityBuilder& EntityBuilder::add_pbr_directional_light(Renderer::Light::Pbr::Di
     return *this;
 }
 
+EntityBuilder& EntityBuilder::add_pbr_spot_light(Renderer::Light::Pbr::Spot& info)
+{
+    m_pbr_spot = &info;
+    return *this;
+}
+
 EntityBuilder& EntityBuilder::add_model_matrix(glm::mat4 model)
 {
     m_model_matrix = model;

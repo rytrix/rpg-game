@@ -21,5 +21,6 @@
 
 #include "../light/pbr/directional.hpp"
 #include "../light/pbr/point.hpp"
+#include "../light/pbr/spot.hpp"
 
 // #include "../frustum.hpp"
