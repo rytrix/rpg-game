@@ -39,6 +39,7 @@ add_executable(${PROJECT_NAME}
 
     src/renderer/light/pbr/point.cpp
     src/renderer/light/pbr/directional.cpp
+    src/renderer/light/pbr/spot.cpp
 )
 
 target_precompile_headers(${PROJECT_NAME} PUBLIC src/pch.hpp)

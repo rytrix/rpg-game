@@ -86,9 +86,9 @@ App::App()
     });
     m_scene->add_entity(e3);
 
-    for (int i = 0; i <= 500; i++) {
+    for (int i = 0; i <= 50; i++) {
         e3.add_physics_command([](Physics::System* system, [[maybe_unused]] Renderer::Model* _model) -> std::pair<JPH::BodyID, JPH::EMotionType> {
-            float y = rand() % 500;
+            float y = rand() % 300;
             float x = rand() % 10 - 5;
             float z = rand() % 10 - 5;
             JPH::BodyCreationSettings cube_settings(
@@ -134,6 +134,16 @@ App::App()
     point.color = glm::vec3(50.0, 25.0, 25.0);
     e5.add_pbr_point_light(point);
     m_scene->add_entity(e5);
+
+    EntityBuilder e7;
+    Renderer::Light::Pbr::Spot spot {};
+    spot.position = glm::vec3(-6.0F, 8.0F, -8.0F);
+    spot.direction = glm::vec3(0.2, -1.0, 0.3);
+    spot.color = glm::vec3(50.0, 25.0, 25.0);
+    spot.inner_cutoff = glm::cos(glm::radians(12.5F));
+    spot.outer_cutoff = glm::cos(glm::radians(13.5F));
+    e7.add_pbr_spot_light(spot);
+    m_scene->add_entity(e7);
 
     m_scene->optimize();
     m_scene->update();

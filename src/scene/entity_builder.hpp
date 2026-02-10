@@ -16,6 +16,7 @@ public:
     EntityBuilder& add_phong_directional_light(Renderer::Light::Phong::DirectionalInfo& info);
     EntityBuilder& add_pbr_point_light(Renderer::Light::Pbr::Point& info);
     EntityBuilder& add_pbr_directional_light(Renderer::Light::Pbr::Directional& info);
+    EntityBuilder& add_pbr_spot_light(Renderer::Light::Pbr::Spot& info);
     EntityBuilder& add_model_matrix(glm::mat4 model);
 
 private:
@@ -25,6 +26,7 @@ private:
     Renderer::Light::Phong::DirectionalInfo* m_phong_directional_info = nullptr;
     Renderer::Light::Pbr::Point* m_pbr_point = nullptr;
     Renderer::Light::Pbr::Directional* m_pbr_directional = nullptr;
+    Renderer::Light::Pbr::Spot* m_pbr_spot = nullptr;
     glm::mat4 m_model_matrix { 1.0 };
     const char* m_name = nullptr;
 };

@@ -8,7 +8,7 @@ struct Point {
     glm::vec3 position;
     glm::vec3 color;
 
-    void set_uniforms(Renderer::ShaderProgram& shader, const char* light_name);
+    void set_uniforms(Renderer::ShaderProgram& shader, const char* light_name) const;
 };
 
 } // Renderer::Light::Pbr
