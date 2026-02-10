@@ -191,10 +191,29 @@ void Texture::map_bindless_texture()
 
 void Texture::unmap_bindless_texture()
 {
+    util_assert(initialized == true, "Texture has not been initialized");
     util_assert(m_bindless_texture_mapped == true, "Attempting to unmap bindless texture that is not mapped");
     util_assert(Renderer::Extensions::is_extension_supported("GL_ARB_bindless_texture") == true, "GL_ARB_bindless_texture not supported");
     glMakeTextureHandleNonResidentARB(get_bindless_texture_id());
     m_bindless_texture_mapped = false;
+}
+
+void Texture::set_max_anisotropy(float max_anisotropy)
+{
+    util_assert(initialized == true, "Texture has not been initialized");
+    auto get_hardware_max_anisotropy = []() {
+        float hardware_max_anisotropy = 0.0F;
+        glGetFloatv(GL_MAX_TEXTURE_MAX_ANISOTROPY, &hardware_max_anisotropy);
+        return hardware_max_anisotropy;
+    };
+    util_assert(max_anisotropy <= get_hardware_max_anisotropy(),
+        std::format("Texture max_anisotropy \"{}\" is higher than hardware limit \"{}\"",
+            max_anisotropy,
+            get_hardware_max_anisotropy()));
+    
+    max_anisotropy = std::min(max_anisotropy, get_hardware_max_anisotropy());
+
+    glTextureParameterf(m_id, GL_TEXTURE_MAX_ANISOTROPY, max_anisotropy);
 }
 
 [[nodiscard]] GLuint Texture::get_id() const noexcept

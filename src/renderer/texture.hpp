@@ -53,6 +53,8 @@ public:
     void map_bindless_texture();
     void unmap_bindless_texture();
 
+    void set_max_anisotropy(float max_anisotropy);
+
     [[nodiscard]] GLuint get_id() const noexcept;
 
 private:

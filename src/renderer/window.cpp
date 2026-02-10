@@ -46,6 +46,7 @@ void Window::init(const char* name, int width, int height)
     SDL_GL_SetAttribute(SDL_GL_MULTISAMPLEBUFFERS, 1);
     SDL_GL_SetAttribute(SDL_GL_MULTISAMPLESAMPLES, 8);
     SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, 24);
+    SDL_GL_SetAttribute(SDL_GL_FLOATBUFFERS, 1);
 
     m_window = SDL_CreateWindow(name,
         width, height,
