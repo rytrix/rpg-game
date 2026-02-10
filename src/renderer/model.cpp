@@ -160,12 +160,15 @@ Texture* Model::load_material_texture(aiMaterial* mat, aiTextureType type)
 
         TextureInfo texture_info;
         texture_info.from_file = GL_TRUE;
+        texture_info.min_filter = GL_LINEAR;
+        texture_info.mag_filter = GL_LINEAR;
         texture_info.file_path = texture_path.c_str();
         texture_info.flip = false;
 
         LOG_INFO(std::format("Loading {} type {}", texture_path, aiTextureTypeToString(type)));
 
         Texture& texture = m_texture_cache.get_or_create(texture_path, texture_info);
+        texture.set_max_anisotropy(16.0F);
         return &texture;
     } else {
         return nullptr;
