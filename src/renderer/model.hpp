@@ -18,8 +18,8 @@ public:
 
     void init(const char* path);
 
-    void draw_untextured(ShaderProgram& shader, const std::vector<glm::mat4>& model);
-    void draw(ShaderProgram& shader, const std::vector<glm::mat4>& model);
+    void draw_untextured(ShaderProgram& shader, const std::span<glm::mat4> model);
+    void draw(ShaderProgram& shader, const std::span<glm::mat4> model);
 
     const Mesh* get_mesh();
 
@@ -27,6 +27,7 @@ public:
     static void init_placeholder_textures();
     // Call this before the opengl context is killed (or don't the os will clean it up)
     static void destroy_placeholder_textures();
+
 private:
     bool initialized = false;
 

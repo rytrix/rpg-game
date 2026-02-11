@@ -42,7 +42,7 @@ Model::~Model()
     initialized = false;
 }
 
-void Model::draw_untextured(ShaderProgram& shader, const std::vector<glm::mat4>& model)
+void Model::draw_untextured(ShaderProgram& shader, const std::span<glm::mat4> model)
 {
     util_assert(initialized == true, "Model has not been initialized");
 
@@ -51,7 +51,7 @@ void Model::draw_untextured(ShaderProgram& shader, const std::vector<glm::mat4>&
     m_mesh.draw();
 }
 
-void Model::draw(ShaderProgram& shader, const std::vector<glm::mat4>& model)
+void Model::draw(ShaderProgram& shader, const std::span<glm::mat4> model)
 {
     util_assert(initialized == true, "Model has not been initialized");
 

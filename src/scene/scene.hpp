@@ -10,10 +10,10 @@
 
 class Scene : public NoCopyNoMove {
 public:
-    explicit Scene(Renderer::Window& window);
+    explicit Scene(Renderer::Window& window, Renderer::Camera& camera);
     ~Scene();
 
-    void add_entity(EntityBuilder& entity);
+    void add_entity(const EntityBuilder& entity);
 
     // Call update after adding an entity (or maybe I do that internally)
     void update();
@@ -39,7 +39,7 @@ private:
     Utils::DeltaTime m_clock;
 
     Renderer::Window& m_window;
-    Renderer::Camera m_camera;
+    Renderer::Camera& m_camera;
     float m_camera_speed = 5.0F;
 
     bool m_shaders_need_update = true;

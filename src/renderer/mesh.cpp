@@ -9,7 +9,7 @@ Mesh::~Mesh()
     initialized = false;
 }
 
-void Mesh::update_model_ssbos(const std::vector<glm::mat4>& model_matrices)
+void Mesh::update_model_ssbos(const std::span<glm::mat4> model_matrices)
 {
     util_assert(initialized == true, "Mesh has not been initialized");
 
