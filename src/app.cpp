@@ -7,20 +7,21 @@ App::App()
     m_window.init(m_window_title, 800, 600);
     m_window.set_relative_mode(m_capture_mouse);
 
+    m_camera.init(90.0F, 0.1F, 1000.0F, m_window.get_aspect_ratio(), { -2.0F, 1.5F, 4.0F });
+    m_camera.set_speed(5.0F);
+
     Renderer::Model::init_placeholder_textures();
 
-    m_scene = new Scene(m_window);
-
-    m_camera = &m_scene->get_camera();
+    m_scene = new Scene(m_window, m_camera);
 
     m_window.process_input_callback([&](SDL_Event& event) {
         if (event.type == SDL_EVENT_WINDOW_RESIZED) {
-            m_camera->update_aspect(m_window.get_aspect_ratio());
+            m_camera.update_aspect(m_window.get_aspect_ratio());
             m_scene->update();
         }
         if (event.type == SDL_EVENT_MOUSE_MOTION) {
             if (m_capture_mouse) {
-                m_camera->rotate(event.motion.xrel, -event.motion.yrel);
+                m_camera.rotate(event.motion.xrel, -event.motion.yrel);
             }
         }
         if (event.type == SDL_EVENT_KEY_DOWN) {
@@ -32,7 +33,7 @@ App::App()
                 m_physics_on = !m_physics_on;
             }
             if (event.key.key == SDLK_P) {
-                glm::vec3 pos = m_camera->get_pos();
+                glm::vec3 pos = m_camera.get_pos();
                 std::println("Camera_position: {}, {}, {}", pos.x, pos.y, pos.z);
             }
             if (event.key.key == SDLK_Q) {
@@ -129,6 +130,9 @@ App::App()
     e4.add_pbr_point_light(point);
     m_scene->add_entity(e4);
 
+    e6.add_pbr_point_light(point);
+    m_scene->add_entity(e6);
+
     EntityBuilder e5;
     point.position = glm::vec3(6.0F, 6.0F, -8.0F);
     point.color = glm::vec3(50.0, 25.0, 25.0);
@@ -138,10 +142,10 @@ App::App()
     EntityBuilder e7;
     Renderer::Light::Pbr::Spot spot {};
     spot.position = glm::vec3(-6.0F, 8.0F, -8.0F);
-    spot.direction = glm::vec3(0.2, -1.0, 0.3);
+    spot.direction = glm::vec3(-0.2, 0.0, 0.3);
     spot.color = glm::vec3(50.0, 25.0, 25.0);
     spot.inner_cutoff = glm::cos(glm::radians(12.5F));
-    spot.outer_cutoff = glm::cos(glm::radians(13.5F));
+    spot.outer_cutoff = glm::cos(glm::radians(15.5F));
     e7.add_pbr_spot_light(spot);
     m_scene->add_entity(e7);
 
@@ -186,22 +190,22 @@ void App::run()
             float delta_time = m_scene->get_clock().delta_time();
             using Dir = Renderer::Camera::Movement;
             if (keys[SDL_SCANCODE_W]) {
-                m_camera->move(Dir::Forward, delta_time);
+                m_camera.move(Dir::Forward, delta_time);
             }
             if (keys[SDL_SCANCODE_S]) {
-                m_camera->move(Dir::Backward, delta_time);
+                m_camera.move(Dir::Backward, delta_time);
             }
             if (keys[SDL_SCANCODE_A]) {
-                m_camera->move(Dir::Left, delta_time);
+                m_camera.move(Dir::Left, delta_time);
             }
             if (keys[SDL_SCANCODE_D]) {
-                m_camera->move(Dir::Right, delta_time);
+                m_camera.move(Dir::Right, delta_time);
             }
             if (keys[SDL_SCANCODE_SPACE]) {
-                m_camera->move(Dir::Up, delta_time);
+                m_camera.move(Dir::Up, delta_time);
             }
             if (keys[SDL_SCANCODE_LSHIFT]) {
-                m_camera->move(Dir::Down, delta_time);
+                m_camera.move(Dir::Down, delta_time);
             }
         }
     };

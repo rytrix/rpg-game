@@ -7,13 +7,11 @@ namespace {
 
 }
 
-Scene::Scene(Renderer::Window& window)
+Scene::Scene(Renderer::Window& window, Renderer::Camera& camera)
     : m_window(window)
+    , m_camera(camera)
 {
     m_physics_system = std::make_unique<Physics::System>();
-
-    m_camera.init(90.0F, 0.1F, 1000.0F, m_window.get_aspect_ratio(), { -2.0F, 1.5F, 4.0F });
-    m_camera.set_speed(m_camera_speed);
 
     init_pass();
     update();
@@ -34,7 +32,7 @@ Scene::~Scene()
     }
 }
 
-void Scene::add_entity(EntityBuilder& entity_builder)
+void Scene::add_entity(const EntityBuilder& entity_builder)
 {
     auto entity = m_registry.create();
     if (entity_builder.m_name != nullptr) {
@@ -144,6 +142,16 @@ void Scene::physics()
     for (auto [entity, model, body, motion] : view.each()) {
         if (motion != JPH::EMotionType::Static) {
             model = mat4_to_mat4(m_physics_system->m_body_interface->GetCenterOfMassTransform(body));
+
+            auto* point_light = m_registry.try_get<Renderer::Light::Pbr::Point>(entity);
+            if (point_light != nullptr) {
+                point_light->position = model[3];
+            }
+
+            auto* spot_light = m_registry.try_get<Renderer::Light::Pbr::Spot>(entity);
+            if (spot_light != nullptr) {
+                spot_light->position = model[3];
+            }
         }
     }
 }
@@ -285,7 +293,7 @@ void Scene::draw_debug_imgui()
     constexpr float MIN_COLOR = 0.0F;
 
     usize i = 0;
-    if (ImGui::CollapsingHeader("Entities")) {
+    if (ImGui::CollapsingHeader("Physics Objects")) {
         auto view = m_registry.view<glm::mat4, JPH::BodyID, JPH::EMotionType>();
         for (auto [entity, model_matrix, body, motion_type] : view.each()) {
             if (motion_type != JPH::EMotionType::Static) {
@@ -414,9 +422,9 @@ void Scene::compile_pbr_shaders()
 {
     std::string light_uniforms;
     std::string light_functions;
-    auto directional_view = m_registry.view<Renderer::Light::Pbr::Directional>();
 
     u32 i = 0;
+    auto directional_view = m_registry.view<Renderer::Light::Pbr::Directional>();
     for (auto [entity, light] : directional_view.each()) {
         light_uniforms += std::format("uniform DirectionalLight u_directional_light_{};\n", i);
         light_functions += std::format("lo += pbr_directional(u_directional_light_{}, albedo, roughness, metallic, normal, view);", i);

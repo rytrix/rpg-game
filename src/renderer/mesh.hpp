@@ -48,7 +48,7 @@ public:
     Mesh() = default;
     ~Mesh();
 
-    void update_model_ssbos(const std::vector<glm::mat4>& model_matrices);
+    void update_model_ssbos(const std::span<glm::mat4> model_matrices);
 
     void draw();
     void draw(ShaderProgram& shader);

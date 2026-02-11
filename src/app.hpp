@@ -20,7 +20,7 @@ private:
 
     const char* m_window_title = "test window";
     Renderer::Window m_window;
-    Renderer::Camera* m_camera = nullptr;
+    Renderer::Camera m_camera;
 
     Scene* m_scene = nullptr;
 };
