@@ -8,7 +8,7 @@ App::App()
     m_window.set_relative_mode(m_capture_mouse);
 
     m_camera.init(90.0F, 0.1F, 1000.0F, m_window.get_aspect_ratio(), { -2.0F, 1.5F, 4.0F });
-    m_camera.set_speed(5.0F);
+    m_camera.set_speed(10.0F);
 
     Renderer::Model::init_placeholder_textures();
 

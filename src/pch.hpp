@@ -26,6 +26,7 @@
 #include "utils/assert.hpp"
 #include "utils/default.hpp"
 #include "utils/log.hpp"
+#include "utils/file.hpp"
 
 #include <algorithm>
 #include <chrono>

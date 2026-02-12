@@ -35,6 +35,7 @@ public:
     [[nodiscard]] float get_far() const;
     [[nodiscard]] float get_aspect() const;
     [[nodiscard]] float get_fov() const;
+    [[nodiscard]] float get_speed() const;
 
     enum class Movement : u8 {
         Forward,

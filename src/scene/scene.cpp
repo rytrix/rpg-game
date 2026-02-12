@@ -10,6 +10,7 @@ namespace {
 Scene::Scene(Renderer::Window& window, Renderer::Camera& camera)
     : m_window(window)
     , m_camera(camera)
+    , m_camera_speed(m_camera.get_speed())
 {
     m_physics_system = std::make_unique<Physics::System>();
 
