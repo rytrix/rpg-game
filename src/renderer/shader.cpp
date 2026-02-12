@@ -6,29 +6,22 @@ namespace Renderer {
 
 namespace {
 
-    constexpr std::size_t MAX_ERROR_LENGTH = 512;
-
-    class Shader {
+    class Shader : public NoCopyNoMove {
     public:
         Shader() = default;
         Shader(bool is_file, const char* shader, GLenum type);
         ~Shader();
 
-        Shader(const Shader&) = delete;
-        Shader& operator=(const Shader&) = delete;
-        Shader(Shader&&) = default;
-        Shader& operator=(Shader&&) = default;
-
         void init(bool is_file, const char* shader, GLenum type);
 
         [[nodiscard]] GLuint get_id() const;
+        [[nodiscard]] bool get_error() const;
 
     private:
         GLuint m_id {};
         bool m_errors = true;
 
         [[nodiscard]] bool has_errors() const;
-        static std::vector<char> from_file(const char* path);
     };
 
     Shader::Shader(bool is_file, const char* shader, GLenum type)
@@ -47,8 +40,9 @@ namespace {
     {
         m_id = glCreateShader(type);
 
+        std::vector<char> shader_text;
         if (is_file) {
-            std::vector<char> shader_text = from_file(shader);
+            shader_text = read_file<char>(shader);
             const char* data_text = shader_text.data();
             glShaderSource(m_id, 1, &data_text, nullptr);
         } else {
@@ -57,11 +51,6 @@ namespace {
 
         glCompileShader(m_id);
 
-        m_errors = has_errors();
-    }
-
-    [[nodiscard]] bool Shader::has_errors() const
-    {
         int is_compiled = 0;
         glGetShaderiv(m_id, GL_COMPILE_STATUS, &is_compiled);
 
@@ -72,27 +61,10 @@ namespace {
             std::vector<GLchar> error_log(max_length);
             glGetShaderInfoLog(m_id, max_length, &max_length, error_log.data());
 
-            std::print("shader failed to compile: {}\n", error_log.data());
-            return true;
+            LOG_ERROR(std::format("shader failed to compile: {}\nshader source:\n{}", error_log.data(), shader_text.data()));
+            m_errors = true;
         }
-
-        return false;
-    }
-
-    std::vector<char> Shader::from_file(const char* path)
-    {
-        std::ifstream file(path, std::ios::in | std::ios::binary);
-        if (!file) {
-            std::println("Shader: Could not open file \"{}\"", path);
-            return {};
-        }
-
-        std::vector<char> shader_text((std::istreambuf_iterator<char>(file)),
-            std::istreambuf_iterator<char>());
-
-        shader_text.push_back('\0');
-
-        return shader_text;
+        m_errors = false;
     }
 
     [[nodiscard]] GLuint Shader::get_id() const
@@ -123,7 +95,9 @@ void ShaderProgram::init(ShaderInfo* shader_info, std::size_t shader_count)
 
     static constexpr size_t MAX_SHADER_COUNT = 5;
     if (shader_count > MAX_SHADER_COUNT) {
-        std::print("shader programs do not currently support more than 5 shaders\n");
+        LOG_ERROR(std::format("shader programs do not currently support more than {} shaders\n", MAX_SHADER_COUNT));
+        m_errors = true;
+        util_assert(m_errors == false, "Shader program has errors");
         return;
     }
     std::array<Shader, MAX_SHADER_COUNT> shaders;
@@ -148,6 +122,32 @@ void ShaderProgram::init(ShaderInfo* shader_info, std::size_t shader_count)
 [[nodiscard]] bool ShaderProgram::is_initialized() const
 {
     return initialized;
+}
+
+bool ShaderProgram::has_errors() const
+{
+    util_assert(initialized == true, "ShaderProgram has not been initialized");
+    return m_errors;
+}
+
+bool ShaderProgram::errors_internal() const
+{
+    int program_linked = 0;
+
+    glGetProgramiv(m_id, GL_LINK_STATUS, &program_linked);
+
+    if (program_linked == GL_FALSE) {
+        GLint max_length = 0;
+        glGetProgramiv(m_id, GL_INFO_LOG_LENGTH, &max_length);
+
+        std::vector<GLchar> error_log(max_length);
+        glGetProgramInfoLog(m_id, max_length, &max_length, error_log.data());
+
+        LOG_ERROR(std::format("shader program failed to link: {}\n", error_log.data()))
+        return true;
+    }
+
+    return false;
 }
 
 void ShaderProgram::bind()
@@ -226,32 +226,6 @@ void ShaderProgram::set_mat4(const char* name, glm::mat4 value)
 {
     util_assert(initialized == true, "ShaderProgram has not been initialized");
     glUniformMatrix4fv(glGetUniformLocation(m_id, name), 1, GL_FALSE, &value[0][0]);
-}
-
-bool ShaderProgram::has_errors() const
-{
-    util_assert(initialized == true, "ShaderProgram has not been initialized");
-    return m_errors;
-}
-
-bool ShaderProgram::errors_internal() const
-{
-    int program_linked = 0;
-
-    glGetProgramiv(m_id, GL_LINK_STATUS, &program_linked);
-
-    if (program_linked == GL_FALSE) {
-        GLint max_length = 0;
-        glGetProgramiv(m_id, GL_INFO_LOG_LENGTH, &max_length);
-
-        std::vector<GLchar> error_log(max_length);
-        glGetProgramInfoLog(m_id, max_length, &max_length, error_log.data());
-
-        std::print("shader program failed to link: {}\n", error_log.data());
-        return true;
-    }
-
-    return false;
 }
 
 } // namespace Renderer

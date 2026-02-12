@@ -15,6 +15,10 @@ public:
     ~ShaderProgram();
 
     void init(ShaderInfo* shader_info, std::size_t shader_count);
+
+    [[nodiscard]] bool has_errors() const;
+    [[nodiscard]] bool is_initialized() const;
+
     void bind();
 
     void set_bool(const char* name, bool value);
@@ -29,9 +33,6 @@ public:
     void set_mat2(const char* name, glm::mat2 value);
     void set_mat3(const char* name, glm::mat3 value);
     void set_mat4(const char* name, glm::mat4 value);
-
-    [[nodiscard]] bool has_errors() const;
-    [[nodiscard]] bool is_initialized() const;
 
 private:
     bool initialized = false;

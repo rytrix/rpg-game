@@ -1,3 +1,37 @@
+#pragma once
+
+constexpr std::vector<std::string_view> get_lines_between_delims(std::string_view string, std::string_view start, std::string_view end)
+{
+    std::vector<std::string_view> lines;
+    usize begin = 0;
+    for (usize i = 0; i < string.size(); i++) {
+        if (string[i] == '\n') {
+            lines.emplace_back(&string.at(begin), i - begin);
+            begin = i + 1;
+        }
+        if (i == string.size() - 1) {
+            lines.emplace_back(&string.at(begin), i - begin);
+        }
+    }
+
+    begin = 0;
+    for (usize i = 0; i < lines.size(); i++) {
+        if (lines[i] == start) {
+            begin = i;
+        }
+        if (lines[i] == end) {
+            std::vector<std::string_view> result;
+            result.reserve(i - begin);
+            for (; begin <= i; begin++) {
+                result.emplace_back(lines[begin]);
+            }
+            return result;
+        }
+    }
+
+    return {};
+}
+
 constexpr const char* PHONG_LIGHTING_SHADER_CODE = R"(
 struct DirectionalLight {
     vec3 direction;

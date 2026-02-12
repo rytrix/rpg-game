@@ -207,6 +207,11 @@ float Camera::get_fov() const
     return m_fov;
 }
 
+float Camera::get_speed() const
+{
+    return m_speed;
+}
+
 void Camera::set_speed(float speed)
 {
     this->m_speed = speed;
