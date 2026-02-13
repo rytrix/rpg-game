@@ -11,6 +11,7 @@ add_executable(${PROJECT_NAME}
 
     src/scene/scene.cpp
     src/scene/entity_builder.cpp
+    src/scene/shader_preprocessor.cpp
 
     src/physics/engine.cpp
     

@@ -1,11 +1,7 @@
 #include "scene.hpp"
 #include "../physics/helpers.hpp"
 
-namespace {
-
 #include "scene_shaders.hpp"
-
-}
 
 Scene::Scene(Renderer::Window& window, Renderer::Camera& camera)
     : m_window(window)
@@ -447,27 +443,26 @@ void Scene::compile_pbr_shaders()
     }
 
     if (m_forward_pass) {
-        std::string shader_source_frag;
-        const char* shader_source_vert;
+        std::pair<std::string, std::string> shader_source;
         if (Renderer::Extensions::is_extension_supported("GL_ARB_bindless_texture")) {
-            shader_source_frag = get_pbr_forward_pass_indirect(light_uniforms, light_functions);
-            shader_source_vert = "res/forward_pass/model_indirect.glsl.vert";
+            shader_source = get_pbr_forward_pass_indirect(light_uniforms, light_functions);
         } else {
-            shader_source_frag = get_pbr_forward_pass_normal(light_uniforms, light_functions);
-            // shader_source_frag = "res/forward_pass/pbr_normal.glsl.frag";
-            shader_source_vert = "res/forward_pass/model_normal.glsl.vert";
+            shader_source = get_pbr_forward_pass_normal(light_uniforms, light_functions);
         }
+
+        // std::println("Vertex Shader\n{}\n\n\nFragment Shader\n{}", shader_source.first, shader_source.second);
+        // std::quick_exit(0);
 
         std::array<Renderer::ShaderInfo, 2>
             shader_info = {
                 Renderer::ShaderInfo {
-                    .is_file = true,
-                    .shader = shader_source_vert,
+                    .is_file = false,
+                    .shader = shader_source.first.c_str(),
                     .type = GL_VERTEX_SHADER,
                 },
                 Renderer::ShaderInfo {
                     .is_file = false,
-                    .shader = shader_source_frag.c_str(),
+                    .shader = shader_source.second.c_str(),
                     .type = GL_FRAGMENT_SHADER,
                 },
             };
@@ -478,120 +473,120 @@ void Scene::compile_pbr_shaders()
     }
 }
 
-void Scene::compile_phong_shaders()
-{
-    std::string light_uniforms;
-    std::string light_functions;
-    auto directional_view = m_registry.view<Renderer::Light::Phong::Directional>();
+// void Scene::compile_phong_shaders()
+// {
+//     std::string light_uniforms;
+//     std::string light_functions;
+//     auto directional_view = m_registry.view<Renderer::Light::Phong::Directional>();
 
-    u32 i = 0;
-    for (auto [entity, light] : directional_view.each()) {
-        if (light.has_shadowmap()) {
-            light_uniforms += std::format("uniform DirectionalLightShadow u_directional_light_{};\n", i);
-            light_functions += std::format("FragColor += vec4(directional_light_shadow(u_directional_light_{}, Albedo, Specular, Normal, view_position, FragPos, 32.0), 1.0);\n", i);
-        } else {
-            light_uniforms += std::format("uniform DirectionalLight u_directional_light_{};\n", i);
-            light_functions += std::format("FragColor += vec4(directional_light(u_directional_light_{}, Albedo, Specular, Normal, view_position, FragPos, 32.0), 1.0);\n", i);
-        }
-        i++;
-    }
-    auto point_view = m_registry.view<Renderer::Light::Phong::Point>();
-    i = 0;
-    for (auto [entity, light] : point_view.each()) {
-        if (light.has_shadowmap()) {
-            light_uniforms += std::format("uniform PointLightShadow u_point_light_{};\n", i);
-            light_functions += std::format("FragColor += vec4(point_light_shadow(u_point_light_{}, Albedo, Specular, Normal, view_position, FragPos, 32.0), 1.0);\n", i);
-        } else {
-            light_uniforms += std::format("uniform PointLight u_point_light_{};\n", i);
-            light_functions += std::format("FragColor += vec4(point_light(u_point_light_{}, Albedo, Specular, Normal, view_position, FragPos, 32.0), 1.0);\n", i);
-        }
-        i++;
-    }
+//     u32 i = 0;
+//     for (auto [entity, light] : directional_view.each()) {
+//         if (light.has_shadowmap()) {
+//             light_uniforms += std::format("uniform DirectionalLightShadow u_directional_light_{};\n", i);
+//             light_functions += std::format("FragColor += vec4(directional_light_shadow(u_directional_light_{}, Albedo, Specular, Normal, view_position, FragPos, 32.0), 1.0);\n", i);
+//         } else {
+//             light_uniforms += std::format("uniform DirectionalLight u_directional_light_{};\n", i);
+//             light_functions += std::format("fragcolor += vec4(directional_light(u_directional_light_{}, albedo, specular, normal, view_position, fragpos, 32.0), 1.0);\n", i);
+//         }
+//         i++;
+//     }
+//     auto point_view = m_registry.view<renderer::light::phong::point>();
+//     i = 0;
+//     for (auto [entity, light] : point_view.each()) {
+//         if (light.has_shadowmap()) {
+//             light_uniforms += std::format("uniform pointlightshadow u_point_light_{};\n", i);
+//             light_functions += std::format("fragcolor += vec4(point_light_shadow(u_point_light_{}, albedo, specular, normal, view_position, fragpos, 32.0), 1.0);\n", i);
+//         } else {
+//             light_uniforms += std::format("uniform pointlight u_point_light_{};\n", i);
+//             light_functions += std::format("fragcolor += vec4(point_light(u_point_light_{}, albedo, specular, normal, view_position, fragpos, 32.0), 1.0);\n", i);
+//         }
+//         i++;
+//     }
 
-    if (m_forward_pass) {
-        std::string shader_source_frag;
-        const char* shader_source_vert;
-        if (Renderer::Extensions::is_extension_supported("GL_ARB_bindless_texture")) {
-            shader_source_frag = get_phong_forward_pass_indirect(light_uniforms, light_functions);
-            shader_source_vert = "res/forward_pass/model_indirect.glsl.vert";
-        } else {
-            shader_source_frag = get_phong_forward_pass_normal(light_uniforms, light_functions);
-            // shader_source_frag = "res/forward_pass/pbr_normal.glsl.frag";
-            shader_source_vert = "res/forward_pass/model_normal.glsl.vert";
-        }
+//     if (m_forward_pass) {
+//         std::string shader_source_frag;
+//         const char* shader_source_vert;
+//         if (renderer::extensions::is_extension_supported("gl_arb_bindless_texture")) {
+//             shader_source_frag = get_phong_forward_pass_indirect(light_uniforms, light_functions);
+//             shader_source_vert = "res/forward_pass/model_indirect.glsl.vert";
+//         } else {
+//             shader_source_frag = get_phong_forward_pass_normal(light_uniforms, light_functions);
+//             // shader_source_frag = "res/forward_pass/pbr_normal.glsl.frag";
+//             shader_source_vert = "res/forward_pass/model_normal.glsl.vert";
+//         }
 
-        std::array<Renderer::ShaderInfo, 2>
-            shader_info = {
-                Renderer::ShaderInfo {
-                    .is_file = true,
-                    .shader = shader_source_vert,
-                    .type = GL_VERTEX_SHADER,
-                },
-                Renderer::ShaderInfo {
-                    .is_file = true,
-                    .shader = shader_source_frag.c_str(),
-                    .type = GL_FRAGMENT_SHADER,
-                },
-            };
-        if (m_forward->m_shader.is_initialized()) {
-            m_forward->m_shader.~ShaderProgram();
-        }
-        m_forward->m_shader.init(shader_info.data(), shader_info.size());
-    } else {
-        std::array<Renderer::ShaderInfo, 2> shader_info;
+//         std::array<renderer::shaderinfo, 2>
+//             shader_info = {
+//                 renderer::shaderinfo {
+//                     .is_file = true,
+//                     .shader = shader_source_vert,
+//                     .type = gl_vertex_shader,
+//                 },
+//                 renderer::shaderinfo {
+//                     .is_file = true,
+//                     .shader = shader_source_frag.c_str(),
+//                     .type = gl_fragment_shader,
+//                 },
+//             };
+//         if (m_forward->m_shader.is_initialized()) {
+//             m_forward->m_shader.~shaderprogram();
+//         }
+//         m_forward->m_shader.init(shader_info.data(), shader_info.size());
+//     } else {
+//         std::array<renderer::shaderinfo, 2> shader_info;
 
-        if (Renderer::Extensions::is_extension_supported("GL_ARB_bindless_texture")) {
-            shader_info = {
-                Renderer::ShaderInfo {
-                    .is_file = true,
-                    .shader = "res/deferred_shading/g_pass_indirect.glsl.vert",
-                    .type = GL_VERTEX_SHADER,
-                },
-                Renderer::ShaderInfo {
-                    .is_file = true,
-                    .shader = "res/deferred_shading/g_pass_indirect.glsl.frag",
-                    .type = GL_FRAGMENT_SHADER,
-                },
-            };
-        } else {
-            shader_info = {
-                Renderer::ShaderInfo {
-                    .is_file = true,
-                    .shader = "res/deferred_shading/g_pass_normal.glsl.vert",
-                    .type = GL_VERTEX_SHADER,
-                },
-                Renderer::ShaderInfo {
-                    .is_file = true,
-                    .shader = "res/deferred_shading/g_pass_normal.glsl.frag",
-                    .type = GL_FRAGMENT_SHADER,
-                },
-            };
-        }
-        if (m_deferred->m_gpass_shader.is_initialized()) {
-            m_deferred->m_gpass_shader.~ShaderProgram();
-        }
-        m_deferred->m_gpass_shader.init(shader_info.data(), shader_info.size());
+//         if (renderer::extensions::is_extension_supported("gl_arb_bindless_texture")) {
+//             shader_info = {
+//                 renderer::shaderinfo {
+//                     .is_file = true,
+//                     .shader = "res/deferred_shading/g_pass_indirect.glsl.vert",
+//                     .type = gl_vertex_shader,
+//                 },
+//                 renderer::shaderinfo {
+//                     .is_file = true,
+//                     .shader = "res/deferred_shading/g_pass_indirect.glsl.frag",
+//                     .type = gl_fragment_shader,
+//                 },
+//             };
+//         } else {
+//             shader_info = {
+//                 renderer::shaderinfo {
+//                     .is_file = true,
+//                     .shader = "res/deferred_shading/g_pass_normal.glsl.vert",
+//                     .type = gl_vertex_shader,
+//                 },
+//                 renderer::shaderinfo {
+//                     .is_file = true,
+//                     .shader = "res/deferred_shading/g_pass_normal.glsl.frag",
+//                     .type = gl_fragment_shader,
+//                 },
+//             };
+//         }
+//         if (m_deferred->m_gpass_shader.is_initialized()) {
+//             m_deferred->m_gpass_shader.~shaderprogram();
+//         }
+//         m_deferred->m_gpass_shader.init(shader_info.data(), shader_info.size());
 
-        std::string shader_source_frag = get_deferred_pass(light_uniforms, light_functions);
+//         std::string shader_source_frag = get_deferred_pass(light_uniforms, light_functions);
 
-        shader_info = {
-            Renderer::ShaderInfo {
-                .is_file = true,
-                .shader = "res/deferred_shading/l_pass.glsl.vert",
-                .type = GL_VERTEX_SHADER,
-            },
-            Renderer::ShaderInfo {
-                .is_file = false,
-                .shader = shader_source_frag.c_str(),
-                .type = GL_FRAGMENT_SHADER,
-            },
-        };
-        if (m_deferred->m_lpass_shader.is_initialized()) {
-            m_deferred->m_lpass_shader.~ShaderProgram();
-        }
-        m_deferred->m_lpass_shader.init(shader_info.data(), shader_info.size());
-    }
-}
+//         shader_info = {
+//             renderer::shaderinfo {
+//                 .is_file = true,
+//                 .shader = "res/deferred_shading/l_pass.glsl.vert",
+//                 .type = gl_vertex_shader,
+//             },
+//             renderer::shaderinfo {
+//                 .is_file = false,
+//                 .shader = shader_source_frag.c_str(),
+//                 .type = gl_fragment_shader,
+//             },
+//         };
+//         if (m_deferred->m_lpass_shader.is_initialized()) {
+//             m_deferred->m_lpass_shader.~shaderprogram();
+//         }
+//         m_deferred->m_lpass_shader.init(shader_info.data(), shader_info.size());
+//     }
+// }
 
 void Scene::init_pass()
 {
