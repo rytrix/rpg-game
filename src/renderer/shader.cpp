@@ -61,7 +61,11 @@ namespace {
             std::vector<GLchar> error_log(max_length);
             glGetShaderInfoLog(m_id, max_length, &max_length, error_log.data());
 
-            LOG_ERROR(std::format("shader failed to compile: {}\nshader source:\n{}", error_log.data(), shader_text.data()));
+            if (is_file) {
+                LOG_ERROR(std::format("shader failed to compile: {}\nshader source:\n{}", error_log.data(), shader_text.data()));
+            } else {
+                LOG_ERROR(std::format("shader failed to compile: {}\nshader source:\n{}", error_log.data(), shader));
+            }
             m_errors = true;
         }
         m_errors = false;
