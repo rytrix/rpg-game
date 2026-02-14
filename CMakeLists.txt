@@ -34,6 +34,7 @@ add_executable(${PROJECT_NAME}
     src/renderer/gbuffer.cpp
     src/renderer/shadowmap.cpp
     src/renderer/quad.cpp
+    src/renderer/frustum_culling.cpp
 
     src/renderer/light/phong/point.cpp
     src/renderer/light/phong/directional.cpp
