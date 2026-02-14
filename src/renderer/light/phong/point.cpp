@@ -27,7 +27,6 @@ void Point::init(PointInfo& info)
     }
 
     initialized = true;
-    m_info = info;
     update(info);
 }
 

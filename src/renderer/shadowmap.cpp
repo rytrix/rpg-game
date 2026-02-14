@@ -86,4 +86,9 @@ void ShadowMap::unbind()
     return m_texture;
 }
 
+[[nodiscard]] bool ShadowMap::is_initialized() const
+{
+    return initialized;
+}
+
 } // namespace Renderer

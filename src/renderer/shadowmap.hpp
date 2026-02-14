@@ -22,6 +22,7 @@ public:
     [[nodiscard]] i32 get_width() const;
     [[nodiscard]] i32 get_height() const;
     [[nodiscard]] Texture& get_texture();
+    [[nodiscard]] bool is_initialized() const;
 
     static consteval std::array<Renderer::ShaderInfo, 2> get_shader_info()
     {
