@@ -1,5 +1,5 @@
-// Vertex Begin
 #version 460 core
+// Vertex Begin
 layout (location = 0) in vec3 inPos;
 layout (location = 1) in vec3 inNormal;
 layout (location = 2) in vec2 inTexCoords;
@@ -11,23 +11,23 @@ out vec2 TexCoords;
 out vec3 Tangent;
 out flat int DrawID;
 
-//%Preprocess% if ModelUniform
+#ifdef ModelUniform
 uniform mat4 model;
-//%Preprocess% endif
+#endif
 uniform mat4 view;
 uniform mat4 proj;
 
-//%Preprocess% if SSBO0
+#ifdef SSBO0
 layout(binding = 1, std430) readonly buffer ssbo0 {
     mat4 models[];
 };
-//%Preprocess% endif
+#endif
 
 void main()
 {
-//%Preprocess% if SSBO0
+#ifdef SSBO0
     mat4 model = models[gl_InstanceID];
-//%Preprocess% endif
+#endif
     vec4 world_pos = model * vec4(inPos, 1.0);
     TexCoords = inTexCoords;
 
@@ -43,11 +43,11 @@ void main()
 }
 // Vertex End
 
-// Fragment Begin
 #version 460 core
-//%Preprocess% if BindlessTextures
+// Fragment Begin
+#ifdef BindlessTextures
 #extension GL_ARB_bindless_texture : require
-//%Preprocess% endif
+#endif
 
 out vec4 FragColor;
 
@@ -75,13 +75,13 @@ struct SpotLight {
     float outer_cutoff;
 };
 
-//%Preprocess% if UniformTextures
+#ifdef UniformTextures
 uniform sampler2D tex_diffuse;
 uniform sampler2D tex_metallic_roughness;
 uniform sampler2D tex_normals;
-//%Preprocess% endif
+#endif
 
-//%Preprocess% if BindlessTextures
+#ifdef BindlessTextures
 layout(binding = 2, std430) readonly buffer ssbo1 {
     sampler2D tex_diffuse[];
 };
@@ -97,7 +97,7 @@ layout(binding = 4, std430) readonly buffer ssbo3 {
 uniform int diffuse_max_textures;
 uniform int metallic_roughness_max_textures;
 uniform int normals_max_textures;
-//%Preprocess% endif 
+#endif
 
 uniform vec3 view_position;
 
@@ -243,17 +243,17 @@ vec3 calc_bumped_normal(vec3 bump_map_normal)
 // Light Uniforms End
 
 void main() {
-//%Preprocess% if UniformTextures
+#ifdef UniformTextures
     vec3 bump_map_normal = texture(tex_normals, TexCoords).xyz;
     vec4 diffuse = texture(tex_diffuse, TexCoords);
     vec4 metallic_roughness = texture(tex_metallic_roughness, TexCoords);
-//%Preprocess% endif
+#endif
 
-//%Preprocess% if BindlessTextures
+#ifdef BindlessTextures
     vec3 bump_map_normal = texture(tex_normals[DrawID], TexCoords).xyz;
     vec4 diffuse = texture(tex_diffuse[DrawID], TexCoords);
     vec4 metallic_roughness = texture(tex_metallic_roughness[DrawID], TexCoords);
-//%Preprocess% endif
+#endif
 
     // vec3 normal = normalize(Normal);
     vec3 normal = calc_bumped_normal(bump_map_normal);

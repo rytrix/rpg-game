@@ -12,19 +12,16 @@ constexpr std::pair<std::string, std::string> get_pbr_forward_pass_indirect(cons
     std::string_view pbr_file_view = { pbr_file.data(), pbr_file.size() };
 
     // Vertex Shader
-    std::string vertex_shader = get_lines_between_delims(pbr_file_view, "// Vertex Begin", "// Vertex End");
-    ShaderPreprocessor vertex_processor(vertex_shader, { "SSBO0" });
-    shaders.first = vertex_processor.process();
+    shaders.first = "#version 460 core\n#define SSBO0\n";
+    shaders.first += get_lines_between_delims(pbr_file_view, "// Vertex Begin", "// Vertex End");
 
     // Fragment Shader
-    std::string fragment_shader = get_lines_between_delims_inclusive(pbr_file_view, "// Fragment Begin", "// Fragment End");
-    ShaderPreprocessor fragment_processor(fragment_shader, { "BindlessTextures" });
-    fragment_shader = fragment_processor.process();
-    shaders.second += get_lines_between_delims(fragment_shader, "// Fragment Begin", "// Light Uniforms Begin");
+    shaders.second += "#version 460 core\n#define BindlessTextures\n";
+    shaders.second += get_lines_between_delims(pbr_file_view, "// Fragment Begin", "// Light Uniforms Begin");
     shaders.second += light_uniforms;
-    shaders.second += get_lines_between_delims(fragment_shader, "// Light Uniforms End", "// LO Functions Begin");
+    shaders.second += get_lines_between_delims(pbr_file_view, "// Light Uniforms End", "// LO Functions Begin");
     shaders.second += light_functions;
-    shaders.second += get_lines_between_delims(fragment_shader, "// LO Functions End", "// Fragment End");
+    shaders.second += get_lines_between_delims(pbr_file_view, "// LO Functions End", "// Fragment End");
 
     return shaders;
 }
@@ -37,19 +34,16 @@ constexpr std::pair<std::string, std::string> get_pbr_forward_pass_normal(const 
     std::string_view pbr_file_view = { pbr_file.data(), pbr_file.size() };
 
     // Vertex Shader
-    std::string vertex_shader = get_lines_between_delims(pbr_file_view, "// Vertex Begin", "// Vertex End");
-    ShaderPreprocessor vertex_processor(vertex_shader, { "SSBO0" });
-    shaders.first = vertex_processor.process();
+    shaders.first = "#version 460 core\n#define SSBO0\n";
+    shaders.first += get_lines_between_delims(pbr_file_view, "// Vertex Begin", "// Vertex End");
 
     // Fragment Shader
-    std::string fragment_shader = get_lines_between_delims_inclusive(pbr_file_view, "// Fragment Begin", "// Fragment End");
-    ShaderPreprocessor fragment_processor(fragment_shader, { "UniformTextures" });
-    fragment_shader = fragment_processor.process();
-    shaders.second += get_lines_between_delims(fragment_shader, "// Fragment Begin", "// Light Uniforms Begin");
+    shaders.second += "#version 460 core\n#define UniformTextures\n";
+    shaders.second += get_lines_between_delims(pbr_file_view, "// Fragment Begin", "// Light Uniforms Begin");
     shaders.second += light_uniforms;
-    shaders.second += get_lines_between_delims(fragment_shader, "// Light Uniforms End", "// LO Functions Begin");
+    shaders.second += get_lines_between_delims(pbr_file_view, "// Light Uniforms End", "// LO Functions Begin");
     shaders.second += light_functions;
-    shaders.second += get_lines_between_delims(fragment_shader, "// LO Functions End", "// Fragment End");
+    shaders.second += get_lines_between_delims(pbr_file_view, "// LO Functions End", "// Fragment End");
 
     return shaders;
 }
