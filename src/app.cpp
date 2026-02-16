@@ -7,7 +7,7 @@ App::App()
     m_window.init(m_window_title, 800, 600);
     m_window.set_relative_mode(m_capture_mouse);
 
-    m_camera.init(90.0F, 0.1F, 1000.0F, m_window.get_aspect_ratio(), { -2.0F, 1.5F, 4.0F });
+    m_camera.init(90.0F, 1.0F, 300.0F, m_window.get_aspect_ratio(), { -2.0F, 1.5F, 4.0F });
     m_camera.set_speed(10.0F);
 
     Renderer::Model::init_placeholder_textures();
@@ -47,6 +47,7 @@ App::App()
     directional.direction = glm::vec3(-0.2F, -1.0F, 0.3F);
     directional.color = glm::vec3(0.8);
     e1.add_pbr_directional_light(directional);
+    e1.add_pbr_directional_light_shadow();
     m_scene->add_entity(e1);
 
     EntityBuilder e2;

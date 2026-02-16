@@ -10,15 +10,15 @@ public:
 
     void init(float fov, float near, float far, float aspect_ratio, glm::vec3 pos);
 
+    void update_vectors();
     void update_proj();
     void update_view();
     void update_aspect(float aspect_ratio);
     void update();
+
     void move(Movement direction, float delta_time);
     void rotate(float x_offset, float y_offset);
-    void update_vectors();
     void zoom(float y_offset);
-    void set_first_mouse();
 
     [[nodiscard]] glm::mat4 get_proj() const;
     [[nodiscard]] glm::mat4 get_view() const;
@@ -54,6 +54,8 @@ public:
     void set_speed(float speed);
 
 private:
+    bool m_needs_update = true;
+
     float m_fov {};
     float m_near {};
     float m_far {};
@@ -62,8 +64,6 @@ private:
     float m_speed {};
     float m_sensitivity {};
 
-    float m_last_x {};
-    float m_last_y {};
     float m_yaw {};
     float m_pitch {};
 

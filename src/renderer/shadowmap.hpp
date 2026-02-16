@@ -69,10 +69,14 @@ private:
             layout (location = 0) in vec3 aPos;
 
             uniform mat4 light_space_matrix;
-            uniform mat4 model;
+
+            layout(binding = 1, std430) readonly buffer ssbo0 {
+                mat4 models[];
+            };
 
             void main()
             {
+                mat4 model = models[gl_InstanceID];
                 gl_Position = light_space_matrix * model * vec4(aPos, 1.0);
             }
         )";
@@ -94,10 +98,13 @@ private:
             #version 460 core
             layout (location = 0) in vec3 aPos;
 
-            uniform mat4 model;
+            layout(binding = 1, std430) readonly buffer ssbo0 {
+                mat4 models[];
+            };
 
             void main()
             {
+                mat4 model = models[gl_InstanceID];
                 gl_Position = model * vec4(aPos, 1.0);
             }
         )";

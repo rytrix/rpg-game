@@ -67,6 +67,10 @@ void Scene::add_entity(const EntityBuilder& entity_builder)
 
     if (entity_builder.m_pbr_directional != nullptr) {
         m_registry.emplace<Renderer::Light::Pbr::Directional>(entity, *entity_builder.m_pbr_directional);
+        if (entity_builder.m_pbr_directional_shadow) {
+            m_registry.emplace<Renderer::Light::Pbr::DirectionalShadow>(entity);
+            m_registry.get<Renderer::Light::Pbr::DirectionalShadow>(entity).init();
+        }
         m_shaders_need_update = true;
     }
 
@@ -180,24 +184,16 @@ void Scene::draw()
 
     m_camera.update();
 
-    auto phong_directional_view = m_registry.view<Renderer::Light::Phong::Directional>();
-    for (auto [entity, light] : phong_directional_view.each()) {
-        if (light.has_shadowmap()) {
-            light.shadowmap_draw(m_shadowmap_shader, [&]() {
-                instance_draw_internal(m_shadowmap_shader, true);
-            });
-        }
+    glCullFace(GL_FRONT);
+    auto directional_shadow_view = m_registry.view<Renderer::Light::Pbr::Directional, Renderer::Light::Pbr::DirectionalShadow>();
+    for (auto [entity, light, shadow] : directional_shadow_view.each()) {
+        shadow.update(light, m_camera);
+        shadow.shadowmap_draw(m_shadowmap_shader, [&]() {
+            instance_draw_internal(m_shadowmap_shader, true);
+        });
     }
 
-    auto phong_point_view = m_registry.view<Renderer::Light::Phong::Point>();
-    for (auto [entity, light] : phong_point_view.each()) {
-        if (light.has_shadowmap()) {
-            light.shadowmap_draw(m_shadowmap_cubemap_shader, [&]() {
-                instance_draw_internal(m_shadowmap_cubemap_shader, true);
-            });
-        }
-    }
-
+    glCullFace(GL_BACK);
     if (m_forward_pass) {
         glViewport(0, 0, m_window.get_width(), m_window.get_height());
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -207,12 +203,16 @@ void Scene::draw()
         m_forward->m_shader.set_mat4("view", m_camera.get_view());
         m_forward->m_shader.set_vec3("view_position", m_camera.get_pos());
 
-        auto pbr_point_view = m_registry.view<Renderer::Light::Pbr::Point>();
         auto pbr_directional_view = m_registry.view<Renderer::Light::Pbr::Directional>();
+        auto pbr_point_view = m_registry.view<Renderer::Light::Pbr::Point>();
         auto pbr_spot_view = m_registry.view<Renderer::Light::Pbr::Spot>();
         u32 i = 0;
         for (auto [entity, light] : pbr_directional_view.each()) {
             light.set_uniforms(m_forward->m_shader, std::format("u_directional_light_{}", i).c_str());
+            auto* shadow = m_registry.try_get<Renderer::Light::Pbr::DirectionalShadow>(entity);
+            if (shadow != nullptr) {
+                shadow->set_uniforms(m_forward->m_shader, std::format("u_directional_light_shadow_{}", i).c_str());
+            }
             i++;
         }
         i = 0;
@@ -228,38 +228,38 @@ void Scene::draw()
 
         instance_draw_internal(m_forward->m_shader, false);
     } else {
-        // Geometry pass
-        m_deferred->m_gpass.bind();
-        glViewport(0, 0, m_window.get_width(), m_window.get_height());
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+        // // Geometry pass
+        // m_deferred->m_gpass.bind();
+        // glViewport(0, 0, m_window.get_width(), m_window.get_height());
+        // glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-        m_deferred->m_gpass_shader.bind();
-        m_deferred->m_gpass_shader.set_mat4("proj", m_camera.get_proj());
-        m_deferred->m_gpass_shader.set_mat4("view", m_camera.get_view());
+        // m_deferred->m_gpass_shader.bind();
+        // m_deferred->m_gpass_shader.set_mat4("proj", m_camera.get_proj());
+        // m_deferred->m_gpass_shader.set_mat4("view", m_camera.get_view());
 
-        instance_draw_internal(m_deferred->m_gpass_shader, false);
+        // instance_draw_internal(m_deferred->m_gpass_shader, false);
 
-        m_deferred->m_gpass.blit_depth_buffer();
-        m_deferred->m_gpass.unbind();
+        // m_deferred->m_gpass.blit_depth_buffer();
+        // m_deferred->m_gpass.unbind();
 
-        // Lighting pass
-        glClear(GL_COLOR_BUFFER_BIT);
-        m_deferred->m_lpass_shader.bind();
+        // // Lighting pass
+        // glClear(GL_COLOR_BUFFER_BIT);
+        // m_deferred->m_lpass_shader.bind();
 
-        m_deferred->m_gpass.set_uniforms(m_deferred->m_lpass_shader);
-        m_deferred->m_lpass_shader.set_vec3("view_position", m_camera.get_pos());
+        // m_deferred->m_gpass.set_uniforms(m_deferred->m_lpass_shader);
+        // m_deferred->m_lpass_shader.set_vec3("view_position", m_camera.get_pos());
 
-        u32 i = 0;
-        for (auto [entity, light] : phong_directional_view.each()) {
-            light.set_uniforms(m_deferred->m_lpass_shader, std::format("u_directional_light_{}", i).c_str());
-            i++;
-        }
-        i = 0;
-        for (auto [entity, light] : phong_point_view.each()) {
-            light.set_uniforms(m_deferred->m_lpass_shader, std::format("u_point_light_{}", i).c_str());
-            i++;
-        }
-        m_deferred->m_lpass.draw();
+        // u32 i = 0;
+        // for (auto [entity, light] : phong_directional_view.each()) {
+        //     light.set_uniforms(m_deferred->m_lpass_shader, std::format("u_directional_light_{}", i).c_str());
+        //     i++;
+        // }
+        // i = 0;
+        // for (auto [entity, light] : phong_point_view.each()) {
+        //     light.set_uniforms(m_deferred->m_lpass_shader, std::format("u_point_light_{}", i).c_str());
+        //     i++;
+        // }
+        // m_deferred->m_lpass.draw();
     }
     Renderer::Texture::reset_texture_units();
 }
@@ -279,6 +279,8 @@ void Scene::draw_debug_imgui()
         m_shaders_need_update = true;
     }
 
+    glm::vec3 cam_pos = m_camera.get_pos();
+    ImGui::Text(std::format("Camera Pos: {}, {}, {}", cam_pos.x, cam_pos.y, cam_pos.z).c_str());
     if (ImGui::DragFloat("Camera Speed", &m_camera_speed, 0.1F, 1.0F, 20.0F)) {
         m_camera.set_speed(m_camera_speed);
     }
@@ -424,21 +426,27 @@ void Scene::compile_pbr_shaders()
     auto directional_view = m_registry.view<Renderer::Light::Pbr::Directional>();
     for (auto [entity, light] : directional_view.each()) {
         light_uniforms += std::format("uniform DirectionalLight u_directional_light_{};\n", i);
-        light_functions += std::format("lo += pbr_directional(u_directional_light_{}, albedo, roughness, metallic, normal, view);", i);
+        auto* shadow = m_registry.try_get<Renderer::Light::Pbr::DirectionalShadow>(entity);
+        if (shadow != nullptr) {
+            light_uniforms += std::format("uniform DirectionalLightShadow u_directional_light_shadow_{};\n", i);
+            light_functions += std::format("lo += (1.0 - shadow_calculation(u_directional_light_shadow_{}, bias)) * pbr_directional(u_directional_light_{}, albedo, roughness, metallic, normal, view, base_reflectivity);", i, i);
+        } else {
+            light_functions += std::format("lo += pbr_directional(u_directional_light_{}, albedo, roughness, metallic, normal, view, base_reflectivity);", i);
+        }
         i++;
     }
     auto point_view = m_registry.view<Renderer::Light::Pbr::Point>();
     i = 0;
     for (auto [entity, light] : point_view.each()) {
         light_uniforms += std::format("uniform PointLight u_point_light_{};\n", i);
-        light_functions += std::format("lo += pbr_point(u_point_light_{}, albedo, roughness, metallic, normal, view);", i);
+        light_functions += std::format("lo += pbr_point(u_point_light_{}, albedo, roughness, metallic, normal, view, base_reflectivity);", i);
         i++;
     }
     auto spot_view = m_registry.view<Renderer::Light::Pbr::Spot>();
     i = 0;
     for (auto [entity, light] : spot_view.each()) {
         light_uniforms += std::format("uniform SpotLight u_spot_light_{};\n", i);
-        light_functions += std::format("lo += pbr_spot(u_spot_light_{}, albedo, roughness, metallic, normal, view);", i);
+        light_functions += std::format("lo += pbr_spot(u_spot_light_{}, albedo, roughness, metallic, normal, view, base_reflectivity);", i);
         i++;
     }
 
@@ -449,9 +457,6 @@ void Scene::compile_pbr_shaders()
         } else {
             shader_source = get_pbr_forward_pass_normal(light_uniforms, light_functions);
         }
-
-        // std::println("Vertex Shader\n{}\n\n\nFragment Shader\n{}", shader_source.first, shader_source.second);
-        // std::quick_exit(0);
 
         std::array<Renderer::ShaderInfo, 2>
             shader_info = {

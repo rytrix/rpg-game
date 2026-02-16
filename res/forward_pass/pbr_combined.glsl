@@ -57,13 +57,18 @@ in vec3 FragPos;
 in vec3 Tangent;
 in flat int DrawID;
 
-struct PointLight {
-    vec3 position;
+struct DirectionalLight {
+    vec3 direction;
     vec3 color;
 };
 
-struct DirectionalLight {
-    vec3 direction;
+struct DirectionalLightShadow {
+    sampler2D shadow_map;
+    mat4 light_space_matrix;
+};
+
+struct PointLight {
+    vec3 position;
     vec3 color;
 };
 
@@ -157,16 +162,32 @@ vec3 pbr_base(
     return (kD * albedo / PI + specular) * radiance * NdotL;
 }
 
+vec3 pbr_directional(
+    DirectionalLight light, 
+    vec3 albedo,
+    float roughness,
+    float metallic,
+    vec3 N,
+    vec3 V,
+    vec3 base_reflectivity)
+{
+    vec3 L = normalize(-light.direction);
+    vec3 H = normalize(V + L);
+    
+    vec3 radiance = light.color;
+
+    return pbr_base(albedo, roughness, metallic, base_reflectivity, radiance, N, V, L, H);
+}
+
 vec3 pbr_point(
     PointLight light, 
     vec3 albedo,
     float roughness,
     float metallic,
     vec3 N,
-    vec3 V)
+    vec3 V,
+    vec3 base_reflectivity)
 {
-    vec3 base_reflectivity = mix(vec3(0.04), albedo, metallic);
-
     vec3 L = normalize(light.position - FragPos);
     vec3 H = normalize(V + L);
     
@@ -177,39 +198,20 @@ vec3 pbr_point(
     return pbr_base(albedo, roughness, metallic, base_reflectivity, radiance, N, V, L, H);
 }
 
-vec3 pbr_directional(
-    DirectionalLight light, 
-    vec3 albedo,
-    float roughness,
-    float metallic,
-    vec3 N,
-    vec3 V)
-{
-    vec3 base_reflectivity = mix(vec3(0.04), albedo, metallic);
-
-    vec3 L = normalize(-light.direction);
-    vec3 H = normalize(V + L);
-    
-    vec3 radiance = light.color;
-
-    return pbr_base(albedo, roughness, metallic, base_reflectivity, radiance, N, V, L, H);
-}
-
 vec3 pbr_spot(
     SpotLight light, 
     vec3 albedo,
     float roughness,
     float metallic,
     vec3 N,
-    vec3 V)
+    vec3 V,
+    vec3 base_reflectivity)
 {
     vec3 light_dir = normalize(light.position - FragPos);
     float theta = dot(light_dir, normalize(-light.direction));
     
     float epsilon = light.inner_cutoff - light.outer_cutoff;
     float intensity = clamp((theta - light.outer_cutoff) / epsilon, 0.0, 1.0);
-
-    vec3 base_reflectivity = mix(vec3(0.04), albedo, metallic);
 
     vec3 L = normalize(light.position - FragPos);
     vec3 H = normalize(V + L);
@@ -237,6 +239,40 @@ vec3 calc_bumped_normal(vec3 bump_map_normal)
     new_normal = normalize(new_normal);
 
     return new_normal;
+}
+
+float shadow_calculation(DirectionalLightShadow light, float bias)
+{
+    vec4 light_space_frag_pos = light.light_space_matrix * vec4(FragPos, 1.0);
+
+    vec3 proj_coords = light_space_frag_pos.xyz / light_space_frag_pos.w;
+
+    // transform to [0,1] range
+    proj_coords = proj_coords * 0.5 + 0.5;
+
+    float closest_depth = texture(light.shadow_map, proj_coords.xy).x;
+
+    float current_depth = proj_coords.z;
+
+    float shadow = 0.0;
+    vec2 texel_size = 1.0 / textureSize(light.shadow_map, 0);
+    for(int x = -1; x <= 1; x++)
+    {
+        for(int y = -1; y <= 1; y++)
+        {
+            float pcf_depth = texture(light.shadow_map, proj_coords.xy + vec2(x, y) * texel_size).r; 
+            shadow += current_depth - bias > pcf_depth ? 1.0 : 0.0;        
+        }
+    }
+    shadow /= 9.0;
+
+    // float shadow = current_depth - bias > closest_depth ? 1.0 : 0.0;
+
+    if (proj_coords.z > 1.0) {
+        shadow = 0.0;
+    }
+
+    return shadow;
 }
 
 // Light Uniforms Begin
@@ -272,7 +308,10 @@ void main() {
     metallic = metallic_roughness.b;
     roughness = metallic_roughness.g;
 
+    vec3 base_reflectivity = mix(vec3(0.04), albedo, metallic);
+
     vec3 lo = vec3(0.0);
+    float bias = 0.00;
 
 // LO Functions Begin
 // LO Functions End

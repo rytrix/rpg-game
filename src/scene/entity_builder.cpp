@@ -42,6 +42,12 @@ EntityBuilder& EntityBuilder::add_pbr_directional_light(Renderer::Light::Pbr::Di
     return *this;
 }
 
+EntityBuilder& EntityBuilder::add_pbr_directional_light_shadow()
+{
+    m_pbr_directional_shadow = true;
+    return *this;
+}
+
 EntityBuilder& EntityBuilder::add_pbr_spot_light(Renderer::Light::Pbr::Spot& info)
 {
     m_pbr_spot = &info;

@@ -37,9 +37,12 @@ void Camera::init(float fov, float near, float far, float aspect_ratio, glm::vec
 
 void Camera::update()
 {
-    update_vectors();
-    update_proj();
-    update_view();
+    if (m_needs_update) {
+        update_vectors();
+        update_proj();
+        update_view();
+        m_needs_update = false;
+    }
 }
 
 void Camera::update_vectors()
@@ -67,7 +70,8 @@ void Camera::update_view()
 void Camera::update_aspect(float aspect_ratio)
 {
     this->m_aspect_ratio = aspect_ratio;
-    update_proj();
+
+    m_needs_update = true;
 }
 
 void Camera::move(Movement direction, float delta_time)
@@ -93,6 +97,8 @@ void Camera::move(Movement direction, float delta_time)
             m_pos -= m_up * velocity;
             break;
     }
+
+    m_needs_update = true;
 }
 
 void Camera::rotate(float x_pos, float y_pos)
@@ -118,12 +124,9 @@ void Camera::rotate(float x_pos, float y_pos)
     m_pitch += yoffset;
 
     m_pitch = std::clamp(m_pitch, -89.0F, 89.0F);
-    // if (m_pitch > 89.0f)
-    //     m_pitch = 89.0f;
-    // if (m_pitch < -89.0f)
-    //     m_pitch = -89.0f;
 
-    update();
+    m_needs_update = true;
+    // update();
 }
 
 void Camera::zoom(float y_offset)
@@ -135,7 +138,8 @@ void Camera::zoom(float y_offset)
 
     m_fov = std::min(m_fov, defaults::max_fov);
 
-    update_proj();
+    m_needs_update = true;
+    // update_proj();
 }
 
 glm::mat4 Camera::get_proj() const
