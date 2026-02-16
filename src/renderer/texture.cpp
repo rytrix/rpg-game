@@ -9,6 +9,7 @@ public:
     explicit TextureAllocator(u32 max_textures);
 
     u32 next();
+    void drop(u32 count = 0);
     void reset();
 
 private:
@@ -33,6 +34,11 @@ u32 TextureAllocator::next()
     LOG_TRACE(std::format("TextureAllocator::next() returning {}", m_front));
 
     return m_front++;
+}
+
+void TextureAllocator::drop(u32 count)
+{
+    m_front -= count;
 }
 
 void TextureAllocator::reset()
@@ -103,6 +109,13 @@ GLuint Texture::get_texture_unit()
         texture_unit_allocator = create_texture_allocator();
     }
     return texture_unit_allocator->next();
+}
+
+void Texture::drop_texture_units(u32 count)
+{
+    if (texture_unit_allocator != nullptr) {
+        texture_unit_allocator->drop(count);
+    }
 }
 
 void Texture::reset_texture_units()
@@ -210,7 +223,7 @@ void Texture::set_max_anisotropy(float max_anisotropy)
         std::format("Texture max_anisotropy \"{}\" is higher than hardware limit \"{}\"",
             max_anisotropy,
             get_hardware_max_anisotropy()));
-    
+
     max_anisotropy = std::min(max_anisotropy, get_hardware_max_anisotropy());
 
     glTextureParameterf(m_id, GL_TEXTURE_MAX_ANISOTROPY, max_anisotropy);

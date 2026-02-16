@@ -42,6 +42,7 @@ public:
     ~Texture();
 
     static GLuint get_texture_unit();
+    static void drop_texture_units(u32 count);
     static void reset_texture_units();
 
     void init(TextureInfo& info);

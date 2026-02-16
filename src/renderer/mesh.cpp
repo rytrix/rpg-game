@@ -114,7 +114,7 @@ void Mesh::draw(ShaderProgram& shader)
                 m_commands[i].base_vertex,
                 m_commands[i].base_instance);
 
-            Texture::reset_texture_units();
+            Texture::drop_texture_units(3);
         }
     }
 }
