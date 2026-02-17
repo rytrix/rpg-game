@@ -14,26 +14,43 @@ void Directional::set_uniforms(Renderer::ShaderProgram& shader, const char* ligh
 
 void DirectionalShadow::init()
 {
-    auto shader_text = get_directional_cascade_shader_text(m_cascades);
-    std::array<Renderer::ShaderInfo, 3> shader_info {
-        Renderer::ShaderInfo {
-            .is_file = false,
-            .shader = shader_text.at(0).c_str(),
-            .type = GL_VERTEX_SHADER,
-        },
-        Renderer::ShaderInfo {
-            .is_file = false,
-            .shader = shader_text.at(1).c_str(),
-            .type = GL_GEOMETRY_SHADER,
-        },
-        Renderer::ShaderInfo {
-            .is_file = false,
-            .shader = shader_text.at(2).c_str(),
-            .type = GL_FRAGMENT_SHADER,
-        },
-    };
+    if constexpr (USE_GEOMETRY_SHADER) {
+        auto shader_text = get_directional_cascade_shader_text_geometry(m_cascades);
+        std::array<Renderer::ShaderInfo, 3> shader_info {
+            Renderer::ShaderInfo {
+                .is_file = false,
+                .shader = shader_text.at(0).c_str(),
+                .type = GL_VERTEX_SHADER,
+            },
+            Renderer::ShaderInfo {
+                .is_file = false,
+                .shader = shader_text.at(1).c_str(),
+                .type = GL_GEOMETRY_SHADER,
+            },
+            Renderer::ShaderInfo {
+                .is_file = false,
+                .shader = shader_text.at(2).c_str(),
+                .type = GL_FRAGMENT_SHADER,
+            },
+        };
+        m_shader.init(shader_info.data(), shader_info.size());
+    } else {
+        auto shader_text = get_directional_cascade_shader_text();
+        std::array<Renderer::ShaderInfo, 2> shader_info {
+            Renderer::ShaderInfo {
+                .is_file = false,
+                .shader = shader_text.at(0).c_str(),
+                .type = GL_VERTEX_SHADER,
+            },
+            Renderer::ShaderInfo {
+                .is_file = false,
+                .shader = shader_text.at(1).c_str(),
+                .type = GL_FRAGMENT_SHADER,
+            },
+        };
+        m_shader.init(shader_info.data(), shader_info.size());
+    }
 
-    m_shader.init(shader_info.data(), shader_info.size());
     m_shadowmap.init_cascade(2000, 2000, static_cast<int>(m_cascades));
     initialized = true;
 }
@@ -78,10 +95,20 @@ void DirectionalShadow::shadowmap_draw(const std::function<void(Renderer::Shader
 
     glClear(GL_DEPTH_BUFFER_BIT);
     m_shader.bind();
-    for (u32 i = 0; i < m_cascades; i++) {
-        m_shader.set_mat4(std::format("light_space_matrices[{}]", i).c_str(), m_light_space_matrix.at(i));
+
+    if constexpr (USE_GEOMETRY_SHADER) {
+        for (u32 i = 0; i < m_cascades; i++) {
+            m_shader.set_mat4(std::format("light_space_matrices[{}]", i).c_str(), m_light_space_matrix.at(i));
+        }
+        draw_function(m_shader);
+    } else {
+        for (u32 i = 0; i < m_cascades; i++) {
+            m_shadowmap.bind_texture_layer(static_cast<i32>(i));
+            m_shadowmap.bind();
+            m_shader.set_mat4("light_space_matrix", m_light_space_matrix.at(i));
+            draw_function(m_shader);
+        }
     }
-    draw_function(m_shader);
 
     m_shadowmap.unbind();
 
@@ -159,11 +186,29 @@ glm::mat4 DirectionalShadow::calculate_light_space_matrix(const Directional& lig
     return light_projection * light_view;
 }
 
-std::array<std::string, 3> DirectionalShadow::get_directional_cascade_shader_text(u32 cascade_count)
+std::array<std::string, 2> DirectionalShadow::get_directional_cascade_shader_text()
+{
+    std::array<std::string, 2> shaders;
+
+    std::vector<char> shadow_file = read_file<char>("res/forward_pass/shadow_pass_directional_cascades.glsl");
+    std::string_view shadow_file_view = { shadow_file.data(), shadow_file.size() };
+
+    // Vertex Shader
+    shaders.at(0) = "#version 460 core\n";
+    shaders.at(0) += get_lines_between_delims(shadow_file_view, "// Vertex Begin", "// Vertex End");
+
+    // Fragment Shader
+    shaders.at(1) += "#version 460 core\n";
+    shaders.at(1) += get_lines_between_delims(shadow_file_view, "// Fragment Begin", "// Fragment End");
+
+    return shaders;
+}
+
+std::array<std::string, 3> DirectionalShadow::get_directional_cascade_shader_text_geometry(u32 cascade_count)
 {
     std::array<std::string, 3> shaders;
 
-    std::vector<char> shadow_file = read_file<char>("res/forward_pass/directional_cascades.glsl");
+    std::vector<char> shadow_file = read_file<char>("res/forward_pass/shadow_pass_directional_cascades_geometry.glsl");
     std::string_view shadow_file_view = { shadow_file.data(), shadow_file.size() };
 
     // Vertex Shader

@@ -39,6 +39,16 @@ void Framebuffer::bind_texture(GLenum attachment, GLuint texture, GLint level) c
     }
 }
 
+void Framebuffer::bind_texture(GLenum attachment, GLuint texture, GLint level, GLint layer) const
+{
+    util_assert(initialized == true, "Framebuffer has not been initialized");
+    glNamedFramebufferTextureLayer(m_id, attachment, texture, level, layer);
+    auto error = glCheckNamedFramebufferStatus(m_id, GL_FRAMEBUFFER);
+    if (error != GL_FRAMEBUFFER_COMPLETE) {
+        util_error(std::format("Framebuffer error: {}", error));
+    }
+}
+
 void Framebuffer::bind_draw_buffer(const GLenum buff) const
 {
     util_assert(initialized == true, "Framebuffer has not been initialized");

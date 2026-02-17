@@ -23,6 +23,8 @@ public:
     void shadowmap_draw(Renderer::ShaderProgram& shader, const Point& light, const std::function<void()>& draw_function);
     void set_uniforms(Renderer::ShaderProgram& shader, const char* light_name);
 
+    static constexpr bool USE_GEOMETRY_SHADER = false;
+
 private:
     bool initialized = false;
 

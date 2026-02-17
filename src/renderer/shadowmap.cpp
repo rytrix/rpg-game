@@ -80,9 +80,16 @@ void ShadowMap::bind()
     m_framebuffer.bind();
 }
 
+void ShadowMap::bind_texture_layer(GLint layer)
+{
+    util_assert(initialized == true, "ShadowMap has not been initialized");
+    m_framebuffer.bind_texture(GL_DEPTH_ATTACHMENT, m_texture.get_id(), 0, layer);
+}
+
 void ShadowMap::unbind()
 {
     util_assert(initialized == true, "ShadowMap has not been initialized");
+    m_framebuffer.bind_texture(GL_DEPTH_ATTACHMENT, m_texture.get_id(), 0);
     m_framebuffer.unbind();
 }
 

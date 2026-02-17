@@ -437,13 +437,59 @@ void Scene::compile_shaders()
     compile_pbr_shaders();
 
     if (!m_shadowmap_shader.is_initialized()) {
-        auto shadowmap_info = Renderer::ShadowMap::get_shader_info();
-        m_shadowmap_shader.init(shadowmap_info.data(), shadowmap_info.size());
+        auto shadowmap_shaders = get_shadow_pass_basic_shaders();
+        std::array<Renderer::ShaderInfo, 2> shader_info_basic {
+            Renderer::ShaderInfo {
+                .is_file = false,
+                .shader = shadowmap_shaders.at(0).c_str(),
+                .type = GL_VERTEX_SHADER,
+            },
+            Renderer::ShaderInfo {
+                .is_file = false,
+                .shader = shadowmap_shaders.at(1).c_str(),
+                .type = GL_FRAGMENT_SHADER,
+            },
+        };
+        m_shadowmap_shader.init(shader_info_basic.data(), shader_info_basic.size());
     }
 
     if (!m_shadowmap_cubemap_shader.is_initialized()) {
-        auto shadowmap_cubemap_info = Renderer::ShadowMap::get_shader_info_cubemap();
-        m_shadowmap_cubemap_shader.init(shadowmap_cubemap_info.data(), shadowmap_cubemap_info.size());
+        if constexpr (Renderer::Light::Pbr::PointShadow::USE_GEOMETRY_SHADER) {
+            auto cubemap_shaders = get_shadow_pass_point_geometry_shaders();
+            std::array<Renderer::ShaderInfo, 3> shader_info_cubemap {
+                Renderer::ShaderInfo {
+                    .is_file = false,
+                    .shader = cubemap_shaders.at(0).c_str(),
+                    .type = GL_VERTEX_SHADER,
+                },
+                Renderer::ShaderInfo {
+                    .is_file = false,
+                    .shader = cubemap_shaders.at(1).c_str(),
+                    .type = GL_GEOMETRY_SHADER,
+                },
+                Renderer::ShaderInfo {
+                    .is_file = false,
+                    .shader = cubemap_shaders.at(2).c_str(),
+                    .type = GL_FRAGMENT_SHADER,
+                },
+            };
+            m_shadowmap_cubemap_shader.init(shader_info_cubemap.data(), shader_info_cubemap.size());
+        } else {
+            auto cubemap_shaders = get_shadow_pass_point_shaders();
+            std::array<Renderer::ShaderInfo, 2> shader_info_cubemap {
+                Renderer::ShaderInfo {
+                    .is_file = false,
+                    .shader = cubemap_shaders.at(0).c_str(),
+                    .type = GL_VERTEX_SHADER,
+                },
+                Renderer::ShaderInfo {
+                    .is_file = false,
+                    .shader = cubemap_shaders.at(1).c_str(),
+                    .type = GL_FRAGMENT_SHADER,
+                },
+            };
+            m_shadowmap_cubemap_shader.init(shader_info_cubemap.data(), shader_info_cubemap.size());
+        }
     }
 
     m_shaders_need_update = false;

@@ -46,15 +46,24 @@ void PointShadow::shadowmap_draw(Renderer::ShaderProgram& shader, const Point& l
 
     glClear(GL_DEPTH_BUFFER_BIT);
     shader.bind();
-    shader.set_mat4("light_space_matrices[0]", m_light_space_matrices[0]);
-    shader.set_mat4("light_space_matrices[1]", m_light_space_matrices[1]);
-    shader.set_mat4("light_space_matrices[2]", m_light_space_matrices[2]);
-    shader.set_mat4("light_space_matrices[3]", m_light_space_matrices[3]);
-    shader.set_mat4("light_space_matrices[4]", m_light_space_matrices[4]);
-    shader.set_mat4("light_space_matrices[5]", m_light_space_matrices[5]);
+
     shader.set_float("far_plane", m_far);
     shader.set_vec3("light_pos", light.position);
-    draw_function();
+    if constexpr (USE_GEOMETRY_SHADER) {
+        shader.set_mat4("light_space_matrices[0]", m_light_space_matrices[0]);
+        shader.set_mat4("light_space_matrices[1]", m_light_space_matrices[1]);
+        shader.set_mat4("light_space_matrices[2]", m_light_space_matrices[2]);
+        shader.set_mat4("light_space_matrices[3]", m_light_space_matrices[3]);
+        shader.set_mat4("light_space_matrices[4]", m_light_space_matrices[4]);
+        shader.set_mat4("light_space_matrices[5]", m_light_space_matrices[5]);
+        draw_function();
+    } else {
+        for (u32 i = 0; i < 6; i++) {
+            m_shadowmap.bind_texture_layer(static_cast<i32>(i));
+            shader.set_mat4("light_space_matrix", m_light_space_matrices.at(i));
+            draw_function();
+        }
+    }
 
     m_shadowmap.unbind();
 }

@@ -25,11 +25,14 @@ public:
 
 private:
     glm::mat4 calculate_light_space_matrix(const Directional& light, const glm::mat4 proj, const glm::mat4 view, f32 far);
-    static std::array<std::string, 3> get_directional_cascade_shader_text(u32 cascade_count);
 
+    static std::array<std::string, 2> get_directional_cascade_shader_text();
+    static std::array<std::string, 3> get_directional_cascade_shader_text_geometry(u32 cascade_count);
+
+    static constexpr bool USE_GEOMETRY_SHADER = false;
     static constexpr usize MAX_CASCADES = 16;
     bool initialized = false;
-    u32 m_cascades = 2;
+    u32 m_cascades = 6;
     Renderer::ShaderProgram m_shader;
     Renderer::ShadowMap m_shadowmap;
     std::array<glm::mat4, MAX_CASCADES> m_light_space_matrix;
