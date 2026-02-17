@@ -87,6 +87,11 @@ struct SpotLight {
     float outer_cutoff;
 };
 
+struct SpotLightShadow {
+    sampler2D shadow_map;
+    mat4 light_space_matrix;
+};
+
 #ifdef UniformTextures
 uniform sampler2D tex_diffuse;
 uniform sampler2D tex_metallic_roughness;
@@ -314,7 +319,6 @@ float shadow_calculation_point(PointLight light, PointLightShadow light_shadow, 
 
     // pcf 2
     float shadow = 0.0;
-    // float bias   = 0.15;
     int samples  = 20;
     float view_distance = length(light.position - FragPos);
     float disk_radius = (1.0 + (view_distance / light_shadow.far_plane)) / 25.0;  
@@ -331,39 +335,37 @@ float shadow_calculation_point(PointLight light, PointLightShadow light_shadow, 
     return shadow;
 }
 
-// float shadow_calculation_simple(DirectionalLightShadow light, float bias)
-// {
-//     vec4 light_space_frag_pos = light.light_space_matrix * vec4(FragPos, 1.0);
+float shadow_calculation_spot(SpotLightShadow light, float bias)
+{
+    vec4 light_space_frag_pos = light.light_space_matrix * vec4(FragPos, 1.0);
 
-//     vec3 proj_coords = light_space_frag_pos.xyz / light_space_frag_pos.w;
+    vec3 proj_coords = light_space_frag_pos.xyz / light_space_frag_pos.w;
 
-//     // transform to [0,1] range
-//     proj_coords = proj_coords * 0.5 + 0.5;
+    // transform to [0,1] range
+    proj_coords = proj_coords * 0.5 + 0.5;
 
-//     float closest_depth = texture(light.shadow_map, proj_coords.xy).x;
+    float closest_depth = texture(light.shadow_map, proj_coords.xy).x;
 
-//     float current_depth = proj_coords.z;
+    float current_depth = proj_coords.z;
 
-//     float shadow = 0.0;
-//     vec2 texel_size = 1.0 / textureSize(light.shadow_map, 0);
-//     for(int x = -1; x <= 1; x++)
-//     {
-//         for(int y = -1; y <= 1; y++)
-//         {
-//             float pcf_depth = texture(light.shadow_map, proj_coords.xy + vec2(x, y) * texel_size).r; 
-//             shadow += current_depth - bias > pcf_depth ? 1.0 : 0.0;        
-//         }
-//     }
-//     shadow /= 9.0;
+    float shadow = 0.0;
+    vec2 texel_size = 1.0 / textureSize(light.shadow_map, 0);
+    for(int x = -1; x <= 1; x++) {
+        for(int y = -1; y <= 1; y++) {
+            float pcf_depth = texture(light.shadow_map, proj_coords.xy + vec2(x, y) * texel_size).r; 
+            shadow += current_depth - bias > pcf_depth ? 1.0 : 0.0;        
+        }
+    }
+    shadow /= 9.0;
 
-//     // float shadow = current_depth - bias > closest_depth ? 1.0 : 0.0;
+    // float shadow = current_depth - bias > closest_depth ? 1.0 : 0.0;
 
-//     if (proj_coords.z > 1.0) {
-//         shadow = 0.0;
-//     }
+    if (proj_coords.z > 1.0) {
+        shadow = 0.0;
+    }
 
-//     return shadow;
-// }
+    return shadow;
+}
 
 // Light Uniforms Begin
 // Light Uniforms End

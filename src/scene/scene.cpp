@@ -80,6 +80,10 @@ void Scene::add_entity(const EntityBuilder& entity_builder)
 
     if (entity_builder.m_pbr_spot != nullptr) {
         m_registry.emplace<Renderer::Light::Pbr::Spot>(entity, *entity_builder.m_pbr_spot);
+        if (entity_builder.m_pbr_spot_shadow) {
+            m_registry.emplace<Renderer::Light::Pbr::SpotShadow>(entity);
+            m_registry.get<Renderer::Light::Pbr::SpotShadow>(entity).init();
+        }
         m_shaders_need_update = true;
     }
 
@@ -205,6 +209,14 @@ void Scene::draw()
         });
     }
 
+    auto spot_shadow_view = m_registry.view<Renderer::Light::Pbr::Spot, Renderer::Light::Pbr::SpotShadow>();
+    for (auto [entity, light, shadow] : spot_shadow_view.each()) {
+        shadow.update(light);
+        shadow.shadowmap_draw(m_shadowmap_shader, [&]() {
+            instance_draw_internal(m_shadowmap_shader, true);
+        });
+    }
+
     glCullFace(GL_BACK);
     if (m_forward_pass) {
         glViewport(0, 0, m_window.get_width(), m_window.get_height());
@@ -239,6 +251,10 @@ void Scene::draw()
         i = 0;
         for (auto [entity, light] : pbr_spot_view.each()) {
             light.set_uniforms(m_forward->m_shader, std::format("u_spot_light_{}", i).c_str());
+            auto* shadow = m_registry.try_get<Renderer::Light::Pbr::SpotShadow>(entity);
+            if (shadow != nullptr) {
+                shadow->set_uniforms(m_forward->m_shader, std::format("u_spot_light_shadow_{}", i).c_str());
+            }
             i++;
         }
 
@@ -474,7 +490,14 @@ void Scene::compile_pbr_shaders()
     i = 0;
     for (auto [entity, light] : spot_view.each()) {
         light_uniforms += std::format("uniform SpotLight u_spot_light_{};\n", i);
-        light_functions += std::format("lo += pbr_spot(u_spot_light_{}, albedo, roughness, metallic, normal, view, base_reflectivity);", i);
+
+        auto* shadow = m_registry.try_get<Renderer::Light::Pbr::SpotShadow>(entity);
+        if (shadow != nullptr) {
+            light_uniforms += std::format("uniform SpotLightShadow u_spot_light_shadow_{};\n", i);
+            light_functions += std::format("lo += (1.0 - shadow_calculation_spot(u_spot_light_shadow_{}, bias)) * pbr_spot(u_spot_light_{}, albedo, roughness, metallic, normal, view, base_reflectivity);", i, i, i);
+        } else {
+            light_functions += std::format("lo += pbr_spot(u_spot_light_{}, albedo, roughness, metallic, normal, view, base_reflectivity);", i);
+        }
         i++;
     }
 

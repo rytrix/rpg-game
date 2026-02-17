@@ -19,6 +19,7 @@ public:
     EntityBuilder& add_pbr_point_light(Renderer::Light::Pbr::Point& info);
     EntityBuilder& add_pbr_point_light_shadow();
     EntityBuilder& add_pbr_spot_light(Renderer::Light::Pbr::Spot& info);
+    EntityBuilder& add_pbr_spot_light_shadow();
     EntityBuilder& add_model_matrix(glm::mat4 model);
 
 private:
@@ -31,6 +32,7 @@ private:
     Renderer::Light::Pbr::Point* m_pbr_point = nullptr;
     bool m_pbr_point_shadow = false;
     Renderer::Light::Pbr::Spot* m_pbr_spot = nullptr;
+    bool m_pbr_spot_shadow = false;
     glm::mat4 m_model_matrix { 1.0 };
     const char* m_name = nullptr;
 };

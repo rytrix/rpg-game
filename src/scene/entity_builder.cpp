@@ -60,6 +60,12 @@ EntityBuilder& EntityBuilder::add_pbr_spot_light(Renderer::Light::Pbr::Spot& inf
     return *this;
 }
 
+EntityBuilder& EntityBuilder::add_pbr_spot_light_shadow()
+{
+    m_pbr_spot_shadow = true;
+    return *this;
+}
+
 EntityBuilder& EntityBuilder::add_model_matrix(glm::mat4 model)
 {
     m_model_matrix = model;

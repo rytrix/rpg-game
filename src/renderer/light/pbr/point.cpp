@@ -10,6 +10,7 @@ void Point::set_uniforms(Renderer::ShaderProgram& shader, const char* light_name
 
 void PointShadow::init()
 {
+    util_assert(initialized == false, "Light::PointShadow has already been initialized");
     m_shadowmap.init_cubemap(2000, 2000);
     initialized = true;
 }
