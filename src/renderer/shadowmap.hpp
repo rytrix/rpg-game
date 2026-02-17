@@ -42,27 +42,6 @@ public:
         };
     }
 
-    static consteval std::array<Renderer::ShaderInfo, 3> get_shader_info_cascade()
-    {
-        return std::array<Renderer::ShaderInfo, 3> {
-            Renderer::ShaderInfo {
-                .is_file = false,
-                .shader = get_vertex_shader_cascade(),
-                .type = GL_VERTEX_SHADER,
-            },
-            Renderer::ShaderInfo {
-                .is_file = false,
-                .shader = get_geometry_shader_cascade(),
-                .type = GL_GEOMETRY_SHADER,
-            },
-            Renderer::ShaderInfo {
-                .is_file = false,
-                .shader = get_frag_shader_cascade(),
-                .type = GL_FRAGMENT_SHADER,
-            },
-        };
-    }
-
     static consteval std::array<Renderer::ShaderInfo, 3> get_shader_info_cubemap()
     {
         return std::array<Renderer::ShaderInfo, 3> {
@@ -112,59 +91,6 @@ private:
             void main()
             {
             }
-        )";
-    }
-
-    static consteval const char* get_vertex_shader_cascade()
-    {
-        return R"(
-            #version 460 core
-            layout (location = 0) in vec3 inPos;
-
-            layout(binding = 1, std430) readonly buffer ssbo0 {
-                mat4 models[];
-            };
-
-            void main()
-            {
-                mat4 model = models[gl_InstanceID];
-                gl_Position = model * vec4(inPos, 1.0);
-            }
-        )";
-    }
-
-    static consteval const char* get_geometry_shader_cascade()
-    {
-        return R"(
-        #version 460 core
-
-        layout(triangles, invocations = 4) in;
-        layout(triangle_strip, max_vertices = 3) out;
-
-        uniform mat4 light_space_matrices[4];
-
-        void main()
-        {          
-            for (int i = 0; i < 3; ++i)
-            {
-                gl_Position = 
-                    light_space_matrices[gl_InvocationID] * gl_in[i].gl_Position;
-                gl_Layer = gl_InvocationID;
-                EmitVertex();
-            }
-            EndPrimitive();
-        }  
-        )";
-    }
-
-    static consteval const char* get_frag_shader_cascade()
-    {
-        return R"(
-        #version 460 core
-
-        void main()
-        {             
-        }
         )";
     }
 

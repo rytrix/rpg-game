@@ -64,8 +64,8 @@ struct DirectionalLight {
 
 struct DirectionalLightShadow {
     sampler2DArray shadow_map;
-    mat4 light_space_matrix[4];
-    float cascade_plane_distances[4];
+    mat4 light_space_matrix[16];
+    float cascade_plane_distances[16];
     int cascade_count;
 };
 

@@ -1,5 +1,7 @@
 #include "directional.hpp"
 
+#include "../../../scene/shader_preprocessor.hpp"
+
 #include <algorithm>
 
 namespace Renderer::Light::Pbr {
@@ -12,8 +14,27 @@ void Directional::set_uniforms(Renderer::ShaderProgram& shader, const char* ligh
 
 void DirectionalShadow::init()
 {
-    m_shadowmap.init_cascade(3000, 3000, static_cast<int>(m_cascades));
-    // m_light_space_matrix.resize(m_cascades);
+    auto shader_text = get_directional_cascade(m_cascades);
+    std::array<Renderer::ShaderInfo, 3> shader_info {
+        Renderer::ShaderInfo {
+            .is_file = false,
+            .shader = shader_text.at(0).c_str(),
+            .type = GL_VERTEX_SHADER,
+        },
+        Renderer::ShaderInfo {
+            .is_file = false,
+            .shader = shader_text.at(1).c_str(),
+            .type = GL_GEOMETRY_SHADER,
+        },
+        Renderer::ShaderInfo {
+            .is_file = false,
+            .shader = shader_text.at(2).c_str(),
+            .type = GL_FRAGMENT_SHADER,
+        },
+    };
+
+    m_shader.init(shader_info.data(), shader_info.size());
+    m_shadowmap.init_cascade(2000, 2000, static_cast<int>(m_cascades));
     initialized = true;
 }
 
@@ -24,15 +45,14 @@ DirectionalShadow::~DirectionalShadow()
     }
 }
 
-void DirectionalShadow::update(const Directional& light, Renderer::Camera& camera)
+void DirectionalShadow::update(const Directional& light, const Renderer::Camera& camera)
 {
     util_assert(initialized == true, "Light::DirectionalShadow has not been initialized");
-    util_assert(m_cascades < MAX_CASCADES, "Light::DirectionalShadow cascades greater than max (16)");
+    util_assert(m_cascades <= MAX_CASCADES, "Light::DirectionalShadow cascades greater than max (16)");
 
-    // m_cascade_plane_distances.resize(m_cascades + 1);
     f32 near = camera.get_near();
     f32 far = camera.get_far();
-    const f32 lambda = 0.7F;
+    const f32 lambda = 0.85F;
 
     m_cascade_plane_distances.at(0) = near;
     m_cascade_plane_distances.at(m_cascades) = far;
@@ -45,8 +65,44 @@ void DirectionalShadow::update(const Directional& light, Renderer::Camera& camer
 
     for (u32 i = 0; i < m_cascades; i++) {
         glm::mat4 projection = glm::perspective(camera.get_fov(), camera.get_aspect(), m_cascade_plane_distances.at(i), m_cascade_plane_distances.at(i + 1));
-        m_light_space_matrix.at(i) = calculate_light_space_matrix(light, projection, camera.get_view(), m_cascade_plane_distances.at(i + 1));
+        m_light_space_matrix.at(i) = calculate_light_space_matrix(light, projection, camera.get_view(), m_cascade_plane_distances.at(m_cascades));
     }
+}
+
+void DirectionalShadow::shadowmap_draw(const std::function<void(Renderer::ShaderProgram& shader)>& draw_function)
+{
+    util_assert(initialized == true, "Light::DirectionalShadow has not been initialized");
+
+    glViewport(0, 0, m_shadowmap.get_width(), m_shadowmap.get_height());
+    m_shadowmap.bind();
+
+    glClear(GL_DEPTH_BUFFER_BIT);
+    m_shader.bind();
+    for (u32 i = 0; i < m_cascades; i++) {
+        m_shader.set_mat4(std::format("light_space_matrices[{}]", i).c_str(), m_light_space_matrix.at(i));
+    }
+    draw_function(m_shader);
+
+    m_shadowmap.unbind();
+
+    // ImGui::Begin("Shadow Map Debug");
+    // GLuint textureID = m_shadowmap.get_texture().get_id();
+    // ImGui::Image((void*)(intptr_t)textureID, ImVec2(256, 256), ImVec2(0, 1), ImVec2(1, 0));
+    // ImGui::End();
+}
+
+void DirectionalShadow::set_uniforms(Renderer::ShaderProgram& shader, const char* light_name)
+{
+    util_assert(initialized == true, "Light::DirectionalShadow has not been initialized");
+
+    GLuint texture_unit = Texture::get_texture_unit();
+    m_shadowmap.get_texture().bind(texture_unit);
+    shader.set_int(std::format("{}.shadow_map", light_name).c_str(), static_cast<int>(texture_unit));
+    for (u32 i = 0; i < m_cascades; i++) {
+        shader.set_mat4(std::format("{}.light_space_matrix[{}]", light_name, i).c_str(), m_light_space_matrix.at(i));
+        shader.set_float(std::format("{}.cascade_plane_distances[{}]", light_name, i).c_str(), m_cascade_plane_distances.at(i + 1));
+    }
+    shader.set_int(std::format("{}.cascade_count", light_name).c_str(), static_cast<int>(m_cascades));
 }
 
 glm::mat4 DirectionalShadow::calculate_light_space_matrix(const Directional& light, const glm::mat4 proj, const glm::mat4 view, f32 far)
@@ -97,46 +153,32 @@ glm::mat4 DirectionalShadow::calculate_light_space_matrix(const Directional& lig
         radius,
         -radius,
         radius,
-        -far * 15.0F,
-        far * 15.0F);
+        -far * 2.0F,
+        far * 2.0F);
 
     return light_projection * light_view;
 }
 
-void DirectionalShadow::shadowmap_draw(Renderer::ShaderProgram& shader, const std::function<void()>& draw_function)
+std::array<std::string, 3> DirectionalShadow::get_directional_cascade(u32 cascade_count)
 {
-    util_assert(initialized == true, "Light::DirectionalShadow has not been initialized");
+    std::array<std::string, 3> shaders;
 
-    glViewport(0, 0, m_shadowmap.get_width(), m_shadowmap.get_height());
-    m_shadowmap.bind();
+    std::vector<char> shadow_file = read_file<char>("res/forward_pass/directional_cascades.glsl");
+    std::string_view shadow_file_view = { shadow_file.data(), shadow_file.size() };
 
-    glClear(GL_DEPTH_BUFFER_BIT);
-    shader.bind();
-    for (u32 i = 0; i < m_cascades; i++) {
-        shader.set_mat4(std::format("light_space_matrices[{}]", i).c_str(), m_light_space_matrix.at(i));
-    }
-    draw_function();
+    // Vertex Shader
+    shaders.at(0) = "#version 460 core\n";
+    shaders.at(0) += get_lines_between_delims(shadow_file_view, "// Vertex Begin", "// Vertex End");
 
-    m_shadowmap.unbind();
+    // Geometry Shader
+    shaders.at(1) = std::format("#version 460 core\n#define CASCADE_COUNT {}\n", cascade_count);
+    shaders.at(1) += get_lines_between_delims(shadow_file_view, "// Geometry Begin", "// Geometry End");
 
-    // ImGui::Begin("Shadow Map Debug");
-    // GLuint textureID = m_shadowmap.get_texture().get_id();
-    // ImGui::Image((void*)(intptr_t)textureID, ImVec2(256, 256), ImVec2(0, 1), ImVec2(1, 0));
-    // ImGui::End();
-}
+    // Fragment Shader
+    shaders.at(2) += "#version 460 core\n";
+    shaders.at(2) += get_lines_between_delims(shadow_file_view, "// Fragment Begin", "// Fragment End");
 
-void DirectionalShadow::set_uniforms(Renderer::ShaderProgram& shader, const char* light_name)
-{
-    util_assert(initialized == true, "Light::DirectionalShadow has not been initialized");
-
-    GLuint texture_unit = Texture::get_texture_unit();
-    m_shadowmap.get_texture().bind(texture_unit);
-    shader.set_int(std::format("{}.shadow_map", light_name).c_str(), static_cast<int>(texture_unit));
-    for (u32 i = 0; i < m_cascades; i++) {
-        shader.set_mat4(std::format("{}.light_space_matrix[{}]", light_name, i).c_str(), m_light_space_matrix.at(i));
-        shader.set_float(std::format("{}.cascade_plane_distances[{}]", light_name, i).c_str(), m_cascade_plane_distances.at(i + 1));
-    }
-    shader.set_int(std::format("{}.cascade_count", light_name).c_str(), static_cast<int>(m_cascades));
+    return shaders;
 }
 
 } // Renderer::Light::Pbr
