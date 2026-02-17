@@ -1,5 +1,6 @@
 #pragma once
 
+#include "../../camera.hpp"
 #include "../../shader.hpp"
 #include "../../shadowmap.hpp"
 
@@ -10,15 +11,25 @@ struct Point {
 
     glm::vec3 position;
     glm::vec3 color;
+};
 
-    // ShadowMap shadowmap;
-    // std::array<glm::mat4, 6> light_space_matrix {};
-    // float near = 1.0F;
-    // float far = 25.0F;
+class PointShadow : public NoCopyNoMove {
+public:
+    PointShadow() = default;
+    ~PointShadow();
 
-    void init_shadowmap();
-    void update();
-    void shadowmap_draw();
+    void init();
+    void update(const Point& light);
+    void shadowmap_draw(Renderer::ShaderProgram& shader, const Point& light, const std::function<void()>& draw_function);
+    void set_uniforms(Renderer::ShaderProgram& shader, const char* light_name);
+
+private:
+    bool initialized = false;
+
+    ShadowMap m_shadowmap;
+    std::array<glm::mat4, 6> m_light_space_matrices {};
+    float m_near = 1.0F;
+    float m_far = 100.0F;
 };
 
 } // Renderer::Light::Pbr

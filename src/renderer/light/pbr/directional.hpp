@@ -26,11 +26,12 @@ public:
 private:
     glm::mat4 calculate_light_space_matrix(const Directional& light, const glm::mat4 proj, const glm::mat4 view, f32 far);
 
+    static constexpr usize MAX_CASCADES = 16;
     bool initialized = false;
     u32 m_cascades = 4;
     Renderer::ShadowMap m_shadowmap;
-    std::vector<glm::mat4> m_light_space_matrix;
-    std::vector<f32> m_cascade_plane_distances;
+    std::array<glm::mat4, MAX_CASCADES> m_light_space_matrix;
+    std::array<f32, MAX_CASCADES + 1> m_cascade_plane_distances;
 };
 
 } // Renderer::Light::Pbr

@@ -30,12 +30,6 @@ EntityBuilder& EntityBuilder::add_phong_directional_light(Renderer::Light::Phong
     return *this;
 }
 
-EntityBuilder& EntityBuilder::add_pbr_point_light(Renderer::Light::Pbr::Point& info)
-{
-    m_pbr_point = &info;
-    return *this;
-}
-
 EntityBuilder& EntityBuilder::add_pbr_directional_light(Renderer::Light::Pbr::Directional& info)
 {
     m_pbr_directional = &info;
@@ -45,6 +39,18 @@ EntityBuilder& EntityBuilder::add_pbr_directional_light(Renderer::Light::Pbr::Di
 EntityBuilder& EntityBuilder::add_pbr_directional_light_shadow()
 {
     m_pbr_directional_shadow = true;
+    return *this;
+}
+
+EntityBuilder& EntityBuilder::add_pbr_point_light(Renderer::Light::Pbr::Point& info)
+{
+    m_pbr_point = &info;
+    return *this;
+}
+
+EntityBuilder& EntityBuilder::add_pbr_point_light_shadow()
+{
+    m_pbr_point_shadow = true;
     return *this;
 }
 

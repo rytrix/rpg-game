@@ -7,7 +7,7 @@ App::App()
     m_window.init(m_window_title, 800, 600);
     m_window.set_relative_mode(m_capture_mouse);
 
-    m_camera.init(90.0F, 1.0F, 300.0F, m_window.get_aspect_ratio(), { -2.0F, 1.5F, 4.0F });
+    m_camera.init(90.0F, 1.0F, 200.0F, m_window.get_aspect_ratio(), { -2.0F, 1.5F, 4.0F });
     m_camera.set_speed(10.0F);
 
     Renderer::Model::init_placeholder_textures();
@@ -107,6 +107,21 @@ App::App()
         m_scene->add_entity(e3);
     }
 
+    EntityBuilder e4;
+    Renderer::Light::Pbr::Point point {};
+    point.position = glm::vec3(6.0F, 6.0F, 8.0F);
+    point.color = glm::vec3(10.0, 10.0, 10.0);
+    e4.add_pbr_point_light(point);
+    e4.add_pbr_point_light_shadow();
+    m_scene->add_entity(e4);
+
+    EntityBuilder e5;
+    point.position = glm::vec3(6.0F, 6.0F, -8.0F);
+    point.color = glm::vec3(50.0, 25.0, 25.0);
+    e5.add_pbr_point_light(point);
+    e5.add_pbr_point_light_shadow();
+    m_scene->add_entity(e5);
+
     EntityBuilder e6;
     e6.add_name("sphere");
     e6.add_model_path("res/models/icosphere/icosphere.obj");
@@ -123,22 +138,6 @@ App::App()
         return { body, JPH::EMotionType::Dynamic };
     });
     m_scene->add_entity(e6);
-
-    EntityBuilder e4;
-    Renderer::Light::Pbr::Point point {};
-    point.position = glm::vec3(6.0F, 6.0F, 8.0F);
-    point.color = glm::vec3(10.0, 10.0, 10.0);
-    e4.add_pbr_point_light(point);
-    m_scene->add_entity(e4);
-
-    e6.add_pbr_point_light(point);
-    m_scene->add_entity(e6);
-
-    EntityBuilder e5;
-    point.position = glm::vec3(6.0F, 6.0F, -8.0F);
-    point.color = glm::vec3(50.0, 25.0, 25.0);
-    e5.add_pbr_point_light(point);
-    m_scene->add_entity(e5);
 
     EntityBuilder e7;
     Renderer::Light::Pbr::Spot spot {};

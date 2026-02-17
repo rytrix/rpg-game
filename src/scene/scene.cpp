@@ -60,16 +60,20 @@ void Scene::add_entity(const EntityBuilder& entity_builder)
         m_shaders_need_update = true;
     }
 
-    if (entity_builder.m_pbr_point != nullptr) {
-        m_registry.emplace<Renderer::Light::Pbr::Point>(entity, *entity_builder.m_pbr_point);
-        m_shaders_need_update = true;
-    }
-
     if (entity_builder.m_pbr_directional != nullptr) {
         m_registry.emplace<Renderer::Light::Pbr::Directional>(entity, *entity_builder.m_pbr_directional);
         if (entity_builder.m_pbr_directional_shadow) {
             m_registry.emplace<Renderer::Light::Pbr::DirectionalShadow>(entity);
             m_registry.get<Renderer::Light::Pbr::DirectionalShadow>(entity).init();
+        }
+        m_shaders_need_update = true;
+    }
+
+    if (entity_builder.m_pbr_point != nullptr) {
+        m_registry.emplace<Renderer::Light::Pbr::Point>(entity, *entity_builder.m_pbr_point);
+        if (entity_builder.m_pbr_point_shadow) {
+            m_registry.emplace<Renderer::Light::Pbr::PointShadow>(entity);
+            m_registry.get<Renderer::Light::Pbr::PointShadow>(entity).init();
         }
         m_shaders_need_update = true;
     }
@@ -193,6 +197,14 @@ void Scene::draw()
         });
     }
 
+    auto point_shadow_view = m_registry.view<Renderer::Light::Pbr::Point, Renderer::Light::Pbr::PointShadow>();
+    for (auto [entity, light, shadow] : point_shadow_view.each()) {
+        shadow.update(light);
+        shadow.shadowmap_draw(m_shadowmap_cubemap_shader, light, [&]() {
+            instance_draw_internal(m_shadowmap_cubemap_shader, true);
+        });
+    }
+
     glCullFace(GL_BACK);
     if (m_forward_pass) {
         glViewport(0, 0, m_window.get_width(), m_window.get_height());
@@ -218,6 +230,10 @@ void Scene::draw()
         i = 0;
         for (auto [entity, light] : pbr_point_view.each()) {
             light.set_uniforms(m_forward->m_shader, std::format("u_point_light_{}", i).c_str());
+            auto* shadow = m_registry.try_get<Renderer::Light::Pbr::PointShadow>(entity);
+            if (shadow != nullptr) {
+                shadow->set_uniforms(m_forward->m_shader, std::format("u_point_light_shadow_{}", i).c_str());
+            }
             i++;
         }
         i = 0;
@@ -444,7 +460,14 @@ void Scene::compile_pbr_shaders()
     i = 0;
     for (auto [entity, light] : point_view.each()) {
         light_uniforms += std::format("uniform PointLight u_point_light_{};\n", i);
-        light_functions += std::format("lo += pbr_point(u_point_light_{}, albedo, roughness, metallic, normal, view, base_reflectivity);", i);
+
+        auto* shadow = m_registry.try_get<Renderer::Light::Pbr::PointShadow>(entity);
+        if (shadow != nullptr) {
+            light_uniforms += std::format("uniform PointLightShadow u_point_light_shadow_{};\n", i);
+            light_functions += std::format("lo += (1.0 - shadow_calculation_point(u_point_light_{}, u_point_light_shadow_{}, bias)) * pbr_point(u_point_light_{}, albedo, roughness, metallic, normal, view, base_reflectivity);", i, i, i);
+        } else {
+            light_functions += std::format("lo += pbr_point(u_point_light_{}, albedo, roughness, metallic, normal, view, base_reflectivity);", i);
+        }
         i++;
     }
     auto spot_view = m_registry.view<Renderer::Light::Pbr::Spot>();

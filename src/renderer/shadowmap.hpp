@@ -138,13 +138,10 @@ private:
         return R"(
         #version 460 core
 
-        layout(triangles, invocations = 5) in;
+        layout(triangles, invocations = 4) in;
         layout(triangle_strip, max_vertices = 3) out;
 
-        // layout (std140, binding = 0) uniform LightSpaceMatrices
-        // {
-            uniform mat4 light_space_matrices[4];
-        // };
+        uniform mat4 light_space_matrices[4];
 
         void main()
         {          

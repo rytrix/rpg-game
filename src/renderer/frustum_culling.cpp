@@ -58,32 +58,32 @@ void Frustum::init(const Camera& cam)
 } // namespace Renderer
 
 // struct AABB {
-//     inline AABB() = default;
-//     inline AABB(const glm::vec3& min, const glm::vec3& max);
+//     AABB() = default;
+//     AABB(const glm::vec3& min, const glm::vec3& max);
 
-//     inline void init(const glm::vec3& min, const glm::vec3& max);
+//     void init(const glm::vec3& min, const glm::vec3& max);
 
-//     inline std::array<glm::vec3, 8> getVerticies() const;
-//     inline bool isOnOrForwardPlane(const Plane& plane) const;
-//     inline bool isOnFrustum(const Frustum& camFrustum) const;
+//     std::array<glm::vec3, 8> getVerticies() const;
+//     bool isOnOrForwardPlane(const Plane& plane) const;
+//     bool isOnFrustum(const Frustum& camFrustum) const;
 
 // private:
 //     glm::vec3 center { 0.f, 0.f, 0.f };
 //     glm::vec3 extents { 0.f, 0.f, 0.f };
 // };
 
-// inline AABB::AABB(const glm::vec3& min, const glm::vec3& max)
+// AABB::AABB(const glm::vec3& min, const glm::vec3& max)
 // {
 //     init(min, max);
 // }
 
-// inline void AABB::init(const glm::vec3& min, const glm::vec3& max)
+// void AABB::init(const glm::vec3& min, const glm::vec3& max)
 // {
 //     center = { (max + min) * 0.5f };
 //     extents = { max.x - center.x, max.y - center.y, max.z - center.z };
 // }
 
-// inline std::array<glm::vec3, 8> AABB::getVerticies() const
+// std::array<glm::vec3, 8> AABB::getVerticies() const
 // {
 //     std::array<glm::vec3, 8> verticies;
 //     verticies[0] = { center.x - extents.x, center.y - extents.y, center.z - extents.z };
@@ -97,7 +97,7 @@ void Frustum::init(const Camera& cam)
 //     return verticies;
 // }
 
-// inline bool AABB::isOnOrForwardPlane(const Plane& plane) const
+// bool AABB::isOnOrForwardPlane(const Plane& plane) const
 // {
 //     // Compute the projection interval radius of b onto L(t) = b.c + t * p.n
 //     const glm::vec3 normal = plane.getNormal();
@@ -106,7 +106,7 @@ void Frustum::init(const Camera& cam)
 //     return -r <= plane.getSignedDistanceToPlane(center);
 // }
 
-// inline bool AABB::isOnFrustum(const Frustum& camFrustum) const
+// bool AABB::isOnFrustum(const Frustum& camFrustum) const
 // {
 //     return (isOnOrForwardPlane(camFrustum.leftFace) && isOnOrForwardPlane(camFrustum.rightFace) && isOnOrForwardPlane(camFrustum.topFace) && isOnOrForwardPlane(camFrustum.bottomFace) && isOnOrForwardPlane(camFrustum.nearFace) && isOnOrForwardPlane(camFrustum.farFace));
 // };

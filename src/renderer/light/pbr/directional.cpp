@@ -12,8 +12,8 @@ void Directional::set_uniforms(Renderer::ShaderProgram& shader, const char* ligh
 
 void DirectionalShadow::init()
 {
-    m_shadowmap.init_cascade(4000, 4000, static_cast<int>(m_cascades));
-    m_light_space_matrix.resize(m_cascades);
+    m_shadowmap.init_cascade(3000, 3000, static_cast<int>(m_cascades));
+    // m_light_space_matrix.resize(m_cascades);
     initialized = true;
 }
 
@@ -27,24 +27,25 @@ DirectionalShadow::~DirectionalShadow()
 void DirectionalShadow::update(const Directional& light, Renderer::Camera& camera)
 {
     util_assert(initialized == true, "Light::DirectionalShadow has not been initialized");
+    util_assert(m_cascades < MAX_CASCADES, "Light::DirectionalShadow cascades greater than max (16)");
 
-    m_cascade_plane_distances.resize(m_cascades + 1);
+    // m_cascade_plane_distances.resize(m_cascades + 1);
     f32 near = camera.get_near();
     f32 far = camera.get_far();
     const f32 lambda = 0.7F;
 
-    m_cascade_plane_distances[0] = near;
-    m_cascade_plane_distances[m_cascades] = far;
+    m_cascade_plane_distances.at(0) = near;
+    m_cascade_plane_distances.at(m_cascades) = far;
     for (u32 i = 1; i < m_cascades + 1; i++) {
         f32 ratio = static_cast<f32>(i) / static_cast<f32>(m_cascades);
         f32 log_split = near * std::pow(far / near, ratio);
         f32 lin_split = near + ((far - near) * ratio);
-        m_cascade_plane_distances[i] = glm::mix(lin_split, log_split, lambda);
+        m_cascade_plane_distances.at(i) = glm::mix(lin_split, log_split, lambda);
     }
 
     for (u32 i = 0; i < m_cascades; i++) {
-        glm::mat4 projection = glm::perspective(camera.get_fov(), camera.get_aspect(), m_cascade_plane_distances[i], m_cascade_plane_distances[i + 1]);
-        m_light_space_matrix[i] = calculate_light_space_matrix(light, projection, camera.get_view(), m_cascade_plane_distances[i + 1]);
+        glm::mat4 projection = glm::perspective(camera.get_fov(), camera.get_aspect(), m_cascade_plane_distances.at(i), m_cascade_plane_distances.at(i + 1));
+        m_light_space_matrix.at(i) = calculate_light_space_matrix(light, projection, camera.get_view(), m_cascade_plane_distances.at(i + 1));
     }
 }
 
@@ -111,8 +112,8 @@ void DirectionalShadow::shadowmap_draw(Renderer::ShaderProgram& shader, const st
 
     glClear(GL_DEPTH_BUFFER_BIT);
     shader.bind();
-    for (u32 i = 0; i < m_light_space_matrix.size(); i++) {
-        shader.set_mat4(std::format("light_space_matrices[{}]", i).c_str(), m_light_space_matrix[i]);
+    for (u32 i = 0; i < m_cascades; i++) {
+        shader.set_mat4(std::format("light_space_matrices[{}]", i).c_str(), m_light_space_matrix.at(i));
     }
     draw_function();
 
@@ -131,12 +132,11 @@ void DirectionalShadow::set_uniforms(Renderer::ShaderProgram& shader, const char
     GLuint texture_unit = Texture::get_texture_unit();
     m_shadowmap.get_texture().bind(texture_unit);
     shader.set_int(std::format("{}.shadow_map", light_name).c_str(), static_cast<int>(texture_unit));
-    for (u32 i = 0; i < m_light_space_matrix.size(); i++) {
-        shader.set_mat4(std::format("{}.light_space_matrix[{}]", light_name, i).c_str(), m_light_space_matrix[i]);
-        shader.set_float(std::format("{}.cascade_plane_distances[{}]", light_name, i).c_str(), m_cascade_plane_distances[i + 1]);
+    for (u32 i = 0; i < m_cascades; i++) {
+        shader.set_mat4(std::format("{}.light_space_matrix[{}]", light_name, i).c_str(), m_light_space_matrix.at(i));
+        shader.set_float(std::format("{}.cascade_plane_distances[{}]", light_name, i).c_str(), m_cascade_plane_distances.at(i + 1));
     }
     shader.set_int(std::format("{}.cascade_count", light_name).c_str(), static_cast<int>(m_cascades));
-    // shader.set_mat4(std::format("{}.light_space_matrix", light_name).c_str(), m_light_space_matrix[0]);
 }
 
 } // Renderer::Light::Pbr

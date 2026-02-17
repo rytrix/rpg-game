@@ -17,6 +17,7 @@ public:
     EntityBuilder& add_pbr_directional_light(Renderer::Light::Pbr::Directional& info);
     EntityBuilder& add_pbr_directional_light_shadow();
     EntityBuilder& add_pbr_point_light(Renderer::Light::Pbr::Point& info);
+    EntityBuilder& add_pbr_point_light_shadow();
     EntityBuilder& add_pbr_spot_light(Renderer::Light::Pbr::Spot& info);
     EntityBuilder& add_model_matrix(glm::mat4 model);
 
@@ -28,6 +29,7 @@ private:
     Renderer::Light::Pbr::Directional* m_pbr_directional = nullptr;
     bool m_pbr_directional_shadow = false;
     Renderer::Light::Pbr::Point* m_pbr_point = nullptr;
+    bool m_pbr_point_shadow = false;
     Renderer::Light::Pbr::Spot* m_pbr_spot = nullptr;
     glm::mat4 m_model_matrix { 1.0 };
     const char* m_name = nullptr;

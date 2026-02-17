@@ -74,6 +74,11 @@ struct PointLight {
     vec3 color;
 };
 
+struct PointLightShadow {
+    samplerCube shadow_map;
+    float far_plane;
+};
+
 struct SpotLight {
     vec3 position;
     vec3 direction;
@@ -289,6 +294,39 @@ float shadow_calculation_directional(DirectionalLightShadow light, float bias)
     if (proj_coords.z > 1.0) {
         shadow = 0.0;
     }
+
+    return shadow;
+}
+
+vec3 sample_offset_directions[20] = vec3[]
+(
+    vec3( 1,  1,  1), vec3( 1, -1,  1), vec3(-1, -1,  1), vec3(-1,  1,  1), 
+    vec3( 1,  1, -1), vec3( 1, -1, -1), vec3(-1, -1, -1), vec3(-1,  1, -1),
+    vec3( 1,  1,  0), vec3( 1, -1,  0), vec3(-1, -1,  0), vec3(-1,  1,  0),
+    vec3( 1,  0,  1), vec3(-1,  0,  1), vec3( 1,  0, -1), vec3(-1,  0, -1),
+    vec3( 0,  1,  1), vec3( 0, -1,  1), vec3( 0, -1, -1), vec3( 0,  1, -1)
+);
+
+float shadow_calculation_point(PointLight light, PointLightShadow light_shadow, float bias)
+{
+    vec3 frag_to_light = FragPos - light.position;
+    float current_depth = length(frag_to_light);
+
+    // pcf 2
+    float shadow = 0.0;
+    // float bias   = 0.15;
+    int samples  = 20;
+    float view_distance = length(light.position - FragPos);
+    float disk_radius = (1.0 + (view_distance / light_shadow.far_plane)) / 25.0;  
+
+    for (int i = 0; i < samples; i++) {
+        float closest_depth = texture(light_shadow.shadow_map, frag_to_light + sample_offset_directions[i] * disk_radius).r;
+        closest_depth *= light_shadow.far_plane;   // undo mapping [0;1]
+        if (current_depth - bias > closest_depth) {
+            shadow += 1.0;
+        }
+    }
+    shadow /= float(samples);  
 
     return shadow;
 }
