@@ -14,7 +14,7 @@ void Directional::set_uniforms(Renderer::ShaderProgram& shader, const char* ligh
 
 void DirectionalShadow::init()
 {
-    auto shader_text = get_directional_cascade(m_cascades);
+    auto shader_text = get_directional_cascade_shader_text(m_cascades);
     std::array<Renderer::ShaderInfo, 3> shader_info {
         Renderer::ShaderInfo {
             .is_file = false,
@@ -159,7 +159,7 @@ glm::mat4 DirectionalShadow::calculate_light_space_matrix(const Directional& lig
     return light_projection * light_view;
 }
 
-std::array<std::string, 3> DirectionalShadow::get_directional_cascade(u32 cascade_count)
+std::array<std::string, 3> DirectionalShadow::get_directional_cascade_shader_text(u32 cascade_count)
 {
     std::array<std::string, 3> shaders;
 

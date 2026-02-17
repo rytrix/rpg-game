@@ -25,7 +25,7 @@ public:
 
 private:
     glm::mat4 calculate_light_space_matrix(const Directional& light, const glm::mat4 proj, const glm::mat4 view, f32 far);
-    static std::array<std::string, 3> get_directional_cascade(u32 cascade_count);
+    static std::array<std::string, 3> get_directional_cascade_shader_text(u32 cascade_count);
 
     static constexpr usize MAX_CASCADES = 16;
     bool initialized = false;
