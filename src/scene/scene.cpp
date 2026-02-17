@@ -188,8 +188,8 @@ void Scene::draw()
     auto directional_shadow_view = m_registry.view<Renderer::Light::Pbr::Directional, Renderer::Light::Pbr::DirectionalShadow>();
     for (auto [entity, light, shadow] : directional_shadow_view.each()) {
         shadow.update(light, m_camera);
-        shadow.shadowmap_draw(m_shadowmap_shader, [&]() {
-            instance_draw_internal(m_shadowmap_shader, true);
+        shadow.shadowmap_draw(m_shadowmap_cascade_shader, [&]() {
+            instance_draw_internal(m_shadowmap_cascade_shader, true);
         });
     }
 
@@ -409,6 +409,11 @@ void Scene::compile_shaders()
         m_shadowmap_shader.init(shadowmap_info.data(), shadowmap_info.size());
     }
 
+    if (!m_shadowmap_cascade_shader.is_initialized()) {
+        auto shadowmap_cascade_info = Renderer::ShadowMap::get_shader_info_cascade();
+        m_shadowmap_cascade_shader.init(shadowmap_cascade_info.data(), shadowmap_cascade_info.size());
+    }
+
     if (!m_shadowmap_cubemap_shader.is_initialized()) {
         auto shadowmap_cubemap_info = Renderer::ShadowMap::get_shader_info_cubemap();
         m_shadowmap_cubemap_shader.init(shadowmap_cubemap_info.data(), shadowmap_cubemap_info.size());
@@ -429,7 +434,7 @@ void Scene::compile_pbr_shaders()
         auto* shadow = m_registry.try_get<Renderer::Light::Pbr::DirectionalShadow>(entity);
         if (shadow != nullptr) {
             light_uniforms += std::format("uniform DirectionalLightShadow u_directional_light_shadow_{};\n", i);
-            light_functions += std::format("lo += (1.0 - shadow_calculation(u_directional_light_shadow_{}, bias)) * pbr_directional(u_directional_light_{}, albedo, roughness, metallic, normal, view, base_reflectivity);", i, i);
+            light_functions += std::format("lo += (1.0 - shadow_calculation_directional(u_directional_light_shadow_{}, bias)) * pbr_directional(u_directional_light_{}, albedo, roughness, metallic, normal, view, base_reflectivity);", i, i);
         } else {
             light_functions += std::format("lo += pbr_directional(u_directional_light_{}, albedo, roughness, metallic, normal, view, base_reflectivity);", i);
         }

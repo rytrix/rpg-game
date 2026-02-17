@@ -63,8 +63,10 @@ struct DirectionalLight {
 };
 
 struct DirectionalLightShadow {
-    sampler2D shadow_map;
-    mat4 light_space_matrix;
+    sampler2DArray shadow_map;
+    mat4 light_space_matrix[4];
+    float cascade_plane_distances[4];
+    int cascade_count;
 };
 
 struct PointLight {
@@ -105,6 +107,7 @@ uniform int normals_max_textures;
 #endif
 
 uniform vec3 view_position;
+uniform mat4 view;
 
 const float PI = 3.14159265359;
 
@@ -241,26 +244,41 @@ vec3 calc_bumped_normal(vec3 bump_map_normal)
     return new_normal;
 }
 
-float shadow_calculation(DirectionalLightShadow light, float bias)
+float shadow_calculation_directional(DirectionalLightShadow light, float bias)
 {
-    vec4 light_space_frag_pos = light.light_space_matrix * vec4(FragPos, 1.0);
+    vec4 frag_pos_view_space = view * vec4(FragPos, 1.0);
+    float depth_value = abs(frag_pos_view_space.z);
+
+    int layer = -1;
+
+    for (int i = 0; i < light.cascade_count; i++) {
+        if (depth_value < light.cascade_plane_distances[i]) {
+            layer = i;
+            break;
+        }
+    }
+    if (layer == -1) {
+        layer = light.cascade_count;
+    }
+
+    vec4 light_space_frag_pos = light.light_space_matrix[layer] * vec4(FragPos, 1.0);
 
     vec3 proj_coords = light_space_frag_pos.xyz / light_space_frag_pos.w;
 
     // transform to [0,1] range
     proj_coords = proj_coords * 0.5 + 0.5;
 
-    float closest_depth = texture(light.shadow_map, proj_coords.xy).x;
+    float closest_depth = texture(light.shadow_map, vec3(proj_coords.xy, layer)).x;
 
     float current_depth = proj_coords.z;
 
     float shadow = 0.0;
-    vec2 texel_size = 1.0 / textureSize(light.shadow_map, 0);
+    vec2 texel_size = 1.0 / textureSize(light.shadow_map, 0).xy;
     for(int x = -1; x <= 1; x++)
     {
         for(int y = -1; y <= 1; y++)
         {
-            float pcf_depth = texture(light.shadow_map, proj_coords.xy + vec2(x, y) * texel_size).r; 
+            float pcf_depth = texture(light.shadow_map, vec3(proj_coords.xy + vec2(x, y) * texel_size, layer)).r; 
             shadow += current_depth - bias > pcf_depth ? 1.0 : 0.0;        
         }
     }
@@ -274,6 +292,40 @@ float shadow_calculation(DirectionalLightShadow light, float bias)
 
     return shadow;
 }
+
+// float shadow_calculation_simple(DirectionalLightShadow light, float bias)
+// {
+//     vec4 light_space_frag_pos = light.light_space_matrix * vec4(FragPos, 1.0);
+
+//     vec3 proj_coords = light_space_frag_pos.xyz / light_space_frag_pos.w;
+
+//     // transform to [0,1] range
+//     proj_coords = proj_coords * 0.5 + 0.5;
+
+//     float closest_depth = texture(light.shadow_map, proj_coords.xy).x;
+
+//     float current_depth = proj_coords.z;
+
+//     float shadow = 0.0;
+//     vec2 texel_size = 1.0 / textureSize(light.shadow_map, 0);
+//     for(int x = -1; x <= 1; x++)
+//     {
+//         for(int y = -1; y <= 1; y++)
+//         {
+//             float pcf_depth = texture(light.shadow_map, proj_coords.xy + vec2(x, y) * texel_size).r; 
+//             shadow += current_depth - bias > pcf_depth ? 1.0 : 0.0;        
+//         }
+//     }
+//     shadow /= 9.0;
+
+//     // float shadow = current_depth - bias > closest_depth ? 1.0 : 0.0;
+
+//     if (proj_coords.z > 1.0) {
+//         shadow = 0.0;
+//     }
+
+//     return shadow;
+// }
 
 // Light Uniforms Begin
 // Light Uniforms End

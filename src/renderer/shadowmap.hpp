@@ -13,6 +13,8 @@ public:
 
     void init();
     void init(i32 width, i32 height);
+    void init_cascade(i32 cascades);
+    void init_cascade(i32 width, i32 height, i32 cascades);
     void init_cubemap();
     void init_cubemap(i32 width, i32 height);
 
@@ -35,6 +37,27 @@ public:
             Renderer::ShaderInfo {
                 .is_file = false,
                 .shader = get_frag_shader(),
+                .type = GL_FRAGMENT_SHADER,
+            },
+        };
+    }
+
+    static consteval std::array<Renderer::ShaderInfo, 3> get_shader_info_cascade()
+    {
+        return std::array<Renderer::ShaderInfo, 3> {
+            Renderer::ShaderInfo {
+                .is_file = false,
+                .shader = get_vertex_shader_cascade(),
+                .type = GL_VERTEX_SHADER,
+            },
+            Renderer::ShaderInfo {
+                .is_file = false,
+                .shader = get_geometry_shader_cascade(),
+                .type = GL_GEOMETRY_SHADER,
+            },
+            Renderer::ShaderInfo {
+                .is_file = false,
+                .shader = get_frag_shader_cascade(),
                 .type = GL_FRAGMENT_SHADER,
             },
         };
@@ -89,6 +112,62 @@ private:
             void main()
             {
             }
+        )";
+    }
+
+    static consteval const char* get_vertex_shader_cascade()
+    {
+        return R"(
+            #version 460 core
+            layout (location = 0) in vec3 inPos;
+
+            layout(binding = 1, std430) readonly buffer ssbo0 {
+                mat4 models[];
+            };
+
+            void main()
+            {
+                mat4 model = models[gl_InstanceID];
+                gl_Position = model * vec4(inPos, 1.0);
+            }
+        )";
+    }
+
+    static consteval const char* get_geometry_shader_cascade()
+    {
+        return R"(
+        #version 460 core
+
+        layout(triangles, invocations = 5) in;
+        layout(triangle_strip, max_vertices = 3) out;
+
+        // layout (std140, binding = 0) uniform LightSpaceMatrices
+        // {
+            uniform mat4 light_space_matrices[4];
+        // };
+
+        void main()
+        {          
+            for (int i = 0; i < 3; ++i)
+            {
+                gl_Position = 
+                    light_space_matrices[gl_InvocationID] * gl_in[i].gl_Position;
+                gl_Layer = gl_InvocationID;
+                EmitVertex();
+            }
+            EndPrimitive();
+        }  
+        )";
+    }
+
+    static consteval const char* get_frag_shader_cascade()
+    {
+        return R"(
+        #version 460 core
+
+        void main()
+        {             
+        }
         )";
     }
 
@@ -159,17 +238,25 @@ private:
         )";
     }
 
+    enum struct MapType {
+        Default,
+        Cascade,
+        CubeMap,
+    };
+
     static constexpr i32 DEFAULT_SHADOW_WIDTH = 2000;
     static constexpr i32 DEFAULT_SHADOW_HEIGHT = 2000;
+    static constexpr i32 DEFAULT_CASCADES = 0;
 
     bool initialized = false;
 
     i32 m_shadow_width = DEFAULT_SHADOW_WIDTH;
     i32 m_shadow_height = DEFAULT_SHADOW_HEIGHT;
+    i32 m_cascades = DEFAULT_CASCADES;
     Renderer::Texture m_texture;
     Renderer::Framebuffer m_framebuffer;
 
-    void init_internal(bool cubemap);
+    void init_internal(MapType cubemap);
 };
 
 } // namespace Renderer

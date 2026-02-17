@@ -64,6 +64,7 @@ private:
 
     // TODO: do I make these global? they never change.
     Renderer::ShaderProgram m_shadowmap_shader;
+    Renderer::ShaderProgram m_shadowmap_cascade_shader;
     Renderer::ShaderProgram m_shadowmap_cubemap_shader;
 
     entt::registry m_registry;

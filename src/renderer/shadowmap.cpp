@@ -9,43 +9,61 @@ ShadowMap::~ShadowMap()
 
 void ShadowMap::init()
 {
-    init_internal(false);
+    init_internal(MapType::Default);
 }
 
 void ShadowMap::init(i32 width, i32 height)
 {
     m_shadow_width = width;
     m_shadow_height = height;
-    init_internal(false);
+    init_internal(MapType::Default);
+}
+
+void ShadowMap::init_cascade(i32 cascades)
+{
+    m_cascades = cascades;
+    init_internal(MapType::Cascade);
+}
+
+void ShadowMap::init_cascade(i32 width, i32 height, i32 cascades)
+{
+    m_shadow_width = width;
+    m_shadow_height = height;
+    m_cascades = cascades;
+    init_internal(MapType::Cascade);
 }
 
 void ShadowMap::init_cubemap()
 {
-    init_internal(true);
+    init_internal(MapType::CubeMap);
 }
 
 void ShadowMap::init_cubemap(i32 width, i32 height)
 {
     m_shadow_width = width;
     m_shadow_height = height;
-    init_internal(true);
+    init_internal(MapType::CubeMap);
 }
 
-void ShadowMap::init_internal(bool cubemap)
+void ShadowMap::init_internal(MapType map_type)
 {
     util_assert(initialized == false, "ShadowMap::init_internal() has already been initialized");
 
     Renderer::TextureInfo shadowmap_info;
-    if (cubemap) {
+    if (map_type == MapType::CubeMap) {
         shadowmap_info.dimensions = GL_TEXTURE_CUBE_MAP;
+    } else if (map_type == MapType::Cascade) {
+        shadowmap_info.dimensions = GL_TEXTURE_2D_ARRAY;
     } else {
         shadowmap_info.dimensions = GL_TEXTURE_2D;
     }
-    shadowmap_info.size = Renderer::TextureSize { .width = m_shadow_width, .height = m_shadow_height, .depth = 0 };
+    shadowmap_info.size = Renderer::TextureSize { .width = m_shadow_width, .height = m_shadow_height, .depth = m_cascades };
     shadowmap_info.internal_format = GL_DEPTH_COMPONENT24;
     shadowmap_info.wrap_s = GL_CLAMP_TO_BORDER;
     shadowmap_info.wrap_t = GL_CLAMP_TO_BORDER;
     shadowmap_info.wrap_r = GL_CLAMP_TO_BORDER;
+    shadowmap_info.min_filter = GL_NEAREST;
+    shadowmap_info.mag_filter = GL_NEAREST;
     m_texture.init(shadowmap_info);
 
     m_framebuffer.init();

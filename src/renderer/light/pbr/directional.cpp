@@ -12,7 +12,8 @@ void Directional::set_uniforms(Renderer::ShaderProgram& shader, const char* ligh
 
 void DirectionalShadow::init()
 {
-    m_shadowmap.init(4096, 4096);
+    m_shadowmap.init_cascade(4000, 4000, static_cast<int>(m_cascades));
+    m_light_space_matrix.resize(m_cascades);
     initialized = true;
 }
 
@@ -27,7 +28,31 @@ void DirectionalShadow::update(const Directional& light, Renderer::Camera& camer
 {
     util_assert(initialized == true, "Light::DirectionalShadow has not been initialized");
 
-    glm::mat4 inv_proj_view = camera.get_inverse_proj_view();
+    m_cascade_plane_distances.resize(m_cascades + 1);
+    f32 near = camera.get_near();
+    f32 far = camera.get_far();
+    const f32 lambda = 0.7F;
+
+    m_cascade_plane_distances[0] = near;
+    m_cascade_plane_distances[m_cascades] = far;
+    for (u32 i = 1; i < m_cascades + 1; i++) {
+        f32 ratio = static_cast<f32>(i) / static_cast<f32>(m_cascades);
+        f32 log_split = near * std::pow(far / near, ratio);
+        f32 lin_split = near + ((far - near) * ratio);
+        m_cascade_plane_distances[i] = glm::mix(lin_split, log_split, lambda);
+    }
+
+    for (u32 i = 0; i < m_cascades; i++) {
+        glm::mat4 projection = glm::perspective(camera.get_fov(), camera.get_aspect(), m_cascade_plane_distances[i], m_cascade_plane_distances[i + 1]);
+        m_light_space_matrix[i] = calculate_light_space_matrix(light, projection, camera.get_view(), m_cascade_plane_distances[i + 1]);
+    }
+}
+
+glm::mat4 DirectionalShadow::calculate_light_space_matrix(const Directional& light, const glm::mat4 proj, const glm::mat4 view, f32 far)
+{
+    util_assert(initialized == true, "Light::DirectionalShadow has not been initialized");
+
+    glm::mat4 inv_proj_view = glm::inverse(proj * view);
 
     std::array<glm::vec4, 8> frustum_corners;
     u32 i = 0;
@@ -44,111 +69,37 @@ void DirectionalShadow::update(const Directional& light, Renderer::Camera& camer
     }
     center /= 8.0F;
 
-    // f32 radius = 0.0F;
-    // for (usize i = 0; i < frustum_corners.size(); i++) {
-    //     f32 distance = glm::distance(center, frustum_corners.at(i));
-    //     radius = std::max(distance, radius);
-    // }
-    // // radius /= 1.0F;
-
-    // // glm::vec3 normal = glm::normalize(camera.get_pos() - center);
-    // glm::vec3 normal = glm::normalize(-light.direction);
-
-    // constexpr f32 FAR_MULTIPLIER = 2.0F;
-    // // Position where the shadow is cast from
-    // glm::vec3 pos { center + normal * radius / FAR_MULTIPLIER };
-
-    // // radius /= 2.0F;
-    // glm::mat4 light_projection = glm::ortho(
-    //     -radius,
-    //     radius,
-    //     -radius,
-    //     radius,
-    //     -Z_FAR,
-    //     Z_FAR);
-
-    // // light_projection = glm::perspective(
-    // //     glm::radians(camera.get_fov()),
-    // //     camera.get_aspect(),
-    // //     0.1F,
-    // //     100.0F);
-
-    // glm::mat4 light_view = glm::lookAt(
-    //     pos,
-    //     center,
-    //     glm::vec3(0.0F, 1.0F, 0.0F));
-
-
     glm::mat4 light_view = glm::lookAt(
         center - light.direction,
         center,
         glm::vec3(0.0F, 1.0F, 0.0F));
 
-    float minX = std::numeric_limits<float>::max();
-    float maxX = std::numeric_limits<float>::lowest();
-    float minY = std::numeric_limits<float>::max();
-    float maxY = std::numeric_limits<float>::lowest();
-    float minZ = std::numeric_limits<float>::max();
-    float maxZ = std::numeric_limits<float>::lowest();
+    f32 radius = 0.0F;
     for (const auto& corner : frustum_corners) {
-        const auto trf = light_view * corner;
-        minX = std::min(minX, trf.x);
-        maxX = std::max(maxX, trf.x);
-        minY = std::min(minY, trf.y);
-        maxY = std::max(maxY, trf.y);
-        minZ = std::min(minZ, trf.z);
-        maxZ = std::max(maxZ, trf.z);
+        f32 distance = glm::distance(center, glm::vec3(corner));
+        radius = std::max(distance, radius);
     }
 
-    // Tune this parameter according to the scene
-    constexpr float z_mult = 10.0f;
-    if (minZ < 0) {
-        minZ *= z_mult;
-    } else {
-        minZ /= z_mult;
-    }
-    if (maxZ < 0) {
-        maxZ /= z_mult;
-    } else {
-        maxZ *= z_mult;
-    }
+    // Texel Snapping
+    f32 shadow_map_size = static_cast<f32>(m_shadowmap.get_width());
+    f32 texel_size = (2.0F * radius) / shadow_map_size;
+    glm::vec4 shadow_origin = glm::vec4(glm::vec3(0.0F), 1.0F);
+    shadow_origin = light_view * shadow_origin;
+    shadow_origin.x = glm::floor(shadow_origin.x / texel_size) * texel_size;
+    shadow_origin.y = glm::floor(shadow_origin.y / texel_size) * texel_size;
+    glm::vec3 offset = glm::vec3(shadow_origin) - glm::vec3(light_view * glm::vec4(glm::vec3(0.0F), 1.0F));
+    light_view[3][0] += offset.x;
+    light_view[3][1] += offset.y;
 
-    // // Texel Snapping
-    // f32 shadow_map_size = static_cast<f32>(m_shadowmap.get_width());
-    // f32 texel_size = (2.0F * something) / shadow_map_size;
-    // glm::vec4 shadow_origin = glm::vec4(glm::vec3(0.0F), 1.0F);
-    // shadow_origin = light_view * shadow_origin;
-    // shadow_origin.x = glm::floor(shadow_origin.x / texel_size) * texel_size;
-    // shadow_origin.y = glm::floor(shadow_origin.y / texel_size) * texel_size;
-    // glm::vec3 offset = glm::vec3(shadow_origin) - glm::vec3(light_view * glm::vec4(glm::vec3(0.0F), 1.0F));
-    // light_view[3][0] += offset.x;
-    // light_view[3][1] += offset.y;
+    glm::mat4 light_projection = glm::ortho(
+        -radius,
+        radius,
+        -radius,
+        radius,
+        -far * 15.0F,
+        far * 15.0F);
 
-    const glm::mat4 light_projection = glm::ortho(minX, maxX, minY, maxY, minZ, maxZ);
-
-    m_light_space_matrix = light_projection * light_view;
-
-    // if (!ImGui::Begin("Temp Debug", nullptr, 0)) {
-    //     // Early out if the window is collapsed, as an optimization.
-    //     ImGui::End();
-    //     return;
-    // }
-
-    // ImGui::Text(std::format("normal {} {} {}", normal.x, normal.y, normal.z).c_str());
-    // ImGui::Text(std::format("radius {}", radius).c_str());
-    // ImGui::Text(std::format("center {} {} {}", center.x, center.y, center.z).c_str());
-    // ImGui::Text(std::format("pos {} {} {}", pos.x, pos.y, pos.z).c_str());
-    // ImGui::Text(std::format("zfar {}", camera.get_far()).c_str());
-
-    // ImGui::End();
-
-    // glm::mat4 light_projection = glm::ortho(-10.0F, 10.0F, -10.F, 10.0F, camera.get_near(), 10.0F);
-    // glm::mat4 light_view = glm::lookAt(
-    //     glm::vec3(4.0F, 6.0F, -4.0F),
-    //     light.direction,
-    //     glm::vec3(0.0F, 1.0F, 0.0F));
-
-    // m_light_space_matrix = light_projection * light_view;
+    return light_projection * light_view;
 }
 
 void DirectionalShadow::shadowmap_draw(Renderer::ShaderProgram& shader, const std::function<void()>& draw_function)
@@ -160,15 +111,17 @@ void DirectionalShadow::shadowmap_draw(Renderer::ShaderProgram& shader, const st
 
     glClear(GL_DEPTH_BUFFER_BIT);
     shader.bind();
-    shader.set_mat4("light_space_matrix", m_light_space_matrix);
+    for (u32 i = 0; i < m_light_space_matrix.size(); i++) {
+        shader.set_mat4(std::format("light_space_matrices[{}]", i).c_str(), m_light_space_matrix[i]);
+    }
     draw_function();
 
     m_shadowmap.unbind();
 
-    ImGui::Begin("Shadow Map Debug");
-    GLuint textureID = m_shadowmap.get_texture().get_id();
-    ImGui::Image((void*)(intptr_t)textureID, ImVec2(256, 256), ImVec2(0, 1), ImVec2(1, 0));
-    ImGui::End();
+    // ImGui::Begin("Shadow Map Debug");
+    // GLuint textureID = m_shadowmap.get_texture().get_id();
+    // ImGui::Image((void*)(intptr_t)textureID, ImVec2(256, 256), ImVec2(0, 1), ImVec2(1, 0));
+    // ImGui::End();
 }
 
 void DirectionalShadow::set_uniforms(Renderer::ShaderProgram& shader, const char* light_name)
@@ -178,7 +131,12 @@ void DirectionalShadow::set_uniforms(Renderer::ShaderProgram& shader, const char
     GLuint texture_unit = Texture::get_texture_unit();
     m_shadowmap.get_texture().bind(texture_unit);
     shader.set_int(std::format("{}.shadow_map", light_name).c_str(), static_cast<int>(texture_unit));
-    shader.set_mat4(std::format("{}.light_space_matrix", light_name).c_str(), m_light_space_matrix);
+    for (u32 i = 0; i < m_light_space_matrix.size(); i++) {
+        shader.set_mat4(std::format("{}.light_space_matrix[{}]", light_name, i).c_str(), m_light_space_matrix[i]);
+        shader.set_float(std::format("{}.cascade_plane_distances[{}]", light_name, i).c_str(), m_cascade_plane_distances[i + 1]);
+    }
+    shader.set_int(std::format("{}.cascade_count", light_name).c_str(), static_cast<int>(m_cascades));
+    // shader.set_mat4(std::format("{}.light_space_matrix", light_name).c_str(), m_light_space_matrix[0]);
 }
 
 } // Renderer::Light::Pbr

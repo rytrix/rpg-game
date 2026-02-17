@@ -248,6 +248,9 @@ void Texture::texture_storage(TextureSize& size, GLenum internal_format)
         case GL_TEXTURE_3D:
             glTextureStorage3D(m_id, 1, internal_format, size.width, size.height, size.depth);
             break;
+        case GL_TEXTURE_2D_ARRAY:
+            glTextureStorage3D(m_id, 1, internal_format, size.width, size.height, size.depth);
+            break;
         case GL_TEXTURE_CUBE_MAP:
             glTextureStorage2D(m_id, 1, internal_format, size.width, size.height);
             break;
