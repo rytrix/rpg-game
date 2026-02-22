@@ -154,24 +154,23 @@ void Mesh::setup_mesh()
         for (usize i = 0; i < m_commands.size(); i++) {
             // 1 diffuse 1 metallic_roughness 1 normal (at most.. or its broken)
             m_texture_bindless_ids.at((i * 3) + 0) = m_diffuse_textures[i]->get_bindless_texture_id();
-            // m_texture_bindless_ids.emplace_back(m_diffuse_textures[i]->get_bindless_texture_id());
             if (!m_diffuse_textures[i]->is_bindless_texture_mapped()) {
                 m_diffuse_textures[i]->map_bindless_texture();
             }
 
             m_texture_bindless_ids.at((i * 3) + 1) = m_metallic_roughness_textures[i]->get_bindless_texture_id();
-            // m_texture_bindless_ids.emplace_back(m_metallic_roughness_textures[i]->get_bindless_texture_id());
             if (!m_metallic_roughness_textures[i]->is_bindless_texture_mapped()) {
                 m_metallic_roughness_textures[i]->map_bindless_texture();
             }
 
             m_texture_bindless_ids.at((i * 3) + 2) = m_normal_textures[i]->get_bindless_texture_id();
-            // m_texture_bindless_ids.emplace_back(m_normal_textures[i]->get_bindless_texture_id());
             if (!m_normal_textures[i]->is_bindless_texture_mapped()) {
                 m_normal_textures[i]->map_bindless_texture();
             }
         }
-        m_texture_ssbo.buffer_storage(m_texture_bindless_ids.size() * sizeof(GLuint64), m_texture_bindless_ids.data(), 0);
+        if (m_texture_bindless_ids.size() > 0) {
+            m_texture_ssbo.buffer_storage(m_texture_bindless_ids.size() * sizeof(GLuint64), m_texture_bindless_ids.data(), 0);
+        }
     }
 
     initialized = true;
