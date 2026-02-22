@@ -100,20 +100,8 @@ uniform sampler2D tex_normals;
 
 #ifdef BindlessTextures
 layout(binding = 2, std430) readonly buffer ssbo1 {
-    sampler2D tex_diffuse[];
+    sampler2D ssbo_textures[];
 };
-
-layout(binding = 3, std430) readonly buffer ssbo2 {
-    sampler2D tex_metallic_roughness[];
-};
-
-layout(binding = 4, std430) readonly buffer ssbo3 {
-    sampler2D tex_normals[];
-};
-
-uniform int diffuse_max_textures;
-uniform int metallic_roughness_max_textures;
-uniform int normals_max_textures;
 #endif
 
 uniform vec3 view_position;
@@ -378,9 +366,9 @@ void main() {
 #endif
 
 #ifdef BindlessTextures
-    vec3 bump_map_normal = texture(tex_normals[DrawID], TexCoords).xyz;
-    vec4 diffuse = texture(tex_diffuse[DrawID], TexCoords);
-    vec4 metallic_roughness = texture(tex_metallic_roughness[DrawID], TexCoords);
+    vec4 diffuse = texture(ssbo_textures[(DrawID * 3) + 0], TexCoords);
+    vec4 metallic_roughness = texture(ssbo_textures[(DrawID * 3) + 1], TexCoords);
+    vec3 bump_map_normal = texture(ssbo_textures[(DrawID * 3) + 2], TexCoords).xyz;
 #endif
 
     // vec3 normal = normalize(Normal);

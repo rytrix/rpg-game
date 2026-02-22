@@ -14,6 +14,7 @@ void Directional::set_uniforms(Renderer::ShaderProgram& shader, const char* ligh
 
 void DirectionalShadow::init()
 {
+    util_assert(initialized == false, "Light::DirectionalShadow has already been initialized");
     if constexpr (USE_GEOMETRY_SHADER) {
         auto shader_text = get_directional_cascade_shader_text_geometry(m_cascades);
         std::array<Renderer::ShaderInfo, 3> shader_info {

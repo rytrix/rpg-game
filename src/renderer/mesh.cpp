@@ -73,12 +73,7 @@ void Mesh::draw(ShaderProgram& shader)
     m_vao.bind();
 
     if (Renderer::Extensions::is_extension_supported("GL_ARB_bindless_texture")) {
-        glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 2, m_diff_ssbo.get_id());
-        glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 3, m_metallic_roughness_ssbo.get_id());
-        glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 4, m_normals_ssbo.get_id());
-        shader.set_int("diffuse_max_textures", m_diffuse_bindless_ids.size());
-        shader.set_int("metallic_roughness_max_textures", m_metallic_roughness_bindless_ids.size());
-        shader.set_int("normals_max_textures", m_normal_bindless_ids.size());
+        glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 2, m_texture_ssbo.get_id());
 
         m_cmd_buff.bind_buffer(GL_DRAW_INDIRECT_BUFFER);
 
@@ -154,37 +149,29 @@ void Mesh::setup_mesh()
         m_cmd_buff.init();
         m_cmd_buff.buffer_storage(m_commands.size() * sizeof(IndirectCommands), m_commands.data(), GL_DYNAMIC_STORAGE_BIT);
 
-        m_diff_ssbo.init();
-        m_metallic_roughness_ssbo.init();
-        m_normals_ssbo.init();
-
+        m_texture_ssbo.init();
+        m_texture_bindless_ids.resize(m_commands.size() * 3);
         for (usize i = 0; i < m_commands.size(); i++) {
-            // 1 diffuse 1 metallic_roughness 1 normal 1 specular (at most.. or its broken)
-            m_diffuse_bindless_ids.emplace_back(m_diffuse_textures[i]->get_bindless_texture_id());
+            // 1 diffuse 1 metallic_roughness 1 normal (at most.. or its broken)
+            m_texture_bindless_ids.at((i * 3) + 0) = m_diffuse_textures[i]->get_bindless_texture_id();
+            // m_texture_bindless_ids.emplace_back(m_diffuse_textures[i]->get_bindless_texture_id());
             if (!m_diffuse_textures[i]->is_bindless_texture_mapped()) {
                 m_diffuse_textures[i]->map_bindless_texture();
             }
 
-            m_metallic_roughness_bindless_ids.emplace_back(m_metallic_roughness_textures[i]->get_bindless_texture_id());
+            m_texture_bindless_ids.at((i * 3) + 1) = m_metallic_roughness_textures[i]->get_bindless_texture_id();
+            // m_texture_bindless_ids.emplace_back(m_metallic_roughness_textures[i]->get_bindless_texture_id());
             if (!m_metallic_roughness_textures[i]->is_bindless_texture_mapped()) {
                 m_metallic_roughness_textures[i]->map_bindless_texture();
             }
 
-            m_normal_bindless_ids.emplace_back(m_normal_textures[i]->get_bindless_texture_id());
+            m_texture_bindless_ids.at((i * 3) + 2) = m_normal_textures[i]->get_bindless_texture_id();
+            // m_texture_bindless_ids.emplace_back(m_normal_textures[i]->get_bindless_texture_id());
             if (!m_normal_textures[i]->is_bindless_texture_mapped()) {
                 m_normal_textures[i]->map_bindless_texture();
             }
         }
-
-        if (m_diffuse_bindless_ids.size() > 0) {
-            m_diff_ssbo.buffer_storage(m_diffuse_bindless_ids.size() * sizeof(GLuint64), m_diffuse_bindless_ids.data(), GL_DYNAMIC_STORAGE_BIT);
-        }
-        if (m_metallic_roughness_bindless_ids.size() > 0) {
-            m_metallic_roughness_ssbo.buffer_storage(m_metallic_roughness_bindless_ids.size() * sizeof(GLuint64), m_metallic_roughness_bindless_ids.data(), GL_DYNAMIC_STORAGE_BIT);
-        }
-        if (m_normal_bindless_ids.size() > 0) {
-            m_normals_ssbo.buffer_storage(m_normal_bindless_ids.size() * sizeof(GLuint64), m_normal_bindless_ids.data(), GL_DYNAMIC_STORAGE_BIT);
-        }
+        m_texture_ssbo.buffer_storage(m_texture_bindless_ids.size() * sizeof(GLuint64), m_texture_bindless_ids.data(), 0);
     }
 
     initialized = true;

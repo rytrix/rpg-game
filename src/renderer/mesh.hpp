@@ -77,14 +77,10 @@ private:
 
     // Indirect info
     Buffer m_cmd_buff;
-    Buffer m_diff_ssbo;
-    Buffer m_metallic_roughness_ssbo;
-    Buffer m_normals_ssbo;
-
     std::vector<IndirectCommands> m_commands;
-    std::vector<GLuint64> m_diffuse_bindless_ids;
-    std::vector<GLuint64> m_metallic_roughness_bindless_ids;
-    std::vector<GLuint64> m_normal_bindless_ids;
+
+    Buffer m_texture_ssbo;
+    std::vector<GLuint64> m_texture_bindless_ids;
 };
 
 } // namespace Renderer
