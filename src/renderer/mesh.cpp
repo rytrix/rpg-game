@@ -17,7 +17,13 @@ void Mesh::update_model_ssbos(const std::span<glm::mat4> model_matrices)
         m_model_ssbo.init();
         m_model_ssbo.buffer_storage(model_matrices.size() * sizeof(model_matrices[0]), model_matrices.data(), GL_DYNAMIC_STORAGE_BIT);
     } else {
-        m_model_ssbo.buffer_sub_data(0, model_matrices.size() * sizeof(model_matrices[0]), model_matrices.data());
+        if (model_matrices.size() != m_instance_count) {
+            m_model_ssbo.~Buffer();
+            m_model_ssbo.init();
+            m_model_ssbo.buffer_storage(model_matrices.size() * sizeof(model_matrices[0]), model_matrices.data(), GL_DYNAMIC_STORAGE_BIT);
+        } else {
+            m_model_ssbo.buffer_sub_data(0, model_matrices.size() * sizeof(model_matrices[0]), model_matrices.data());
+        }
     }
 
     if (m_instance_count != model_matrices.size()) {

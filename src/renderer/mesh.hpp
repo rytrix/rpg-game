@@ -71,13 +71,12 @@ private:
     Buffer m_vbo;
     Buffer m_ebo;
 
-    GLuint m_instance_count = 1;
-
-    Buffer m_model_ssbo;
-
     // Indirect info
     Buffer m_cmd_buff;
     std::vector<IndirectCommands> m_commands;
+
+    Buffer m_model_ssbo;
+    GLuint m_instance_count = 1;
 
     Buffer m_texture_ssbo;
     std::vector<GLuint64> m_texture_bindless_ids;
