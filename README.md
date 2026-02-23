@@ -4,7 +4,7 @@ A heavily work in progress game and game engine written in c++ and opengl
 
 ### Current Features
 - Scene entity heirachy with automatic rendering optimizations (indirect rendering, instancing, bindless textures)
-- PBR lighting and model loader
+- PBR lighting, shadows, and model loading
 - Physics engine (jolt physics)
 
 # Building
