@@ -147,8 +147,12 @@ App::App()
     spot.inner_cutoff = glm::cos(glm::radians(12.5F));
     spot.outer_cutoff = glm::cos(glm::radians(20.5F));
     e7.add_pbr_spot_light(spot);
-    // e7.add_pbr_spot_light_shadow();
+    e7.add_pbr_spot_light_shadow();
     m_scene->add_entity(e7);
+
+    EntityBuilder e8;
+    e8.add_model_path("res/models/animation/example4.fbx");
+    m_scene->add_entity(e8);
 
     m_scene->optimize();
     m_scene->update();

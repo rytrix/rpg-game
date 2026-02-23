@@ -5,6 +5,8 @@
 #include <assimp/scene.h>
 #include <filesystem>
 
+#include "../utils/helpers.hpp"
+
 namespace Renderer {
 
 Model::Model(const char* file_path)
@@ -82,7 +84,10 @@ void Model::process_mesh(aiMesh* mesh, const aiScene* scene)
 {
     auto base_vertex = static_cast<GLsizei>(m_mesh.m_vertices.size());
     auto count = static_cast<GLsizei>(m_mesh.m_indices.size());
+    auto base_bone = m_mesh.m_bones.size();
 
+    m_mesh.m_vertex_bones.resize(m_mesh.m_vertex_bones.size() + mesh->mNumVertices);
+    std::println("vertex bones size {}", m_mesh.m_vertex_bones.size());
     for (u32 i = 0; i < mesh->mNumVertices; i++) {
         Mesh::Vertex vertex {};
         vertex.m_pos.x = mesh->mVertices[i].x;
@@ -144,11 +149,39 @@ void Model::process_mesh(aiMesh* mesh, const aiScene* scene)
         // m_mesh.m_textures.push_back(ao_map);
     }
 
+    if (mesh->HasBones()) {
+        for (u32 i = 0; i < mesh->mNumBones; i++) {
+            // Each bone has mName, mNumWeights, mOffsetMatrix, mWeights
+
+            // Reverse map each vertex to the bones that influence it (to be accessed in the vertex shader)
+            // preferrably as a seperate data structure
+
+            // Each bone has a ID (and its mat4 transformation)
+            // Each vertex has a list of IDs and Weights that correspond to those bones
+
+            // Also all of these bones have to be kept inside of each base vertex...
+            aiBone* bone = mesh->mBones[i];
+
+            m_mesh.m_bone_id_map[bone->mName.C_Str()] = i;
+
+            glm::mat4 offset_matrix = mat4_to_mat4(bone->mOffsetMatrix);
+            m_mesh.m_bones.emplace_back(offset_matrix);
+
+            for (u32 j = 0; j < bone->mNumWeights; j++) {
+                const aiVertexWeight vw = bone->mWeights[j];
+                m_mesh.m_vertex_bones
+                    .at(base_vertex + vw.mVertexId)
+                    .add_bone(i, vw.mWeight);
+            }
+        }
+    }
+
     count = static_cast<GLsizei>(m_mesh.m_indices.size()) - count;
 
     m_mesh.m_base_vertices.emplace_back(
         count,
-        base_vertex);
+        base_vertex,
+        base_bone);
 }
 
 Texture* Model::load_material_texture(aiMaterial* mat, aiTextureType type)
