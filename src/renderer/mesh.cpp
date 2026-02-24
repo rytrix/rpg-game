@@ -141,6 +141,15 @@ void Mesh::setup_mesh()
     m_vao.vertex_attrib(2, 0, 2, GL_FLOAT, offsetof(Vertex, m_tex));
     m_vao.vertex_attrib(3, 0, 3, GL_FLOAT, offsetof(Vertex, m_tang));
 
+    if (m_has_bones) {
+        m_bones_vbo.init();
+        m_bones_vbo.buffer_data(static_cast<i64>(m_vertex_bones.size() * sizeof(VertexBone)), m_vertex_bones.data(), GL_STATIC_DRAW);
+        m_vao.bind_vertex_buffer(1, m_bones_vbo.get_id(), 0, sizeof(VertexBone));
+
+        m_vao.vertex_attrib(4, 1, MAX_BONES_PER_VERTEX, GL_INT, 0);
+        m_vao.vertex_attrib(5, 1, MAX_BONES_PER_VERTEX, GL_FLOAT, MAX_BONES_PER_VERTEX * sizeof(GLint));
+    }
+
     m_commands.resize(m_base_vertices.size());
 
     for (usize i = 0; i < m_base_vertices.size(); i++) {

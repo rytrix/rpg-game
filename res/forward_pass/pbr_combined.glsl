@@ -5,6 +5,11 @@ layout (location = 1) in vec3 inNormal;
 layout (location = 2) in vec2 inTexCoords;
 layout (location = 3) in vec3 inTangent;
 
+#ifdef ENABLE_BONES
+layout (location = 4) in int[BONES_PER_VERTEX] inBoneIDs;
+layout (location = 5) in float[BONES_PER_VERTEX] inBoneWeights;
+#endif
+
 out vec3 Normal;
 out vec3 FragPos;
 out vec2 TexCoords;

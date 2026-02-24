@@ -150,6 +150,7 @@ void Model::process_mesh(aiMesh* mesh, const aiScene* scene)
     }
 
     if (mesh->HasBones()) {
+        m_mesh.m_has_bones = true;
         for (u32 i = 0; i < mesh->mNumBones; i++) {
             // Each bone has mName, mNumWeights, mOffsetMatrix, mWeights
 

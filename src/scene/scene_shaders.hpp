@@ -4,7 +4,7 @@
 
 namespace {
 
-constexpr std::pair<std::string, std::string> get_pbr_forward_pass_indirect(const std::string& light_uniforms, const std::string& light_functions)
+constexpr std::pair<std::string, std::string> get_pbr_forward_pass_indirect(const std::string& light_uniforms, const std::string& light_functions, const u32 bones_per_vertex)
 {
     std::pair<std::string, std::string> shaders;
 
@@ -12,7 +12,7 @@ constexpr std::pair<std::string, std::string> get_pbr_forward_pass_indirect(cons
     std::string_view pbr_file_view = { pbr_file.data(), pbr_file.size() };
 
     // Vertex Shader
-    shaders.first = "#version 460 core\n#define SSBO0\n";
+    shaders.first = std::format("#version 460 core\n#define SSBO0\n#define ENABLE_BONES\n#define BONES_PER_VERTEX {}\n", bones_per_vertex);
     shaders.first += get_lines_between_delims(pbr_file_view, "// Vertex Begin", "// Vertex End");
 
     // Fragment Shader
@@ -26,7 +26,7 @@ constexpr std::pair<std::string, std::string> get_pbr_forward_pass_indirect(cons
     return shaders;
 }
 
-constexpr std::pair<std::string, std::string> get_pbr_forward_pass_normal(const std::string& light_uniforms, const std::string& light_functions)
+constexpr std::pair<std::string, std::string> get_pbr_forward_pass_normal(const std::string& light_uniforms, const std::string& light_functions, const u32 bones_per_vertex)
 {
     std::pair<std::string, std::string> shaders;
 
@@ -34,7 +34,7 @@ constexpr std::pair<std::string, std::string> get_pbr_forward_pass_normal(const 
     std::string_view pbr_file_view = { pbr_file.data(), pbr_file.size() };
 
     // Vertex Shader
-    shaders.first = "#version 460 core\n#define SSBO0\n";
+    shaders.first = std::format("#version 460 core\n#define SSBO0\n#define ENABLE_BONES\n#define BONES_PER_VERTEX {}\n", bones_per_vertex);
     shaders.first += get_lines_between_delims(pbr_file_view, "// Vertex Begin", "// Vertex End");
 
     // Fragment Shader

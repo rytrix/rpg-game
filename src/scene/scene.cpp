@@ -545,9 +545,9 @@ void Scene::compile_pbr_shaders()
     if (m_forward_pass) {
         std::pair<std::string, std::string> shader_source;
         if (Renderer::Extensions::is_extension_supported("GL_ARB_bindless_texture")) {
-            shader_source = get_pbr_forward_pass_indirect(light_uniforms, light_functions);
+            shader_source = get_pbr_forward_pass_indirect(light_uniforms, light_functions, Renderer::Mesh::MAX_BONES_PER_VERTEX);
         } else {
-            shader_source = get_pbr_forward_pass_normal(light_uniforms, light_functions);
+            shader_source = get_pbr_forward_pass_normal(light_uniforms, light_functions, Renderer::Mesh::MAX_BONES_PER_VERTEX);
         }
 
         std::array<Renderer::ShaderInfo, 2>

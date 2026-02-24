@@ -9,11 +9,6 @@
 
 namespace Renderer {
 
-struct TextureRef {
-    Texture* m_tex = nullptr;
-    aiTextureType m_type = aiTextureType_DIFFUSE;
-};
-
 struct IndirectCommands {
     GLuint count;
     GLuint instance_count;
@@ -26,7 +21,7 @@ class Mesh : public NoCopyNoMove {
     friend class Model;
 
 public:
-    static constexpr u32 MAX_VERTEX_BONES = 4;
+    static constexpr u32 MAX_BONES_PER_VERTEX = 4;
 
     struct Vertex {
         glm::vec3 m_pos;
@@ -36,12 +31,12 @@ public:
     };
 
     struct VertexBone {
-        std::array<u32, MAX_VERTEX_BONES> bones {};
-        std::array<float, MAX_VERTEX_BONES> weights {};
+        std::array<u32, MAX_BONES_PER_VERTEX> bones {};
+        std::array<float, MAX_BONES_PER_VERTEX> weights {};
 
         void add_bone(const u32 bone_id, const float weight)
         {
-            for (u32 i = 0; i < MAX_VERTEX_BONES; i++) {
+            for (u32 i = 0; i < MAX_BONES_PER_VERTEX; i++) {
                 if (weights.at(i) == 0.0F) {
                     bones.at(i) = bone_id;
                     weights.at(i) = weight;
@@ -85,6 +80,7 @@ public:
     std::vector<Texture*> m_metallic_roughness_textures;
     std::vector<Texture*> m_normal_textures;
 
+    bool m_has_bones = false;
     std::unordered_map<const char*, u32> m_bone_id_map;
     std::vector<VertexBone> m_vertex_bones;
     std::vector<BoneInfo> m_bones;
@@ -99,6 +95,8 @@ private:
     VertexArray m_vao;
     Buffer m_vbo;
     Buffer m_ebo;
+
+    Buffer m_bones_vbo;
 
     // Indirect info
     Buffer m_cmd_buff;
