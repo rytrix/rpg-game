@@ -22,6 +22,7 @@ public:
     void draw(ShaderProgram& shader, const std::span<glm::mat4> model);
 
     const Mesh* get_mesh();
+    bool has_bones() const;
 
     // Doesn't need to be called it will lazy load (or do before model loading if it is multi-threaded)
     static void init_placeholder_textures();

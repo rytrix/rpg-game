@@ -112,14 +112,14 @@ App::App()
     point.position = glm::vec3(6.0F, 6.0F, 8.0F);
     point.color = glm::vec3(10.0, 10.0, 10.0);
     e4.add_pbr_point_light(point);
-    e4.add_pbr_point_light_shadow();
+    // e4.add_pbr_point_light_shadow();
     m_scene->add_entity(e4);
 
     EntityBuilder e5;
     point.position = glm::vec3(6.0F, 6.0F, -8.0F);
     point.color = glm::vec3(50.0, 25.0, 25.0);
     e5.add_pbr_point_light(point);
-    e5.add_pbr_point_light_shadow();
+    // e5.add_pbr_point_light_shadow();
     m_scene->add_entity(e5);
 
     EntityBuilder e6;
@@ -147,7 +147,7 @@ App::App()
     spot.inner_cutoff = glm::cos(glm::radians(12.5F));
     spot.outer_cutoff = glm::cos(glm::radians(20.5F));
     e7.add_pbr_spot_light(spot);
-    e7.add_pbr_spot_light_shadow();
+    // e7.add_pbr_spot_light_shadow();
     m_scene->add_entity(e7);
 
     EntityBuilder e8;

@@ -68,6 +68,11 @@ const Mesh* Model::get_mesh()
     return &m_mesh;
 }
 
+bool Model::has_bones() const
+{
+    return m_mesh.m_has_bones;
+}
+
 void Model::process_node(aiNode* node, const aiScene* scene)
 {
     for (u32 i = 0; i < node->mNumMeshes; i++) {
