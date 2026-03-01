@@ -18,18 +18,6 @@ EntityBuilder& EntityBuilder::add_physics_command(const PhysicsFn& create_body_f
     return *this;
 }
 
-EntityBuilder& EntityBuilder::add_phong_point_light(Renderer::Light::Phong::PointInfo& info)
-{
-    m_phong_point_info = &info;
-    return *this;
-}
-
-EntityBuilder& EntityBuilder::add_phong_directional_light(Renderer::Light::Phong::DirectionalInfo& info)
-{
-    m_phong_directional_info = &info;
-    return *this;
-}
-
 EntityBuilder& EntityBuilder::add_pbr_directional_light(Renderer::Light::Pbr::Directional& info)
 {
     m_pbr_directional = &info;

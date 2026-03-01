@@ -50,16 +50,6 @@ void Scene::add_entity(const EntityBuilder& entity_builder)
         m_models_instance_draw_cache_needs_update = true;
     }
 
-    if (entity_builder.m_phong_directional_info != nullptr) {
-        m_registry.emplace<Renderer::Light::Phong::Directional>(entity, *entity_builder.m_phong_directional_info);
-        m_shaders_need_update = true;
-    }
-
-    if (entity_builder.m_phong_point_info != nullptr) {
-        m_registry.emplace<Renderer::Light::Phong::Point>(entity, *entity_builder.m_phong_point_info);
-        m_shaders_need_update = true;
-    }
-
     if (entity_builder.m_pbr_directional != nullptr) {
         m_registry.emplace<Renderer::Light::Pbr::Directional>(entity, *entity_builder.m_pbr_directional);
         if (entity_builder.m_pbr_directional_shadow) {
