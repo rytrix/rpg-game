@@ -14,8 +14,6 @@ public:
 
 private:
     Mapping<ID> m_mapping;
-
-    std::vector<u64> m_ids;
     std::deque<Type> m_types;
 };
 
@@ -24,16 +22,10 @@ template <typename... Args>
 Type& Cache<ID, Type>::get_or_create(const ID& id, Args&&... args)
 {
     u64 map_id = m_mapping.map(id);
-
-    for (usize i = 0; i < m_ids.size(); i++) {
-        if (map_id == m_ids.at(i)) {
-            return m_types.at(i);
-        }
+    if (map_id >= m_types.size()) {
+        m_types.emplace_back(std::forward<Args>(args)...);
     }
-
-    m_ids.emplace_back(map_id);
-    m_types.emplace_back(std::forward<Args>(args)...);
-    return m_types.back();
+    return m_types.at(map_id);
 }
 
 } // namespace Utils
