@@ -37,9 +37,6 @@ System::System()
 
 System::~System()
 {
-    m_body_interface->RemoveBodies(m_bodies.data(), m_bodies.size());
-    m_body_interface->DestroyBodies(m_bodies.data(), m_bodies.size());
-
     // Unregisters all types with the factory and cleans up the default material
     JPH::UnregisterTypes();
 }

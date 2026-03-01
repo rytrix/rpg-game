@@ -127,9 +127,6 @@ public:
     void optimize();
 
     JPH::BodyInterface* m_body_interface = nullptr;
-    // TODO delete this
-    // Deletion list
-    std::vector<JPH::BodyID> m_bodies;
 
 private:
     JPH::TempAllocatorMalloc m_temp_allocator;
