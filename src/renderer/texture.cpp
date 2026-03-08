@@ -79,6 +79,17 @@ void Texture::init(TextureInfo& info)
 {
     util_assert(initialized == false, "Texture::Init() has already been initialized");
 
+    if (info.mipmaps && info.mipmap_levels != 0) {
+        LOG_WARN(std::format("Texture mipmaps set to {}, when they should be set to 0 for automatic generation", info.mipmap_levels));
+    }
+    if (info.mipmaps
+        && info.min_filter != GL_LINEAR_MIPMAP_LINEAR
+            && info.min_filter != GL_LINEAR_MIPMAP_NEAREST
+            && info.min_filter != GL_NEAREST_MIPMAP_LINEAR
+            && info.min_filter != GL_NEAREST_MIPMAP_NEAREST) {
+        LOG_WARN("Texture mipmaps enabled but min_filter is not using mipmaps");
+    }
+
     m_dimensions = info.dimensions;
 
     glCreateTextures(m_dimensions, 1, &m_id);
@@ -93,9 +104,9 @@ void Texture::init(TextureInfo& info)
     initialized = true;
 
     if (info.from_file) {
-        from_file(info.file_path, info.flip);
+        from_file(info.file_path, info.flip, info.mipmap_levels);
     } else {
-        texture_storage(info.size, info.internal_format);
+        texture_storage(info.size, info.internal_format, info.mipmap_levels);
     }
 
     if (info.mipmaps) {
@@ -235,31 +246,34 @@ void Texture::set_max_anisotropy(float max_anisotropy)
     return m_id;
 }
 
-void Texture::texture_storage(TextureSize& size, GLenum internal_format)
+void Texture::texture_storage(TextureSize& size, GLenum internal_format, GLint levels)
 {
     util_assert(initialized == true, "Texture has not been initialized");
+    if (levels == 0) {
+        levels = 1 + std::floor(std::log2(std::max({ size.width, size.height, size.depth })));
+    }
     switch (m_dimensions) {
         case GL_TEXTURE_1D:
-            glTextureStorage1D(m_id, 1, internal_format, size.width);
+            glTextureStorage1D(m_id, levels, internal_format, size.width);
             break;
         case GL_TEXTURE_2D:
-            glTextureStorage2D(m_id, 1, internal_format, size.width, size.height);
+            glTextureStorage2D(m_id, levels, internal_format, size.width, size.height);
             break;
         case GL_TEXTURE_3D:
-            glTextureStorage3D(m_id, 1, internal_format, size.width, size.height, size.depth);
+            glTextureStorage3D(m_id, levels, internal_format, size.width, size.height, size.depth);
             break;
         case GL_TEXTURE_2D_ARRAY:
-            glTextureStorage3D(m_id, 1, internal_format, size.width, size.height, size.depth);
+            glTextureStorage3D(m_id, levels, internal_format, size.width, size.height, size.depth);
             break;
         case GL_TEXTURE_CUBE_MAP:
-            glTextureStorage2D(m_id, 1, internal_format, size.width, size.height);
+            glTextureStorage2D(m_id, levels, internal_format, size.width, size.height);
             break;
         default:
             util_error(std::format("Texture::texture_storage: invalid texture dimensions {}\n", m_dimensions));
     }
 }
 
-void Texture::from_file(const char* file, bool flip)
+void Texture::from_file(const char* file, bool flip, GLint mipmap_levels)
 {
     util_assert(initialized == true, "Texture::from_file has not been initialized");
 
@@ -284,10 +298,10 @@ void Texture::from_file(const char* file, bool flip)
     info.pixels = data;
 
     if (nr_channels == 3) {
-        texture_storage(size, GL_RGB8);
+        texture_storage(size, GL_RGB8, mipmap_levels);
         info.format = GL_RGB;
     } else if (nr_channels == 4) {
-        texture_storage(size, GL_RGBA8);
+        texture_storage(size, GL_RGBA8, mipmap_levels);
         info.format = GL_RGBA;
     } else {
         util_error(std::format("Texture: invalid number of channels \"{}\"", nr_channels));

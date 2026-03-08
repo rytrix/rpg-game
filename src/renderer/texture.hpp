@@ -22,6 +22,7 @@ struct TextureInfo {
     GLint wrap_r = GL_REPEAT;
     std::array<float, 4> border_color = { 1.0F, 1.0F, 1.0F, 1.0F };
     bool mipmaps = GL_TRUE;
+    GLint mipmap_levels = 1;
     GLenum internal_format = GL_RGBA8;
     bool flip = true;
 };
@@ -67,8 +68,8 @@ private:
     bool m_bindless_texture_mapped = false;
 
     void generate_mipmap();
-    void texture_storage(TextureSize& size, GLenum internal_format);
-    void from_file(const char* file, bool flip);
+    void texture_storage(TextureSize& size, GLenum internal_format, GLint levels);
+    void from_file(const char* file, bool flip, GLint mipmap_levels);
 };
 
 } // namespace Renderer
