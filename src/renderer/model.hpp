@@ -1,5 +1,6 @@
 #pragma once
 
+#include "assimp/Importer.hpp"
 #include "mesh.hpp"
 #include "shader.hpp"
 #include "texture.hpp"
@@ -33,6 +34,8 @@ private:
     bool initialized = false;
 
     Utils::Cache<std::string, Texture> m_texture_cache;
+
+    Assimp::Importer m_importer;
     Mesh m_mesh;
     std::string m_directory;
 

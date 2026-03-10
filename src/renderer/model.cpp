@@ -1,11 +1,14 @@
 #include "model.hpp"
 
-#include <assimp/Importer.hpp>
 #include <assimp/postprocess.h>
 #include <assimp/scene.h>
 #include <filesystem>
 
 #include "../utils/helpers.hpp"
+
+namespace {
+
+} // anonymous namespace
 
 namespace Renderer {
 
@@ -22,8 +25,7 @@ void Model::init(const char* file_path)
 
     util_assert(std::filesystem::exists(file_path), std::format("Model \"{}\" is an invalid path", file_path));
 
-    Assimp::Importer importer;
-    const aiScene* scene = importer.ReadFile(file_path, aiProcess_Triangulate | aiProcess_FlipUVs | aiProcess_CalcTangentSpace | aiProcess_JoinIdenticalVertices);
+    const aiScene* scene = m_importer.ReadFile(file_path, aiProcess_Triangulate | aiProcess_FlipUVs | aiProcess_CalcTangentSpace | aiProcess_JoinIdenticalVertices);
     m_directory = m_directory.substr(0, m_directory.find_last_of('/'));
 
     util_assert(scene->mRootNode != nullptr, "Model::Model: Root node is nullptr");
@@ -34,6 +36,28 @@ void Model::init(const char* file_path)
         m_mesh.m_base_vertices.at(i).m_offset = offset;
         offset += m_mesh.m_base_vertices.at(i).m_count;
     }
+
+    // for (auto& bone : m_mesh.m_bone_id_map) {
+    //     std::println("Bone Name: \"{}\", ID: {}", bone.first, bone.second);
+    // }
+
+    // process_animations
+    for (u32 i = 0; i < scene->mNumAnimations; i++) {
+        auto* animation = scene->mAnimations[i];
+        LOG_INFO(std::format("Animation info: Name: {}, Duration: {}", animation->mName.C_Str(), animation->mDuration));
+        m_mesh.m_total_animation_time = animation->mDuration;
+        for (u32 j = 0; j < animation->mNumChannels; j++) {
+            auto* bone_animation = animation->mChannels[j];
+            if (m_mesh.m_bone_id_map.contains(bone_animation->mNodeName.C_Str())) {
+                u32 value = m_mesh.m_bone_id_map.at(bone_animation->mNodeName.C_Str());
+                LOG_DEBUG(std::format("Node name: \"{}\", index: {}", bone_animation->mNodeName.C_Str(), value));
+                m_mesh.m_bones.at(value).m_animation.init(bone_animation);
+            }
+        }
+        break;
+    }
+    // process_animations end
+
     m_mesh.setup_mesh();
 
     initialized = true;
@@ -59,6 +83,9 @@ void Model::draw(ShaderProgram& shader, const std::span<glm::mat4> model)
 
     // shader.set_mat4("model", model[0]);
     m_mesh.update_model_ssbos(model);
+    if (m_mesh.m_has_bones) {
+        m_mesh.update_bone_matrices(6.5F);
+    }
     m_mesh.draw(shader);
 }
 
@@ -91,8 +118,6 @@ void Model::process_mesh(aiMesh* mesh, const aiScene* scene)
     auto count = static_cast<GLsizei>(m_mesh.m_indices.size());
     auto base_bone = m_mesh.m_bones.size();
 
-    m_mesh.m_vertex_bones.resize(m_mesh.m_vertex_bones.size() + mesh->mNumVertices);
-    std::println("vertex bones size {}", m_mesh.m_vertex_bones.size());
     for (u32 i = 0; i < mesh->mNumVertices; i++) {
         Mesh::Vertex vertex {};
         vertex.m_pos.x = mesh->mVertices[i].x;
@@ -156,6 +181,8 @@ void Model::process_mesh(aiMesh* mesh, const aiScene* scene)
 
     if (mesh->HasBones()) {
         m_mesh.m_has_bones = true;
+        m_mesh.m_vertex_bones.resize(m_mesh.m_vertex_bones.size() + mesh->mNumVertices);
+        // std::println("vertex bones size {}", m_mesh.m_vertex_bones.size());
         for (u32 i = 0; i < mesh->mNumBones; i++) {
             // Each bone has mName, mNumWeights, mOffsetMatrix, mWeights
 
@@ -171,7 +198,8 @@ void Model::process_mesh(aiMesh* mesh, const aiScene* scene)
             m_mesh.m_bone_id_map[bone->mName.C_Str()] = i;
 
             glm::mat4 offset_matrix = mat4_to_mat4(bone->mOffsetMatrix);
-            m_mesh.m_bones.emplace_back(offset_matrix);
+
+            m_mesh.m_bones.emplace_back(offset_matrix, nullptr);
 
             for (u32 j = 0; j < bone->mNumWeights; j++) {
                 const aiVertexWeight vw = bone->mWeights[j];
@@ -180,6 +208,13 @@ void Model::process_mesh(aiMesh* mesh, const aiScene* scene)
                     .add_bone(i, vw.mWeight);
             }
         }
+
+        // LOG_INFO(std::format("mesh->mNumAnimMeshes {}", mesh->mNumAnimMeshes));
+        // for (u32 i = 0; i < mesh->mNumAnimMeshes; i++) {
+        //     auto* animation = mesh->mAnimMeshes[i];
+        //     // animation->mName;
+        //     std::println("aiAnimMesh Name: {}", animation->mName.C_Str());
+        // }
     }
 
     count = static_cast<GLsizei>(m_mesh.m_indices.size()) - count;
@@ -199,8 +234,10 @@ Texture* Model::load_material_texture(aiMaterial* mat, aiTextureType type)
 
         TextureInfo texture_info;
         texture_info.from_file = GL_TRUE;
-        texture_info.min_filter = GL_LINEAR;
+        texture_info.min_filter = GL_LINEAR_MIPMAP_LINEAR;
         texture_info.mag_filter = GL_LINEAR;
+        texture_info.mipmaps = true;
+        texture_info.mipmap_levels = 0;
         texture_info.file_path = texture_path.c_str();
         texture_info.flip = false;
 

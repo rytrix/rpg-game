@@ -1,5 +1,6 @@
 #pragma once
 
+#include "animation.hpp"
 #include "assimp/material.h"
 #include "buffer.hpp"
 #include "extensions.hpp"
@@ -34,10 +35,17 @@ public:
         std::array<u32, MAX_BONES_PER_VERTEX> bones {};
         std::array<float, MAX_BONES_PER_VERTEX> weights {};
 
+        VertexBone()
+        {
+            for (auto& bone : bones) {
+                bone = UINT32_MAX;
+            }
+        }
+
         void add_bone(const u32 bone_id, const float weight)
         {
             for (u32 i = 0; i < MAX_BONES_PER_VERTEX; i++) {
-                if (weights.at(i) == 0.0F) {
+                if (bones.at(i) == UINT32_MAX) {
                     bones.at(i) = bone_id;
                     weights.at(i) = weight;
                     return;
@@ -48,7 +56,14 @@ public:
     };
 
     struct BoneInfo {
-        glm::mat4 transform;
+        glm::mat4 m_transform;
+        BoneAnimation m_animation;
+
+        BoneInfo(glm::mat4 transform, aiNodeAnim* anim)
+            : m_transform(transform)
+            , m_animation(anim)
+        {
+        }
     };
 
     struct BaseVertex {
@@ -69,6 +84,7 @@ public:
     ~Mesh();
 
     void update_model_ssbos(const std::span<glm::mat4> model_matrices);
+    void update_bone_matrices(const float animation_time);
 
     void draw();
     void draw(ShaderProgram& shader);
@@ -81,11 +97,14 @@ public:
     std::vector<Texture*> m_normal_textures;
 
     bool m_has_bones = false;
-    std::unordered_map<const char*, u32> m_bone_id_map;
+    std::unordered_map<std::string, u32> m_bone_id_map;
     std::vector<VertexBone> m_vertex_bones;
     std::vector<BoneInfo> m_bones;
+    std::vector<glm::mat4> m_final_bone_matrices;
 
     std::vector<BaseVertex> m_base_vertices;
+
+    float m_total_animation_time = 0.0F;
 
 private:
     void setup_mesh();

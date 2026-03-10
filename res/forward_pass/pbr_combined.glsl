@@ -8,6 +8,8 @@ layout (location = 3) in vec3 inTangent;
 #ifdef ENABLE_BONES
 layout (location = 4) in int[BONES_PER_VERTEX] inBoneIDs;
 layout (location = 5) in float[BONES_PER_VERTEX] inBoneWeights;
+#define MAX_BONES 100
+uniform mat4 final_bone_matrices[MAX_BONES];
 #endif
 
 out vec3 Normal;
@@ -30,13 +32,36 @@ layout(binding = 1, std430) readonly buffer ssbo0 {
 
 void main()
 {
+#ifdef ENABLE_BONES
+    vec4 total_position = vec4(inPos, 1.0);
+    for (int i = 0; i < BONES_PER_VERTEX; i++) {
+        if (inBoneIDs[i] == -1) {
+            continue;
+        } else if (inBoneIDs[i] >= MAX_BONES) {
+            total_position = vec4(inPos, 1.0);
+            break;
+        } else {
+            vec4 local_position = final_bone_matrices[inBoneIDs[i]] * vec4(inPos, 1.0);
+            total_position += local_position * inBoneWeights[i];
+            // vec3 local_normal = mat3(final_bone_matrices[inBoneIDs[i]]) * inNormal;
+        }
+    }
+#endif
+
 #ifdef SSBO0
     mat4 model = models[gl_InstanceID];
 #endif
+
+#ifdef ENABLE_BONES
+    vec4 world_pos = model * total_position;
+#else
     vec4 world_pos = model * vec4(inPos, 1.0);
+#endif
     TexCoords = inTexCoords;
 
     mat3 transposed_model = mat3(transpose(inverse(model)));
+    // TODO:
+    // Normal and Tangent should be different because of bones
     Normal = transposed_model * inNormal;
     Tangent = transposed_model * inTangent;
 

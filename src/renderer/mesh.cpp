@@ -41,9 +41,23 @@ void Mesh::update_model_ssbos(const std::span<glm::mat4> model_matrices)
     glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, m_model_ssbo.get_id());
 }
 
+void Mesh::update_bone_matrices(float animation_time)
+{
+    util_assert(initialized == true, "Mesh has not been initialized");
+
+    animation_time = std::fmod(animation_time, m_total_animation_time);
+
+    m_final_bone_matrices.resize(m_bones.size());
+    for (u32 i = 0; i < m_final_bone_matrices.size(); i++) {
+        m_final_bone_matrices[i] = m_bones[i].m_transform * m_bones[i].m_animation.keyframe_to_mat4(animation_time);
+    }
+}
+
 void Mesh::draw()
 {
     util_assert(initialized == true, "Mesh has not been initialized");
+
+    // TODO EVERYTHING NEEDS BONES
 
     m_vao.bind();
 
@@ -78,6 +92,10 @@ void Mesh::draw(ShaderProgram& shader)
 
     m_vao.bind();
 
+    for (u32 i = 0; i < m_final_bone_matrices.size(); i++) {
+        shader.set_mat4(std::format("final_bone_matrices[{}]", i).c_str(), m_final_bone_matrices[i]);
+    }
+
     if (Renderer::Extensions::is_extension_supported("GL_ARB_bindless_texture")) {
         glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 2, m_texture_ssbo.get_id());
 
@@ -93,7 +111,6 @@ void Mesh::draw(ShaderProgram& shader)
         m_cmd_buff.unbind_buffer(GL_DRAW_INDIRECT_BUFFER);
     } else {
         for (usize i = 0; i < m_commands.size(); i++) {
-            // 1 diffuse 1 metallic_roughness 1 normal 1 specular (at most.. or its broken)
             GLuint texture_unit = Texture::get_texture_unit();
             m_diffuse_textures[i]->bind(texture_unit);
             shader.set_int("tex_diffuse", static_cast<int>(texture_unit));

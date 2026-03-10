@@ -20,6 +20,7 @@ add_executable(${PROJECT_NAME}
     src/game_logic/gear.cpp 
     src/game_logic/character.cpp
 
+	src/renderer/animation.cpp
 	src/renderer/window.cpp
 	src/renderer/extensions.cpp
 	src/renderer/buffer.cpp

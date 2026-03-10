@@ -39,4 +39,4 @@ private:
     std::array<f32, MAX_CASCADES + 1> m_cascade_plane_distances;
 };
 
-} // Renderer::Light::Pbr
+} // namespace Renderer::Light::Pbr
