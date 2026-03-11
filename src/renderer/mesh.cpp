@@ -48,13 +48,13 @@ void Mesh::update_bone_matrices(float animation_time)
 {
     util_assert(initialized == true, "Mesh has not been initialized");
 
-    animation_time = std::fmod(animation_time, m_total_animation_time);
+    animation_time = std::fmod(animation_time * m_ticks_per_second, m_total_animation_time);
 
     m_final_bone_matrices.resize(m_bones.size());
     for (u32 i = 0; i < m_final_bone_matrices.size(); i++) {
         m_final_bone_matrices[i] = m_bones[i].m_transform * m_bones[i].m_animation.keyframe_to_mat4(animation_time);
 
-        std::println("final_bone_matrix = {}", glm::to_string(m_final_bone_matrices[i]));
+        // std::println("final_bone_matrix = {}", glm::to_string(m_final_bone_matrices[i]));
     }
 }
 
@@ -170,7 +170,7 @@ void Mesh::setup_mesh()
         m_bones_vbo.buffer_data(static_cast<i64>(m_vertex_bones.size() * sizeof(VertexBone)), m_vertex_bones.data(), GL_STATIC_DRAW);
         m_vao.bind_vertex_buffer(1, m_bones_vbo.get_id(), 0, sizeof(VertexBone));
 
-        m_vao.vertex_attrib(4, 1, MAX_BONES_PER_VERTEX, GL_INT, 0);
+        m_vao.vertex_attrib_int(4, 1, MAX_BONES_PER_VERTEX, GL_INT, 0);
         m_vao.vertex_attrib(5, 1, MAX_BONES_PER_VERTEX, GL_FLOAT, MAX_BONES_PER_VERTEX * sizeof(GLint));
     }
 

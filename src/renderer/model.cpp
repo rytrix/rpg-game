@@ -25,7 +25,14 @@ void Model::init(const char* file_path)
 
     util_assert(std::filesystem::exists(file_path), std::format("Model \"{}\" is an invalid path", file_path));
 
-    const aiScene* scene = m_importer.ReadFile(file_path, aiProcess_Triangulate | aiProcess_FlipUVs | aiProcess_CalcTangentSpace | aiProcess_JoinIdenticalVertices);
+    m_importer.SetPropertyFloat(AI_CONFIG_GLOBAL_SCALE_FACTOR_KEY, 10.0F);
+
+    const aiScene* scene = m_importer.ReadFile(file_path,
+        aiProcess_Triangulate
+            | aiProcess_FlipUVs
+            | aiProcess_CalcTangentSpace
+            | aiProcess_JoinIdenticalVertices
+            | aiProcess_GlobalScale);
     m_directory = m_directory.substr(0, m_directory.find_last_of('/'));
 
     util_assert(scene->mRootNode != nullptr, "Model::Model: Root node is nullptr");
@@ -37,15 +44,13 @@ void Model::init(const char* file_path)
         offset += m_mesh.m_base_vertices.at(i).m_count;
     }
 
-    // for (auto& bone : m_mesh.m_bone_id_map) {
-    //     std::println("Bone Name: \"{}\", ID: {}", bone.first, bone.second);
-    // }
-
     // process_animations
     for (u32 i = 0; i < scene->mNumAnimations; i++) {
         auto* animation = scene->mAnimations[i];
         LOG_INFO(std::format("Animation info: Name: {}, Duration: {}", animation->mName.C_Str(), animation->mDuration));
         m_mesh.m_total_animation_time = animation->mDuration;
+        m_mesh.m_ticks_per_second = animation->mTicksPerSecond;
+
         for (u32 j = 0; j < animation->mNumChannels; j++) {
             auto* bone_animation = animation->mChannels[j];
             if (m_mesh.m_bone_id_map.contains(bone_animation->mNodeName.C_Str())) {
@@ -84,8 +89,8 @@ void Model::draw(ShaderProgram& shader, const std::span<glm::mat4> model)
     // shader.set_mat4("model", model[0]);
     m_mesh.update_model_ssbos(model);
     static float animation_time = 0.0F;
-    animation_time += 0.1F;
-    std::println("animation time: {}", animation_time);
+    animation_time += 0.001F;
+    // std::println("animation time: {}", animation_time);
     if (m_mesh.m_has_bones) {
         m_mesh.update_bone_matrices(animation_time);
     }
@@ -210,6 +215,8 @@ void Model::process_mesh(aiMesh* mesh, const aiScene* scene)
                     .at(base_vertex + vw.mVertexId)
                     .add_bone(i, vw.mWeight);
             }
+
+            LOG_DEBUG(std::format("Loaded bone: \"{}\" at index {}", bone->mName.C_Str(), i));
         }
 
         // LOG_INFO(std::format("mesh->mNumAnimMeshes {}", mesh->mNumAnimMeshes));

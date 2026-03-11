@@ -29,6 +29,14 @@ void VertexArray::vertex_attrib(GLuint attrib_index, GLuint binding_index, GLint
     glVertexArrayAttribFormat(m_id, attrib_index, values_per_vertex, data_type, GL_FALSE, relative_offset_in_bytes);
 }
 
+void VertexArray::vertex_attrib_int(GLuint attrib_index, GLuint binding_index, GLint values_per_vertex, GLenum data_type, GLuint relative_offset_in_bytes)
+{
+    util_assert(initialized == true, "VertexArray has not been initialized");
+    glEnableVertexArrayAttrib(m_id, attrib_index);
+    glVertexArrayAttribBinding(m_id, attrib_index, binding_index);
+    glVertexArrayAttribIFormat(m_id, attrib_index, values_per_vertex, data_type, relative_offset_in_bytes);
+}
+
 void VertexArray::bind_vertex_buffer(GLuint binding_index, GLuint vertex_buffer, GLintptr offset, GLsizei stride_in_bytes)
 {
     util_assert(initialized == true, "VertexArray has not been initialized");

@@ -105,6 +105,7 @@ public:
     std::vector<BaseVertex> m_base_vertices;
 
     float m_total_animation_time = 0.0F;
+    float m_ticks_per_second = 0.0F;
 
 private:
     void setup_mesh();

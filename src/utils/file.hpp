@@ -16,11 +16,13 @@ constexpr std::vector<T> read_file(const char* path)
     std::streamsize size = file.tellg();
     file.seekg(0, std::ios::beg);
 
+    size = size / sizeof(T);
+
     text.reserve(size + 1);
     text.resize(size);
     file.read(text.data(), size);
 
-    text.push_back('\0');
+    text.push_back(0);
 
     return text;
 }
