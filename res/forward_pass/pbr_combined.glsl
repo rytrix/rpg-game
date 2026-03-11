@@ -6,8 +6,8 @@ layout (location = 2) in vec2 inTexCoords;
 layout (location = 3) in vec3 inTangent;
 
 #ifdef ENABLE_BONES
-layout (location = 4) in int[BONES_PER_VERTEX] inBoneIDs;
-layout (location = 5) in float[BONES_PER_VERTEX] inBoneWeights;
+layout (location = 4) in ivec4 inBoneIDs;
+layout (location = 5) in vec4 inBoneWeights;
 #define MAX_BONES 100
 uniform mat4 final_bone_matrices[MAX_BONES];
 #endif
@@ -37,9 +37,6 @@ void main()
     for (int i = 0; i < BONES_PER_VERTEX; i++) {
         if (inBoneIDs[i] == -1) {
             continue;
-        } else if (inBoneIDs[i] >= MAX_BONES) {
-            total_position = vec4(inPos, 1.0);
-            break;
         } else {
             vec4 local_position = final_bone_matrices[inBoneIDs[i]] * vec4(inPos, 1.0);
             total_position += local_position * inBoneWeights[i];

@@ -33,11 +33,10 @@ BoneAnimation::~BoneAnimation()
 glm::mat4 BoneAnimation::keyframe_to_mat4(float animation_time)
 {
     util_assert(initialized == true, "BoneAnimation has not been initialized");
-    // TODO time wraping
 
-    glm::mat4 translation_matrix {};
-    glm::mat4 rotation_matrix {};
-    glm::mat4 scale_matrix {};
+    glm::mat4 translation_matrix {1.0F};
+    glm::mat4 rotation_matrix {1.0F};
+    glm::mat4 scale_matrix {1.0F};
 
     auto pos_keyframes = find_keyframe(m_prev_pos_frame, m_anim->mPositionKeys, m_anim->mNumPositionKeys, animation_time);
     aiVector3D pos = lerp_interpolate<aiVectorKey, aiVector3D>(&m_anim->mPositionKeys[pos_keyframes[0]], &m_anim->mPositionKeys[pos_keyframes[1]], animation_time);
@@ -54,6 +53,9 @@ glm::mat4 BoneAnimation::keyframe_to_mat4(float animation_time)
     glm::vec3 glm_scale = vec3_to_vec3(scale);
     scale_matrix = glm::scale(glm::mat4(1.0F), glm_scale);
 
+    // glm::mat4 test_matrix = glm::rotate(glm::mat4(1.0F), glm::radians(animation_time), glm::vec3(0.5));
+
+    // return test_matrix;
     return translation_matrix * rotation_matrix * scale_matrix;
 }
 
@@ -107,8 +109,17 @@ aiQuaternion BoneAnimation::slerp_interpolate(aiQuatKey* p_start, aiQuatKey* p_e
 {
     util_assert(initialized == true, "BoneAnimation has not been initialized");
     aiQuaternion result;
-    float delta_time = static_cast<float>(p_start->mTime - p_end->mTime);
-    float factor = (animation_time - static_cast<float>(p_start->mTime)) / delta_time;
+    // float delta_time = static_cast<float>(p_start->mTime - p_end->mTime);
+    // float factor = (animation_time - static_cast<float>(p_start->mTime)) / delta_time;
+
+    float start_time = (float)p_start->mTime;
+    float end_time = (float)p_end->mTime;
+    float delta_time = end_time - start_time;
+
+    if (delta_time <= 0.0f) return p_start->mValue;
+
+    float factor = (animation_time - start_time) / delta_time;
+    factor = glm::clamp(factor, 0.0f, 1.0f); // Crucial!
 
     aiQuaternion::Interpolate(result, p_start->mValue, p_end->mValue, factor);
 

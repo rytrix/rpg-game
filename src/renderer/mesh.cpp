@@ -2,6 +2,9 @@
 
 #include "model.hpp"
 
+#define GLM_ENABLE_EXPERIMENTAL
+#include <glm/gtx/string_cast.hpp>
+
 namespace Renderer {
 
 Mesh::~Mesh()
@@ -50,6 +53,8 @@ void Mesh::update_bone_matrices(float animation_time)
     m_final_bone_matrices.resize(m_bones.size());
     for (u32 i = 0; i < m_final_bone_matrices.size(); i++) {
         m_final_bone_matrices[i] = m_bones[i].m_transform * m_bones[i].m_animation.keyframe_to_mat4(animation_time);
+
+        std::println("final_bone_matrix = {}", glm::to_string(m_final_bone_matrices[i]));
     }
 }
 
@@ -92,8 +97,10 @@ void Mesh::draw(ShaderProgram& shader)
 
     m_vao.bind();
 
-    for (u32 i = 0; i < m_final_bone_matrices.size(); i++) {
-        shader.set_mat4(std::format("final_bone_matrices[{}]", i).c_str(), m_final_bone_matrices[i]);
+    if (m_has_bones) {
+        for (u32 i = 0; i < m_final_bone_matrices.size(); i++) {
+            shader.set_mat4(std::format("final_bone_matrices[{}]", i).c_str(), m_final_bone_matrices[i]);
+        }
     }
 
     if (Renderer::Extensions::is_extension_supported("GL_ARB_bindless_texture")) {
