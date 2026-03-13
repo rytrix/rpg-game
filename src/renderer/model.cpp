@@ -205,20 +205,23 @@ void Model::process_mesh(aiMesh* mesh, const aiScene* scene)
             // Also all of these bones have to be kept inside of each base vertex...
             aiBone* bone = mesh->mBones[i];
 
+            usize bone_id;
             // There might be multiple skeletons/meshes with bones/the same bones
             if (!m_mesh.m_bone_id_map.contains(bone->mName.C_Str())) {
-                const usize bone_id = m_mesh.m_bones.size();
+                bone_id = m_mesh.m_bones.size();
                 m_mesh.m_bone_id_map[bone->mName.C_Str()] = bone_id;
                 m_mesh.m_bones.emplace_back(mat4_to_mat4(bone->mOffsetMatrix), nullptr);
 
-                for (u32 j = 0; j < bone->mNumWeights; j++) {
-                    const aiVertexWeight vw = bone->mWeights[j];
-                    m_mesh.m_vertex_bones
-                        .at(base_vertex + vw.mVertexId)
-                        .add_bone(bone_id, vw.mWeight);
-                }
-
                 LOG_DEBUG(std::format("Loaded bone: \"{}\" at index {}", bone->mName.C_Str(), i));
+            } else {
+                bone_id = m_mesh.m_bone_id_map[bone->mName.C_Str()];
+            }
+
+            for (u32 j = 0; j < bone->mNumWeights; j++) {
+                const aiVertexWeight vw = bone->mWeights[j];
+                m_mesh.m_vertex_bones
+                    .at(base_vertex + vw.mVertexId)
+                    .add_bone(bone_id, vw.mWeight);
             }
         }
     }
