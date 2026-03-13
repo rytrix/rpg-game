@@ -8,7 +8,6 @@ layout (location = 3) in vec3 inTangent;
 #ifdef ENABLE_BONES
 layout (location = 4) in ivec4 inBoneIDs;
 layout (location = 5) in vec4 inBoneWeights;
-#define MAX_BONES 100
 uniform mat4 final_bone_matrices[MAX_BONES];
 #endif
 
@@ -33,22 +32,9 @@ layout(binding = 1, std430) readonly buffer ssbo0 {
 void main()
 {
 #ifdef ENABLE_BONES
-    // mat4 bone_transform = final_bone_matrices[inBoneIDs[0]] * inBoneWeights[0];
-    // for (int i = 1; i < BONES_PER_VERTEX; i++) {
-    //     bone_transform += final_bone_matrices[inBoneIDs[i]] * inBoneWeights[i];
-    // }
-
-
-    // vec4 total_position = vec4(inPos, 1.0);
-    vec4 total_position = vec4(0.0);
-    for (int i = 0; i < BONES_PER_VERTEX; i++) {
-        if (inBoneIDs[i] == -1) {
-            continue;
-        } else {
-            vec4 local_position = final_bone_matrices[inBoneIDs[i]] * vec4(inPos, 1.0);
-            total_position += local_position * inBoneWeights[i];
-            // vec3 local_normal = mat3(final_bone_matrices[inBoneIDs[i]]) * inNormal;
-        }
+    mat4 bone_transform = final_bone_matrices[inBoneIDs[0]] * inBoneWeights[0];
+    for (int i = 1; i < BONES_PER_VERTEX; i++) {
+        bone_transform += final_bone_matrices[inBoneIDs[i]] * inBoneWeights[i];
     }
 #endif
 
@@ -57,18 +43,18 @@ void main()
 #endif
 
 #ifdef ENABLE_BONES
-    vec4 world_pos = model * total_position;
-    // vec4 world_pos = model * bone_transform * vec4(inPos, 1.0);
+    vec4 world_pos = model * (bone_transform * vec4(inPos, 1.0));
+    // Normal and Tangent should be different because of bones
+    // TODO: does this work correctly??
+    Normal = (model * (bone_transform * vec4(inNormal, 1.0))).xyz;
+    Tangent = (model * (bone_transform * vec4(inTangent, 1.0))).xyz;
 #else
     vec4 world_pos = model * vec4(inPos, 1.0);
-#endif
-    TexCoords = inTexCoords;
-
     mat3 transposed_model = mat3(transpose(inverse(model)));
-    // TODO:
-    // Normal and Tangent should be different because of bones
     Normal = transposed_model * inNormal;
     Tangent = transposed_model * inTangent;
+#endif
+    TexCoords = inTexCoords;
 
     FragPos = world_pos.xyz;
 
