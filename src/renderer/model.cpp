@@ -26,6 +26,7 @@ void Model::init(const char* file_path)
     util_assert(std::filesystem::exists(file_path), std::format("Model \"{}\" is an invalid path", file_path));
 
     // m_importer.SetPropertyFloat(AI_CONFIG_GLOBAL_SCALE_FACTOR_KEY, 10.0F);
+    m_importer.SetPropertyBool(AI_CONFIG_IMPORT_FBX_PRESERVE_PIVOTS, false);
 
     const aiScene* scene = m_importer.ReadFile(file_path,
         aiProcess_Triangulate
@@ -47,7 +48,6 @@ void Model::init(const char* file_path)
         offset += m_mesh.m_base_vertices.at(i).m_count;
     }
 
-    // process_animations
     for (u32 i = 0; i < scene->mNumAnimations; i++) {
         auto* animation = scene->mAnimations[i];
         LOG_INFO(std::format("Animation info: Name: {}, Duration: {}", animation->mName.C_Str(), animation->mDuration));
@@ -58,13 +58,14 @@ void Model::init(const char* file_path)
             auto* bone_animation = animation->mChannels[j];
             if (m_mesh.m_bone_id_map.contains(bone_animation->mNodeName.C_Str())) {
                 u32 value = m_mesh.m_bone_id_map.at(bone_animation->mNodeName.C_Str());
-                LOG_DEBUG(std::format("Node name: \"{}\", index: {}", bone_animation->mNodeName.C_Str(), value));
+                LOG_DEBUG(std::format("Loaded node name: \"{}\", index: {}", bone_animation->mNodeName.C_Str(), value));
                 m_mesh.m_bones.at(value).m_animation.init(bone_animation);
+            } else {
+                LOG_WARN(std::format("Failed to load node name: \"{}\"", bone_animation->mNodeName.C_Str()));
             }
         }
         break;
     }
-    // process_animations end
 
     m_mesh.setup_mesh();
 
