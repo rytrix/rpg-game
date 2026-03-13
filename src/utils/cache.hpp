@@ -12,6 +12,8 @@ public:
     template <typename... Args>
     Type& get_or_create(const ID& id, Args&&... args);
 
+    [[nodiscard]] bool contains(const ID& id);
+
 private:
     Mapping<ID> m_mapping;
     std::deque<Type> m_types;
@@ -26,6 +28,12 @@ Type& Cache<ID, Type>::get_or_create(const ID& id, Args&&... args)
         m_types.emplace_back(std::forward<Args>(args)...);
     }
     return m_types.at(map_id);
+}
+
+template <typename ID, typename Type>
+[[nodiscard]] bool Cache<ID, Type>::contains(const ID& id)
+{
+    return m_mapping.contains(id);
 }
 
 } // namespace Utils

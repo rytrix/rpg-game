@@ -33,6 +33,10 @@ layout(binding = 1, std430) readonly buffer ssbo0 {
 void main()
 {
 #ifdef ENABLE_BONES
+    // mat4 bone_transform = final_bone_matrices[inBoneIDs[0]] * inBoneWeights[0];
+    // for (int i = 1; i < BONES_PER_VERTEX; i++) {
+    //     bone_transform += final_bone_matrices[inBoneIDs[i]] * inBoneWeights[i];
+    // }
     vec4 total_position = vec4(inPos, 1.0);
     for (int i = 0; i < BONES_PER_VERTEX; i++) {
         if (inBoneIDs[i] == -1) {
@@ -51,6 +55,7 @@ void main()
 
 #ifdef ENABLE_BONES
     vec4 world_pos = model * total_position;
+    // vec4 world_pos = model * bone_transform * vec4(inPos, 1.0);
 #else
     vec4 world_pos = model * vec4(inPos, 1.0);
 #endif

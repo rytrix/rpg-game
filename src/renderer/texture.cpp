@@ -84,13 +84,14 @@ void Texture::init(TextureInfo& info)
     }
     if (info.mipmaps
         && info.min_filter != GL_LINEAR_MIPMAP_LINEAR
-            && info.min_filter != GL_LINEAR_MIPMAP_NEAREST
-            && info.min_filter != GL_NEAREST_MIPMAP_LINEAR
-            && info.min_filter != GL_NEAREST_MIPMAP_NEAREST) {
+        && info.min_filter != GL_LINEAR_MIPMAP_NEAREST
+        && info.min_filter != GL_NEAREST_MIPMAP_LINEAR
+        && info.min_filter != GL_NEAREST_MIPMAP_NEAREST) {
         LOG_WARN("Texture mipmaps enabled but min_filter is not using mipmaps");
     }
 
     m_dimensions = info.dimensions;
+    mipmaps = info.mipmaps;
 
     glCreateTextures(m_dimensions, 1, &m_id);
 
@@ -105,12 +106,11 @@ void Texture::init(TextureInfo& info)
 
     if (info.from_file) {
         from_file(info.file_path, info.flip, info.mipmap_levels);
+        if (mipmaps) {
+            generate_mipmap();
+        }
     } else {
         texture_storage(info.size, info.internal_format, info.mipmap_levels);
-    }
-
-    if (info.mipmaps) {
-        generate_mipmap();
     }
 }
 
@@ -181,6 +181,9 @@ void Texture::sub_image(TextureSubimageInfo& info)
             break;
         default:
             util_error(std::format("Texture::sub_image: invalid texture dimensions {}\n", m_dimensions));
+    }
+    if (mipmaps) {
+        generate_mipmap();
     }
 }
 

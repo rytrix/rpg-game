@@ -39,6 +39,7 @@ public:
         {
             for (auto& bone : bones) {
                 bone = UINT32_MAX;
+                // bone = 0;
             }
         }
 
@@ -56,11 +57,11 @@ public:
     };
 
     struct BoneInfo {
-        glm::mat4 m_transform;
+        glm::mat4 m_offset;
         BoneAnimation m_animation;
 
-        BoneInfo(glm::mat4 transform, aiNodeAnim* anim)
-            : m_transform(transform)
+        BoneInfo(glm::mat4 offset, aiNodeAnim* anim)
+            : m_offset(offset)
             , m_animation(anim)
         {
         }
@@ -70,12 +71,10 @@ public:
         GLsizei m_count {};
         GLsizei m_base {};
         GLuint m_offset {};
-        GLuint m_base_bone {};
 
-        BaseVertex(GLsizei count, GLsizei base, GLuint base_bone)
+        BaseVertex(GLsizei count, GLsizei base)
             : m_count(count)
             , m_base(base)
-            , m_base_bone(base_bone)
         {
         }
     };
@@ -101,6 +100,9 @@ public:
     std::vector<VertexBone> m_vertex_bones;
     std::vector<BoneInfo> m_bones;
     std::vector<glm::mat4> m_final_bone_matrices;
+    glm::mat4 m_global_inverse_transform;
+
+    const aiScene* m_scene = nullptr;
 
     std::vector<BaseVertex> m_base_vertices;
 
@@ -109,6 +111,7 @@ public:
 
 private:
     void setup_mesh();
+    void evaluate_bone_matrices(float animation_time, const aiNode* node, const glm::mat4& parent_transform);
 
     bool initialized = false;
 

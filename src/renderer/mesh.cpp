@@ -2,6 +2,8 @@
 
 #include "model.hpp"
 
+#include "../utils/helpers.hpp"
+
 #define GLM_ENABLE_EXPERIMENTAL
 #include <glm/gtx/string_cast.hpp>
 
@@ -44,6 +46,35 @@ void Mesh::update_model_ssbos(const std::span<glm::mat4> model_matrices)
     glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, m_model_ssbo.get_id());
 }
 
+void Mesh::evaluate_bone_matrices(float animation_time, const aiNode* node, const glm::mat4& parent_transform)
+{
+    util_assert(initialized == true, "Mesh has not been initialized");
+
+    glm::mat4 global_transform = parent_transform;
+
+    if (m_bone_id_map.contains(node->mName.C_Str())) {
+        u32 index = m_bone_id_map[node->mName.C_Str()];
+        std::println("Bone id map contains \"{}\" at index {}", node->mName.C_Str(), index);
+        // If we skip m_animation, then use node->mTransformation
+        if (m_bones[index].m_animation.is_initialized()) {
+            global_transform *= m_bones[index].m_animation.keyframe_to_mat4(animation_time);
+            // global_transform *= mat4_to_mat4(node->mTransformation);
+        } else {
+            global_transform *= mat4_to_mat4(node->mTransformation);
+        }
+
+        // m_final_bone_matrices[index] = m_bones[index].m_offset;
+        m_final_bone_matrices[index] = m_global_inverse_transform * global_transform * m_bones[index].m_offset;
+    } else {
+        std::println("Bone id map does not contain \"{}\"", node->mName.C_Str());
+        global_transform *= mat4_to_mat4(node->mTransformation);
+    }
+
+    for (u32 i = 0; i < node->mNumChildren; i++) {
+        evaluate_bone_matrices(animation_time, node->mChildren[i], global_transform);
+    }
+}
+
 void Mesh::update_bone_matrices(float animation_time)
 {
     util_assert(initialized == true, "Mesh has not been initialized");
@@ -51,11 +82,12 @@ void Mesh::update_bone_matrices(float animation_time)
     animation_time = std::fmod(animation_time * m_ticks_per_second, m_total_animation_time);
 
     m_final_bone_matrices.resize(m_bones.size());
-    for (u32 i = 0; i < m_final_bone_matrices.size(); i++) {
-        m_final_bone_matrices[i] = m_bones[i].m_transform * m_bones[i].m_animation.keyframe_to_mat4(animation_time);
+    // for (auto& matrix : m_final_bone_matrices) {
+    //     matrix = glm::mat4(1.0F);
+    // }
 
-        // std::println("final_bone_matrix = {}", glm::to_string(m_final_bone_matrices[i]));
-    }
+    glm::mat4 identity(1.0F);
+    evaluate_bone_matrices(animation_time, m_scene->mRootNode, identity);
 }
 
 void Mesh::draw()

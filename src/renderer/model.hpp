@@ -41,7 +41,7 @@ private:
 
     void process_node(aiNode* node, const aiScene* scene);
     void process_mesh(aiMesh* mesh, const aiScene* scene);
-    Texture* load_material_texture(aiMaterial* mat, aiTextureType type);
+    Texture* load_material_texture(const aiMaterial* mat, const aiTextureType type, const aiScene* scene);
 
     static Texture* get_placeholder_texture_albedo();
     static Texture* get_placeholder_texture_normal();

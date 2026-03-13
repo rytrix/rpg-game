@@ -25,17 +25,20 @@ void Model::init(const char* file_path)
 
     util_assert(std::filesystem::exists(file_path), std::format("Model \"{}\" is an invalid path", file_path));
 
-    m_importer.SetPropertyFloat(AI_CONFIG_GLOBAL_SCALE_FACTOR_KEY, 10.0F);
+    // m_importer.SetPropertyFloat(AI_CONFIG_GLOBAL_SCALE_FACTOR_KEY, 10.0F);
 
     const aiScene* scene = m_importer.ReadFile(file_path,
         aiProcess_Triangulate
             | aiProcess_FlipUVs
             | aiProcess_CalcTangentSpace
-            | aiProcess_JoinIdenticalVertices
-            | aiProcess_GlobalScale);
+            | aiProcess_JoinIdenticalVertices);
     m_directory = m_directory.substr(0, m_directory.find_last_of('/'));
 
     util_assert(scene->mRootNode != nullptr, "Model::Model: Root node is nullptr");
+
+    m_mesh.m_scene = scene;
+    m_mesh.m_global_inverse_transform = glm::inverse(mat4_to_mat4(scene->mRootNode->mTransformation));
+
     process_node(scene->mRootNode, scene);
 
     usize offset = 0;
@@ -124,7 +127,6 @@ void Model::process_mesh(aiMesh* mesh, const aiScene* scene)
 {
     auto base_vertex = static_cast<GLsizei>(m_mesh.m_vertices.size());
     auto count = static_cast<GLsizei>(m_mesh.m_indices.size());
-    auto base_bone = m_mesh.m_bones.size();
 
     for (u32 i = 0; i < mesh->mNumVertices; i++) {
         Mesh::Vertex vertex {};
@@ -159,7 +161,7 @@ void Model::process_mesh(aiMesh* mesh, const aiScene* scene)
     if (scene->HasMaterials()) {
         aiMaterial* material = scene->mMaterials[mesh->mMaterialIndex];
 
-        Texture* diffuse_map = load_material_texture(material, aiTextureType_DIFFUSE);
+        Texture* diffuse_map = load_material_texture(material, aiTextureType_DIFFUSE, scene);
         if (diffuse_map == nullptr) {
             LOG_WARN("Using default albedo texture map");
             m_mesh.m_diffuse_textures.push_back(get_placeholder_texture_albedo());
@@ -167,7 +169,7 @@ void Model::process_mesh(aiMesh* mesh, const aiScene* scene)
             m_mesh.m_diffuse_textures.push_back(diffuse_map);
         }
 
-        Texture* metallic_roughness_map = load_material_texture(material, aiTextureType_GLTF_METALLIC_ROUGHNESS);
+        Texture* metallic_roughness_map = load_material_texture(material, aiTextureType_GLTF_METALLIC_ROUGHNESS, scene);
         if (metallic_roughness_map == nullptr) {
             LOG_WARN("Using default metallic texture map");
             m_mesh.m_metallic_roughness_textures.push_back(get_placeholder_texture_metallic());
@@ -175,7 +177,7 @@ void Model::process_mesh(aiMesh* mesh, const aiScene* scene)
             m_mesh.m_metallic_roughness_textures.push_back(metallic_roughness_map);
         }
 
-        Texture* normal_map = load_material_texture(material, aiTextureType_NORMALS);
+        Texture* normal_map = load_material_texture(material, aiTextureType_NORMALS, scene);
         if (normal_map == nullptr) {
             LOG_WARN("Using default normal texture map");
             m_mesh.m_normal_textures.push_back(get_placeholder_texture_normal());
@@ -203,59 +205,95 @@ void Model::process_mesh(aiMesh* mesh, const aiScene* scene)
             // Also all of these bones have to be kept inside of each base vertex...
             aiBone* bone = mesh->mBones[i];
 
-            m_mesh.m_bone_id_map[bone->mName.C_Str()] = i;
+            // There might be multiple skeletons/meshes with bones/the same bones
+            if (!m_mesh.m_bone_id_map.contains(bone->mName.C_Str())) {
+                const usize bone_id = m_mesh.m_bones.size();
+                m_mesh.m_bone_id_map[bone->mName.C_Str()] = bone_id;
+                m_mesh.m_bones.emplace_back(mat4_to_mat4(bone->mOffsetMatrix), nullptr);
 
-            glm::mat4 offset_matrix = mat4_to_mat4(bone->mOffsetMatrix);
+                for (u32 j = 0; j < bone->mNumWeights; j++) {
+                    const aiVertexWeight vw = bone->mWeights[j];
+                    m_mesh.m_vertex_bones
+                        .at(base_vertex + vw.mVertexId)
+                        .add_bone(bone_id, vw.mWeight);
+                }
 
-            m_mesh.m_bones.emplace_back(offset_matrix, nullptr);
-
-            for (u32 j = 0; j < bone->mNumWeights; j++) {
-                const aiVertexWeight vw = bone->mWeights[j];
-                m_mesh.m_vertex_bones
-                    .at(base_vertex + vw.mVertexId)
-                    .add_bone(i, vw.mWeight);
+                LOG_DEBUG(std::format("Loaded bone: \"{}\" at index {}", bone->mName.C_Str(), i));
             }
-
-            LOG_DEBUG(std::format("Loaded bone: \"{}\" at index {}", bone->mName.C_Str(), i));
         }
-
-        // LOG_INFO(std::format("mesh->mNumAnimMeshes {}", mesh->mNumAnimMeshes));
-        // for (u32 i = 0; i < mesh->mNumAnimMeshes; i++) {
-        //     auto* animation = mesh->mAnimMeshes[i];
-        //     // animation->mName;
-        //     std::println("aiAnimMesh Name: {}", animation->mName.C_Str());
-        // }
     }
 
     count = static_cast<GLsizei>(m_mesh.m_indices.size()) - count;
 
     m_mesh.m_base_vertices.emplace_back(
         count,
-        base_vertex,
-        base_bone);
+        base_vertex);
 }
 
-Texture* Model::load_material_texture(aiMaterial* mat, aiTextureType type)
+Texture* Model::load_material_texture(const aiMaterial* mat, const aiTextureType type, const aiScene* scene)
 {
     if (mat->GetTextureCount(type) > 0) {
         aiString str;
         mat->GetTexture(type, 0, &str);
-        std::string texture_path = (m_directory + "/" + str.C_Str());
+
+        const aiTexture* embedded_texture = scene->GetEmbeddedTexture(str.C_Str());
 
         TextureInfo texture_info;
-        texture_info.from_file = GL_TRUE;
         texture_info.min_filter = GL_LINEAR_MIPMAP_LINEAR;
         texture_info.mag_filter = GL_LINEAR;
         texture_info.mipmaps = true;
         texture_info.mipmap_levels = 0;
-        texture_info.file_path = texture_path.c_str();
         texture_info.flip = false;
 
-        LOG_INFO(std::format("Loading {} type {}", texture_path, aiTextureTypeToString(type)));
+        if (embedded_texture == nullptr) {
+            std::string texture_path = (m_directory + "/" + str.C_Str());
+            texture_info.from_file = GL_TRUE;
+            texture_info.file_path = texture_path.c_str();
 
-        Texture& texture = m_texture_cache.get_or_create(texture_path, texture_info);
-        texture.set_max_anisotropy(16.0F);
-        return &texture;
+            LOG_INFO(std::format("Loading {} type {}", texture_path, aiTextureTypeToString(type)));
+
+            Texture& texture = m_texture_cache.get_or_create(texture_path, texture_info);
+            texture.set_max_anisotropy(16.0F);
+            return &texture;
+        } else {
+            std::string texture_path = str.C_Str();
+
+            LOG_INFO(std::format("Loading {} type {}", texture_path, aiTextureTypeToString(type)));
+            if (m_texture_cache.contains(texture_path)) {
+                Texture& texture = m_texture_cache.get_or_create(texture_path, texture_info);
+                return &texture;
+            } else {
+                int width, height, channels;
+                TextureSubimageInfo subimage_info;
+                if (texture_info.flip) {
+                    stbi_set_flip_vertically_on_load(1);
+                }
+                unsigned char* data = stbi_load_from_memory((const stbi_uc*)embedded_texture->pcData, embedded_texture->mWidth, &width, &height, &channels, 0);
+
+                texture_info.from_file = GL_FALSE;
+                if (channels == 4) {
+                    texture_info.internal_format = GL_RGBA8;
+                    subimage_info.format = GL_RGBA;
+                } else if (channels == 3) {
+                    texture_info.internal_format = GL_RGB8;
+                    subimage_info.format = GL_RGB;
+                }
+                texture_info.size.width = width;
+                texture_info.size.height = height;
+                texture_info.size.depth = 0;
+                Texture& texture = m_texture_cache.get_or_create(texture_path, texture_info);
+
+                subimage_info.pixels = data;
+                subimage_info.size = texture_info.size;
+                subimage_info.type = GL_UNSIGNED_BYTE;
+                texture.sub_image(subimage_info);
+                texture.set_max_anisotropy(16.0F);
+
+                stbi_image_free(data);
+
+                return &texture;
+            }
+        }
     } else {
         return nullptr;
     }

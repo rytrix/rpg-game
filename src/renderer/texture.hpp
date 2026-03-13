@@ -64,6 +64,7 @@ private:
 
     GLuint m_id {};
     GLenum m_dimensions {};
+    bool mipmaps = false;
 
     bool m_bindless_texture_mapped = false;
 

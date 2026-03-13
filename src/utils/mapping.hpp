@@ -10,6 +10,7 @@ public:
     u64 map(const T& id);
     [[nodiscard]] u64 at(const T& id) const;
     [[nodiscard]] usize size() const;
+    [[nodiscard]] bool contains(const T& id) const;
 
 private:
     std::unordered_map<T, u64> m_map;
@@ -37,6 +38,12 @@ template <typename T>
 usize Mapping<T>::size() const
 {
     return m_id_counter;
+}
+
+template <typename T>
+[[nodiscard]] bool Mapping<T>::contains(const T& id) const
+{
+    return m_map.contains(id);
 }
 
 } // namespace Utils

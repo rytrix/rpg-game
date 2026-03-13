@@ -13,6 +13,7 @@ public:
     void init(aiNodeAnim* anim);
 
     glm::mat4 keyframe_to_mat4(float animation_time);
+    [[nodiscard]] bool is_initialized() const { return initialized; }
 
 private:
     bool initialized = false;
