@@ -91,10 +91,10 @@ void Model::draw(ShaderProgram& shader, const std::span<glm::mat4> model)
 
     // shader.set_mat4("model", model[0]);
     m_mesh.update_model_ssbos(model);
-    static float animation_time = 0.0F;
-    animation_time += 0.001F;
-    // std::println("animation time: {}", animation_time);
     if (m_mesh.m_has_bones) {
+        m_timer.update();
+        static float animation_time = 0.0F;
+        animation_time += m_timer.delta_time();
         m_mesh.update_bone_matrices(animation_time);
     }
     m_mesh.draw(shader);

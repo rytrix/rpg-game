@@ -37,7 +37,10 @@ void main()
     // for (int i = 1; i < BONES_PER_VERTEX; i++) {
     //     bone_transform += final_bone_matrices[inBoneIDs[i]] * inBoneWeights[i];
     // }
-    vec4 total_position = vec4(inPos, 1.0);
+
+
+    // vec4 total_position = vec4(inPos, 1.0);
+    vec4 total_position = vec4(0.0);
     for (int i = 0; i < BONES_PER_VERTEX; i++) {
         if (inBoneIDs[i] == -1) {
             continue;

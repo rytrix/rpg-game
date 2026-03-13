@@ -50,24 +50,23 @@ void Mesh::evaluate_bone_matrices(float animation_time, const aiNode* node, cons
 {
     util_assert(initialized == true, "Mesh has not been initialized");
 
-    glm::mat4 global_transform = parent_transform;
+    glm::mat4 node_transform = mat4_to_mat4(node->mTransformation);
+    glm::mat4 global_transform;
 
     if (m_bone_id_map.contains(node->mName.C_Str())) {
         u32 index = m_bone_id_map[node->mName.C_Str()];
-        std::println("Bone id map contains \"{}\" at index {}", node->mName.C_Str(), index);
-        // If we skip m_animation, then use node->mTransformation
+        // std::println("Bone id map contains \"{}\" at index {}", node->mName.C_Str(), index);
+
+        // If animated
         if (m_bones[index].m_animation.is_initialized()) {
-            global_transform *= m_bones[index].m_animation.keyframe_to_mat4(animation_time);
-            // global_transform *= mat4_to_mat4(node->mTransformation);
-        } else {
-            global_transform *= mat4_to_mat4(node->mTransformation);
+            node_transform = m_bones[index].m_animation.keyframe_to_mat4(animation_time);
         }
 
-        // m_final_bone_matrices[index] = m_bones[index].m_offset;
+        global_transform = parent_transform * node_transform;
+
         m_final_bone_matrices[index] = m_global_inverse_transform * global_transform * m_bones[index].m_offset;
     } else {
-        std::println("Bone id map does not contain \"{}\"", node->mName.C_Str());
-        global_transform *= mat4_to_mat4(node->mTransformation);
+        global_transform = parent_transform * node_transform;
     }
 
     for (u32 i = 0; i < node->mNumChildren; i++) {

@@ -6,6 +6,7 @@
 #include "texture.hpp"
 
 #include "../utils/cache.hpp"
+#include "../utils/deltatime.hpp"
 
 #include <assimp/scene.h>
 
@@ -38,6 +39,8 @@ private:
     Assimp::Importer m_importer;
     Mesh m_mesh;
     std::string m_directory;
+
+    Utils::DeltaTime m_timer;
 
     void process_node(aiNode* node, const aiScene* scene);
     void process_mesh(aiMesh* mesh, const aiScene* scene);
