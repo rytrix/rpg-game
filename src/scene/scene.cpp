@@ -483,9 +483,6 @@ void Scene::compile_pbr_shaders(const std::string& bone_defines)
         get_pbr_forward_pass_normal(shader_source_bones, light_uniforms, light_functions, bone_defines);
     }
 
-    std::println("Vert 1:\n{}", shader_source.info.at(0).shader);
-    std::println("Vert 2:\n{}", shader_source_bones.info.at(0).shader);
-
     if (m_shader.is_initialized()) {
         m_shader.~ShaderProgram();
     }
