@@ -124,8 +124,8 @@ void Scene::draw()
         m_models_instance_draw_cache.clear();
         for (auto [entity, model_matrix, model] : model_view.each()) {
             for (auto& model_cached : m_models_instance_draw_cache) {
-                if (model == model_cached.model) {
-                    model_cached.model_matrices.emplace_back(model_matrix);
+                if (model == model_cached.m_model) {
+                    model_cached.m_model_matrices.emplace_back(model_matrix);
                     goto end_model_matrix_label;
                 }
             }
@@ -139,12 +139,12 @@ void Scene::draw()
         auto model_view = m_registry.view<glm::mat4, Renderer::Model*>();
 
         for (auto& model : m_models_instance_draw_cache) {
-            model.model_matrices.clear();
+            model.m_model_matrices.clear();
         }
         for (auto [entity, model_matrix, model] : model_view.each()) {
             for (usize j = 0; j < m_models_instance_draw_cache.size(); j++) {
-                if (model == m_models_instance_draw_cache[j].model) {
-                    m_models_instance_draw_cache[j].model_matrices.emplace_back(model_matrix);
+                if (model == m_models_instance_draw_cache[j].m_model) {
+                    m_models_instance_draw_cache[j].m_model_matrices.emplace_back(model_matrix);
                 }
             }
         }
@@ -153,7 +153,7 @@ void Scene::draw()
     for (auto& model : m_models_instance_draw_cache) {
         static float animation_time = 0.0F;
         animation_time += m_clock.delta_time();
-        model.model->update(model.model_matrices, animation_time);
+        model.m_model->update(model.m_model_matrices, animation_time);
     }
 
     glEnable(GL_DEPTH_TEST);
@@ -166,7 +166,7 @@ void Scene::draw()
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     // glBlendFuncSeparate(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA, GL_ONE, GL_ZERO);
 
-    glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+    glClearColor(0.0F, 0.0F, 0.0F, 1.0F);
 
     m_camera.update();
 
@@ -176,7 +176,7 @@ void Scene::draw()
         shadow.update(light, m_camera);
         shadow.shadowmap_begin();
         for (auto& model : m_models_instance_draw_cache) {
-            shadow.shadowmap_draw(model.model);
+            shadow.shadowmap_draw(model.m_model);
         }
         shadow.shadowmap_end();
     }
@@ -186,8 +186,8 @@ void Scene::draw()
         shadow.update(light);
         shadow.shadowmap_begin();
         for (auto& model : m_models_instance_draw_cache) {
-            Renderer::ShaderProgram& shader = model.model->has_bones() ? m_shadowmap_cubemap_shader_bones : m_shadowmap_cubemap_shader;
-            shadow.shadowmap_draw(shader, light, model.model);
+            Renderer::ShaderProgram& shader = model.m_model->has_bones() ? m_shadowmap_cubemap_shader_bones : m_shadowmap_cubemap_shader;
+            shadow.shadowmap_draw(shader, light, model.m_model);
         }
         shadow.shadowmap_end();
     }
@@ -197,8 +197,8 @@ void Scene::draw()
         shadow.update(light);
         shadow.shadowmap_begin();
         for (auto& model : m_models_instance_draw_cache) {
-            Renderer::ShaderProgram& shader = model.model->has_bones() ? m_shadowmap_shader_bones : m_shadowmap_shader;
-            shadow.shadowmap_draw(shader, model.model);
+            Renderer::ShaderProgram& shader = model.m_model->has_bones() ? m_shadowmap_shader_bones : m_shadowmap_shader;
+            shadow.shadowmap_draw(shader, model.m_model);
         }
         shadow.shadowmap_end();
     }
@@ -208,7 +208,7 @@ void Scene::draw()
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
     for (auto& model : m_models_instance_draw_cache) {
-        Renderer::ShaderProgram& shader = model.model->has_bones() ? m_shader_bones : m_shader;
+        Renderer::ShaderProgram& shader = model.m_model->has_bones() ? m_shader_bones : m_shader;
         shader.bind();
         shader.set_mat4("proj", m_camera.get_proj());
         shader.set_mat4("view", m_camera.get_view());
@@ -245,7 +245,7 @@ void Scene::draw()
             i++;
         }
 
-        model.model->draw(shader);
+        model.m_model->draw(shader);
     }
 
     Renderer::Texture::reset_texture_units();
@@ -258,7 +258,7 @@ void Scene::draw_debug_imgui()
     }
 
     glm::vec3 cam_pos = m_camera.get_pos();
-    ImGui::Text(std::format("Camera Pos: {}, {}, {}", cam_pos.x, cam_pos.y, cam_pos.z).c_str());
+    ImGui::Text("%s", std::format("Camera Pos: {}, {}, {}", cam_pos.x, cam_pos.y, cam_pos.z).c_str());
     if (ImGui::DragFloat("Camera Speed", &m_camera_speed, 0.1F, 1.0F, 20.0F)) {
         m_camera.set_speed(m_camera_speed);
     }
@@ -269,7 +269,7 @@ void Scene::draw_debug_imgui()
     constexpr float MAX_COLOR = 3000.0F;
     constexpr float MIN_COLOR = 0.0F;
 
-    usize i = 0;
+    i32 i = 0;
     if (ImGui::CollapsingHeader("Physics Objects")) {
         auto view = m_registry.view<glm::mat4, JPH::BodyID, JPH::EMotionType>();
         for (auto [entity, model_matrix, body, motion_type] : view.each()) {

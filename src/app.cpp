@@ -51,9 +51,9 @@ App::App()
     m_scene->add_entity(e1);
 
     EntityBuilder e2;
-    e2.add_model_path("res/models/physics_plane/plane.obj");
-    // e2.add_model_path("res/models/Sponza/glTF/Sponza.gltf");
-    glm::mat4 e2_model_matrix = glm::scale(glm::mat4(1.0), glm::vec3(2.0));
+    // e2.add_model_path("res/models/physics_plane/plane.obj");
+    e2.add_model_path("res/models/Sponza/glTF/Sponza.gltf");
+    glm::mat4 e2_model_matrix = glm::scale(glm::mat4(1.0), glm::vec3(0.1));
     // e2_model_matrix = glm::translate(e2_model_matrix, glm::vec3(0.0, -5.0, 0.0));
     e2.add_model_matrix(e2_model_matrix);
     e2.add_physics_command([&](Physics::System* system, Renderer::Model* model) -> std::pair<JPH::BodyID, JPH::EMotionType> {

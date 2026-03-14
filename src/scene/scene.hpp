@@ -51,12 +51,12 @@ private:
     Utils::Cache<const char*, Renderer::Model> m_model_cache;
 
     struct ModelMatrix {
-        Renderer::Model* model;
-        std::vector<glm::mat4> model_matrices;
+        Renderer::Model* m_model;
+        std::vector<glm::mat4> m_model_matrices;
 
         ModelMatrix(Renderer::Model* model, glm::mat4 matrix)
-            : model(model)
-            , model_matrices({ matrix })
+            : m_model(model)
+            , m_model_matrices({ matrix })
         {
         }
     };
