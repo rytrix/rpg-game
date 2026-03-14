@@ -10,18 +10,11 @@ Scene::Scene(Renderer::Window& window, Renderer::Camera& camera)
 {
     m_physics_system = std::make_unique<Physics::System>();
 
-    init_pass();
     update();
 }
 
 Scene::~Scene()
 {
-    if (m_forward_pass) {
-        delete m_forward;
-    } else {
-        delete m_deferred;
-    }
-
     auto view = m_registry.view<JPH::BodyID>();
     for (auto [entity, body] : view.each()) {
         m_physics_system->m_body_interface->RemoveBody(body);
@@ -90,6 +83,41 @@ void Scene::update()
 {
     m_clock.update();
 
+    // if (m_deferred != nullptr) {
+    //     if (m_window.get_width() != m_deferred->m_gpass_width || m_window.get_height() != m_deferred->m_gpass_height) {
+    //         m_deferred->m_gpass_width = m_window.get_width();
+    //         m_deferred->m_gpass_height = m_window.get_height();
+    //         m_deferred->m_gpass.reinit(m_deferred->m_gpass_width, m_deferred->m_gpass_height);
+    //     }
+    // }
+    compile_shaders();
+}
+
+void Scene::physics()
+{
+    m_physics_system->update(m_clock.delta_time());
+
+    auto view = m_registry.view<glm::mat4, JPH::BodyID, JPH::EMotionType>();
+
+    for (auto [entity, model, body, motion] : view.each()) {
+        if (motion != JPH::EMotionType::Static) {
+            model = mat4_to_mat4(m_physics_system->m_body_interface->GetCenterOfMassTransform(body));
+
+            auto* point_light = m_registry.try_get<Renderer::Light::Pbr::Point>(entity);
+            if (point_light != nullptr) {
+                point_light->position = model[3];
+            }
+
+            auto* spot_light = m_registry.try_get<Renderer::Light::Pbr::Spot>(entity);
+            if (spot_light != nullptr) {
+                spot_light->position = model[3];
+            }
+        }
+    }
+}
+
+void Scene::draw()
+{
     if (m_models_instance_draw_cache_needs_update) {
         auto model_view = m_registry.view<glm::mat4, Renderer::Model*>();
 
@@ -122,52 +150,12 @@ void Scene::update()
         }
     }
 
-    if (m_deferred != nullptr) {
-        if (m_window.get_width() != m_deferred->m_gpass_width || m_window.get_height() != m_deferred->m_gpass_height) {
-            m_deferred->m_gpass_width = m_window.get_width();
-            m_deferred->m_gpass_height = m_window.get_height();
-            m_deferred->m_gpass.reinit(m_deferred->m_gpass_width, m_deferred->m_gpass_height);
-        }
-    }
-    compile_shaders();
-}
-
-void Scene::physics()
-{
-    m_physics_system->update(m_clock.delta_time());
-
-    auto view = m_registry.view<glm::mat4, JPH::BodyID, JPH::EMotionType>();
-
-    for (auto [entity, model, body, motion] : view.each()) {
-        if (motion != JPH::EMotionType::Static) {
-            model = mat4_to_mat4(m_physics_system->m_body_interface->GetCenterOfMassTransform(body));
-
-            auto* point_light = m_registry.try_get<Renderer::Light::Pbr::Point>(entity);
-            if (point_light != nullptr) {
-                point_light->position = model[3];
-            }
-
-            auto* spot_light = m_registry.try_get<Renderer::Light::Pbr::Spot>(entity);
-            if (spot_light != nullptr) {
-                spot_light->position = model[3];
-            }
-        }
-    }
-}
-
-void Scene::instance_draw_internal(Renderer::ShaderProgram& shader, bool shadowmap)
-{
     for (auto& model : m_models_instance_draw_cache) {
-        if (shadowmap) {
-            model.model->draw_untextured(shader, model.model_matrices);
-        } else {
-            model.model->draw(shader, model.model_matrices);
-        }
+        static float animation_time = 0.0F;
+        animation_time += m_clock.delta_time();
+        model.model->update(model.model_matrices, animation_time);
     }
-}
 
-void Scene::draw()
-{
     glEnable(GL_DEPTH_TEST);
     glDepthFunc(GL_LESS);
 
@@ -186,113 +174,81 @@ void Scene::draw()
     auto directional_shadow_view = m_registry.view<Renderer::Light::Pbr::Directional, Renderer::Light::Pbr::DirectionalShadow>();
     for (auto [entity, light, shadow] : directional_shadow_view.each()) {
         shadow.update(light, m_camera);
-        shadow.shadowmap_draw([&](Renderer::ShaderProgram& shader) {
-            instance_draw_internal(shader, true);
-        });
+        shadow.shadowmap_begin();
+        for (auto& model : m_models_instance_draw_cache) {
+            shadow.shadowmap_draw(model.model);
+        }
+        shadow.shadowmap_end();
     }
 
     auto point_shadow_view = m_registry.view<Renderer::Light::Pbr::Point, Renderer::Light::Pbr::PointShadow>();
     for (auto [entity, light, shadow] : point_shadow_view.each()) {
         shadow.update(light);
-        shadow.shadowmap_draw(m_shadowmap_cubemap_shader, light, [&]() {
-            instance_draw_internal(m_shadowmap_cubemap_shader, true);
-        });
+        shadow.shadowmap_begin();
+        for (auto& model : m_models_instance_draw_cache) {
+            Renderer::ShaderProgram& shader = model.model->has_bones() ? m_shadowmap_cubemap_shader_bones : m_shadowmap_cubemap_shader;
+            shadow.shadowmap_draw(shader, light, model.model);
+        }
+        shadow.shadowmap_end();
     }
 
     auto spot_shadow_view = m_registry.view<Renderer::Light::Pbr::Spot, Renderer::Light::Pbr::SpotShadow>();
     for (auto [entity, light, shadow] : spot_shadow_view.each()) {
         shadow.update(light);
-        shadow.shadowmap_draw(m_shadowmap_shader, [&]() {
-            instance_draw_internal(m_shadowmap_shader, true);
-        });
+        shadow.shadowmap_begin();
+        for (auto& model : m_models_instance_draw_cache) {
+            Renderer::ShaderProgram& shader = model.model->has_bones() ? m_shadowmap_shader_bones : m_shadowmap_shader;
+            shadow.shadowmap_draw(shader, model.model);
+        }
+        shadow.shadowmap_end();
     }
 
     glCullFace(GL_BACK);
-    if (m_forward_pass) {
-        glViewport(0, 0, m_window.get_width(), m_window.get_height());
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    glViewport(0, 0, m_window.get_width(), m_window.get_height());
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-        m_forward->m_shader.bind();
-        m_forward->m_shader.set_mat4("proj", m_camera.get_proj());
-        m_forward->m_shader.set_mat4("view", m_camera.get_view());
-        m_forward->m_shader.set_vec3("view_position", m_camera.get_pos());
+    for (auto& model : m_models_instance_draw_cache) {
+        Renderer::ShaderProgram& shader = model.model->has_bones() ? m_shader_bones : m_shader;
+        shader.bind();
+        shader.set_mat4("proj", m_camera.get_proj());
+        shader.set_mat4("view", m_camera.get_view());
+        shader.set_vec3("view_position", m_camera.get_pos());
 
         auto pbr_directional_view = m_registry.view<Renderer::Light::Pbr::Directional>();
         auto pbr_point_view = m_registry.view<Renderer::Light::Pbr::Point>();
         auto pbr_spot_view = m_registry.view<Renderer::Light::Pbr::Spot>();
         u32 i = 0;
         for (auto [entity, light] : pbr_directional_view.each()) {
-            light.set_uniforms(m_forward->m_shader, std::format("u_directional_light_{}", i).c_str());
+            light.set_uniforms(shader, std::format("u_directional_light_{}", i).c_str());
             auto* shadow = m_registry.try_get<Renderer::Light::Pbr::DirectionalShadow>(entity);
             if (shadow != nullptr) {
-                shadow->set_uniforms(m_forward->m_shader, std::format("u_directional_light_shadow_{}", i).c_str());
+                shadow->set_uniforms(shader, std::format("u_directional_light_shadow_{}", i).c_str());
             }
             i++;
         }
         i = 0;
         for (auto [entity, light] : pbr_point_view.each()) {
-            light.set_uniforms(m_forward->m_shader, std::format("u_point_light_{}", i).c_str());
+            light.set_uniforms(shader, std::format("u_point_light_{}", i).c_str());
             auto* shadow = m_registry.try_get<Renderer::Light::Pbr::PointShadow>(entity);
             if (shadow != nullptr) {
-                shadow->set_uniforms(m_forward->m_shader, std::format("u_point_light_shadow_{}", i).c_str());
+                shadow->set_uniforms(shader, std::format("u_point_light_shadow_{}", i).c_str());
             }
             i++;
         }
         i = 0;
         for (auto [entity, light] : pbr_spot_view.each()) {
-            light.set_uniforms(m_forward->m_shader, std::format("u_spot_light_{}", i).c_str());
+            light.set_uniforms(shader, std::format("u_spot_light_{}", i).c_str());
             auto* shadow = m_registry.try_get<Renderer::Light::Pbr::SpotShadow>(entity);
             if (shadow != nullptr) {
-                shadow->set_uniforms(m_forward->m_shader, std::format("u_spot_light_shadow_{}", i).c_str());
+                shadow->set_uniforms(shader, std::format("u_spot_light_shadow_{}", i).c_str());
             }
             i++;
         }
 
-        instance_draw_internal(m_forward->m_shader, false);
-    } else {
-        // // Geometry pass
-        // m_deferred->m_gpass.bind();
-        // glViewport(0, 0, m_window.get_width(), m_window.get_height());
-        // glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-        // m_deferred->m_gpass_shader.bind();
-        // m_deferred->m_gpass_shader.set_mat4("proj", m_camera.get_proj());
-        // m_deferred->m_gpass_shader.set_mat4("view", m_camera.get_view());
-
-        // instance_draw_internal(m_deferred->m_gpass_shader, false);
-
-        // m_deferred->m_gpass.blit_depth_buffer();
-        // m_deferred->m_gpass.unbind();
-
-        // // Lighting pass
-        // glClear(GL_COLOR_BUFFER_BIT);
-        // m_deferred->m_lpass_shader.bind();
-
-        // m_deferred->m_gpass.set_uniforms(m_deferred->m_lpass_shader);
-        // m_deferred->m_lpass_shader.set_vec3("view_position", m_camera.get_pos());
-
-        // u32 i = 0;
-        // for (auto [entity, light] : phong_directional_view.each()) {
-        //     light.set_uniforms(m_deferred->m_lpass_shader, std::format("u_directional_light_{}", i).c_str());
-        //     i++;
-        // }
-        // i = 0;
-        // for (auto [entity, light] : phong_point_view.each()) {
-        //     light.set_uniforms(m_deferred->m_lpass_shader, std::format("u_point_light_{}", i).c_str());
-        //     i++;
-        // }
-        // m_deferred->m_lpass.draw();
+        model.model->draw(shader);
     }
+
     Renderer::Texture::reset_texture_units();
-}
-
-void Scene::set_pass(bool forward)
-{
-    if (m_forward_pass != forward) {
-        m_forward_pass = forward;
-        init_pass();
-        update();
-    }
 }
 
 void Scene::draw_debug_imgui()
@@ -421,71 +377,53 @@ void Scene::compile_shaders()
     if (!m_shaders_need_update) {
         return;
     }
-
     LOG_INFO("Compiling shaders");
 
-    compile_pbr_shaders();
+    std::string no_defines;
+    std::string bone_defines = Renderer::Mesh::get_bone_defines();
+
+    compile_pbr_shaders(bone_defines);
 
     if (!m_shadowmap_shader.is_initialized()) {
-        auto shadowmap_shaders = get_shadow_pass_basic_shaders();
-        std::array<Renderer::ShaderInfo, 2> shader_info_basic {
-            Renderer::ShaderInfo {
-                .is_file = false,
-                .shader = shadowmap_shaders.at(0).c_str(),
-                .type = GL_VERTEX_SHADER,
-            },
-            Renderer::ShaderInfo {
-                .is_file = false,
-                .shader = shadowmap_shaders.at(1).c_str(),
-                .type = GL_FRAGMENT_SHADER,
-            },
-        };
-        m_shadowmap_shader.init(shader_info_basic.data(), shader_info_basic.size());
+        ShaderInfoData<2> shadowmap_shaders;
+        get_shadow_pass_basic_shaders(shadowmap_shaders, no_defines);
+        m_shadowmap_shader.init(shadowmap_shaders.info.data(), shadowmap_shaders.info.size());
+    }
+
+    if (!m_shadowmap_shader_bones.is_initialized()) {
+        ShaderInfoData<2> shadowmap_shaders;
+        get_shadow_pass_basic_shaders(shadowmap_shaders, bone_defines);
+        m_shadowmap_shader_bones.init(shadowmap_shaders.info.data(), shadowmap_shaders.info.size());
     }
 
     if (!m_shadowmap_cubemap_shader.is_initialized()) {
-        if constexpr (Renderer::Light::Pbr::PointShadow::USE_GEOMETRY_SHADER) {
-            auto cubemap_shaders = get_shadow_pass_point_geometry_shaders();
-            std::array<Renderer::ShaderInfo, 3> shader_info_cubemap {
-                Renderer::ShaderInfo {
-                    .is_file = false,
-                    .shader = cubemap_shaders.at(0).c_str(),
-                    .type = GL_VERTEX_SHADER,
-                },
-                Renderer::ShaderInfo {
-                    .is_file = false,
-                    .shader = cubemap_shaders.at(1).c_str(),
-                    .type = GL_GEOMETRY_SHADER,
-                },
-                Renderer::ShaderInfo {
-                    .is_file = false,
-                    .shader = cubemap_shaders.at(2).c_str(),
-                    .type = GL_FRAGMENT_SHADER,
-                },
-            };
-            m_shadowmap_cubemap_shader.init(shader_info_cubemap.data(), shader_info_cubemap.size());
+        if constexpr (!Renderer::Light::Pbr::PointShadow::USE_GEOMETRY_SHADER) {
+            ShaderInfoData<2> cubemap_shaders;
+            get_shadow_pass_point_shaders(cubemap_shaders, no_defines);
+            m_shadowmap_cubemap_shader.init(cubemap_shaders.info.data(), cubemap_shaders.info.size());
         } else {
-            auto cubemap_shaders = get_shadow_pass_point_shaders();
-            std::array<Renderer::ShaderInfo, 2> shader_info_cubemap {
-                Renderer::ShaderInfo {
-                    .is_file = false,
-                    .shader = cubemap_shaders.at(0).c_str(),
-                    .type = GL_VERTEX_SHADER,
-                },
-                Renderer::ShaderInfo {
-                    .is_file = false,
-                    .shader = cubemap_shaders.at(1).c_str(),
-                    .type = GL_FRAGMENT_SHADER,
-                },
-            };
-            m_shadowmap_cubemap_shader.init(shader_info_cubemap.data(), shader_info_cubemap.size());
+            ShaderInfoData<3> cubemap_shaders;
+            get_shadow_pass_point_geometry_shaders(cubemap_shaders, no_defines);
+            m_shadowmap_cubemap_shader.init(cubemap_shaders.info.data(), cubemap_shaders.info.size());
+        }
+    }
+
+    if (!m_shadowmap_cubemap_shader_bones.is_initialized()) {
+        if constexpr (!Renderer::Light::Pbr::PointShadow::USE_GEOMETRY_SHADER) {
+            ShaderInfoData<2> cubemap_shaders;
+            get_shadow_pass_point_shaders(cubemap_shaders, bone_defines);
+            m_shadowmap_cubemap_shader_bones.init(cubemap_shaders.info.data(), cubemap_shaders.info.size());
+        } else {
+            ShaderInfoData<3> cubemap_shaders;
+            get_shadow_pass_point_geometry_shaders(cubemap_shaders, bone_defines);
+            m_shadowmap_cubemap_shader_bones.init(cubemap_shaders.info.data(), cubemap_shaders.info.size());
         }
     }
 
     m_shaders_need_update = false;
 }
 
-void Scene::compile_pbr_shaders()
+void Scene::compile_pbr_shaders(const std::string& bone_defines)
 {
     std::string light_uniforms;
     std::string light_functions;
@@ -532,175 +470,29 @@ void Scene::compile_pbr_shaders()
         i++;
     }
 
-    if (m_forward_pass) {
-        std::pair<std::string, std::string> shader_source;
-        if (Renderer::Extensions::is_extension_supported("GL_ARB_bindless_texture")) {
-            shader_source = get_pbr_forward_pass_indirect(light_uniforms, light_functions, Renderer::Mesh::MAX_BONES_PER_VERTEX);
-        } else {
-            shader_source = get_pbr_forward_pass_normal(light_uniforms, light_functions, Renderer::Mesh::MAX_BONES_PER_VERTEX);
-        }
+    ShaderInfoData<2> shader_source;
+    ShaderInfoData<2> shader_source_bones;
 
-        std::array<Renderer::ShaderInfo, 2>
-            shader_info = {
-                Renderer::ShaderInfo {
-                    .is_file = false,
-                    .shader = shader_source.first.c_str(),
-                    .type = GL_VERTEX_SHADER,
-                },
-                Renderer::ShaderInfo {
-                    .is_file = false,
-                    .shader = shader_source.second.c_str(),
-                    .type = GL_FRAGMENT_SHADER,
-                },
-            };
-        if (m_forward->m_shader.is_initialized()) {
-            m_forward->m_shader.~ShaderProgram();
-        }
-        m_forward->m_shader.init(shader_info.data(), shader_info.size());
-    }
-}
+    std::string empty_defines;
 
-// void Scene::compile_phong_shaders()
-// {
-//     std::string light_uniforms;
-//     std::string light_functions;
-//     auto directional_view = m_registry.view<Renderer::Light::Phong::Directional>();
-
-//     u32 i = 0;
-//     for (auto [entity, light] : directional_view.each()) {
-//         if (light.has_shadowmap()) {
-//             light_uniforms += std::format("uniform DirectionalLightShadow u_directional_light_{};\n", i);
-//             light_functions += std::format("FragColor += vec4(directional_light_shadow(u_directional_light_{}, Albedo, Specular, Normal, view_position, FragPos, 32.0), 1.0);\n", i);
-//         } else {
-//             light_uniforms += std::format("uniform DirectionalLight u_directional_light_{};\n", i);
-//             light_functions += std::format("fragcolor += vec4(directional_light(u_directional_light_{}, albedo, specular, normal, view_position, fragpos, 32.0), 1.0);\n", i);
-//         }
-//         i++;
-//     }
-//     auto point_view = m_registry.view<renderer::light::phong::point>();
-//     i = 0;
-//     for (auto [entity, light] : point_view.each()) {
-//         if (light.has_shadowmap()) {
-//             light_uniforms += std::format("uniform pointlightshadow u_point_light_{};\n", i);
-//             light_functions += std::format("fragcolor += vec4(point_light_shadow(u_point_light_{}, albedo, specular, normal, view_position, fragpos, 32.0), 1.0);\n", i);
-//         } else {
-//             light_uniforms += std::format("uniform pointlight u_point_light_{};\n", i);
-//             light_functions += std::format("fragcolor += vec4(point_light(u_point_light_{}, albedo, specular, normal, view_position, fragpos, 32.0), 1.0);\n", i);
-//         }
-//         i++;
-//     }
-
-//     if (m_forward_pass) {
-//         std::string shader_source_frag;
-//         const char* shader_source_vert;
-//         if (renderer::extensions::is_extension_supported("gl_arb_bindless_texture")) {
-//             shader_source_frag = get_phong_forward_pass_indirect(light_uniforms, light_functions);
-//             shader_source_vert = "res/forward_pass/model_indirect.glsl.vert";
-//         } else {
-//             shader_source_frag = get_phong_forward_pass_normal(light_uniforms, light_functions);
-//             // shader_source_frag = "res/forward_pass/pbr_normal.glsl.frag";
-//             shader_source_vert = "res/forward_pass/model_normal.glsl.vert";
-//         }
-
-//         std::array<renderer::shaderinfo, 2>
-//             shader_info = {
-//                 renderer::shaderinfo {
-//                     .is_file = true,
-//                     .shader = shader_source_vert,
-//                     .type = gl_vertex_shader,
-//                 },
-//                 renderer::shaderinfo {
-//                     .is_file = true,
-//                     .shader = shader_source_frag.c_str(),
-//                     .type = gl_fragment_shader,
-//                 },
-//             };
-//         if (m_forward->m_shader.is_initialized()) {
-//             m_forward->m_shader.~shaderprogram();
-//         }
-//         m_forward->m_shader.init(shader_info.data(), shader_info.size());
-//     } else {
-//         std::array<renderer::shaderinfo, 2> shader_info;
-
-//         if (renderer::extensions::is_extension_supported("gl_arb_bindless_texture")) {
-//             shader_info = {
-//                 renderer::shaderinfo {
-//                     .is_file = true,
-//                     .shader = "res/deferred_shading/g_pass_indirect.glsl.vert",
-//                     .type = gl_vertex_shader,
-//                 },
-//                 renderer::shaderinfo {
-//                     .is_file = true,
-//                     .shader = "res/deferred_shading/g_pass_indirect.glsl.frag",
-//                     .type = gl_fragment_shader,
-//                 },
-//             };
-//         } else {
-//             shader_info = {
-//                 renderer::shaderinfo {
-//                     .is_file = true,
-//                     .shader = "res/deferred_shading/g_pass_normal.glsl.vert",
-//                     .type = gl_vertex_shader,
-//                 },
-//                 renderer::shaderinfo {
-//                     .is_file = true,
-//                     .shader = "res/deferred_shading/g_pass_normal.glsl.frag",
-//                     .type = gl_fragment_shader,
-//                 },
-//             };
-//         }
-//         if (m_deferred->m_gpass_shader.is_initialized()) {
-//             m_deferred->m_gpass_shader.~shaderprogram();
-//         }
-//         m_deferred->m_gpass_shader.init(shader_info.data(), shader_info.size());
-
-//         std::string shader_source_frag = get_deferred_pass(light_uniforms, light_functions);
-
-//         shader_info = {
-//             renderer::shaderinfo {
-//                 .is_file = true,
-//                 .shader = "res/deferred_shading/l_pass.glsl.vert",
-//                 .type = gl_vertex_shader,
-//             },
-//             renderer::shaderinfo {
-//                 .is_file = false,
-//                 .shader = shader_source_frag.c_str(),
-//                 .type = gl_fragment_shader,
-//             },
-//         };
-//         if (m_deferred->m_lpass_shader.is_initialized()) {
-//             m_deferred->m_lpass_shader.~shaderprogram();
-//         }
-//         m_deferred->m_lpass_shader.init(shader_info.data(), shader_info.size());
-//     }
-// }
-
-void Scene::init_pass()
-{
-    if (m_forward != nullptr) {
-        delete m_forward;
-        m_forward = nullptr;
-        LOG_INFO("Deleted forward pass");
-    }
-    if (m_deferred != nullptr) {
-        delete m_deferred;
-        m_deferred = nullptr;
-        LOG_INFO("Deleted deferred pass");
-    }
-
-    if (m_forward_pass) {
-        m_forward = new ForwardPass {};
-        LOG_INFO("Created forward pass");
-        glEnable(GL_MULTISAMPLE);
+    if (Renderer::Extensions::is_extension_supported("GL_ARB_bindless_texture")) {
+        get_pbr_forward_pass_indirect(shader_source, light_uniforms, light_functions, empty_defines);
+        get_pbr_forward_pass_indirect(shader_source_bones, light_uniforms, light_functions, bone_defines);
     } else {
-        m_deferred = new DeferedPass {};
-        m_deferred->m_gpass_width = m_window.get_width();
-        m_deferred->m_gpass_height = m_window.get_height();
-        m_deferred->m_gpass.init(m_deferred->m_gpass_width, m_deferred->m_gpass_height);
-        m_deferred->m_lpass.init();
-        LOG_INFO("Created deferred pass");
-        glDisable(GL_MULTISAMPLE);
+        get_pbr_forward_pass_normal(shader_source, light_uniforms, light_functions, empty_defines);
+        get_pbr_forward_pass_normal(shader_source_bones, light_uniforms, light_functions, bone_defines);
     }
 
-    m_shaders_need_update = true;
+    std::println("Vert 1:\n{}", shader_source.info.at(0).shader);
+    std::println("Vert 2:\n{}", shader_source_bones.info.at(0).shader);
+
+    if (m_shader.is_initialized()) {
+        m_shader.~ShaderProgram();
+    }
+    m_shader.init(shader_source.info.data(), shader_source.info.size());
+
+    if (m_shader_bones.is_initialized()) {
+        m_shader_bones.~ShaderProgram();
+    }
+    m_shader_bones.init(shader_source_bones.info.data(), shader_source_bones.info.size());
 }

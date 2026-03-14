@@ -77,28 +77,28 @@ Model::~Model()
     initialized = false;
 }
 
-void Model::draw_untextured(ShaderProgram& shader, const std::span<glm::mat4> model)
+void Model::draw_untextured(ShaderProgram& shader)
 {
     util_assert(initialized == true, "Model has not been initialized");
 
     // shader.set_mat4("model", model[0]);
-    m_mesh.update_model_ssbos(model);
-    m_mesh.draw();
+    m_mesh.draw_untextured(shader);
 }
 
-void Model::draw(ShaderProgram& shader, const std::span<glm::mat4> model)
+void Model::draw(ShaderProgram& shader)
 {
     util_assert(initialized == true, "Model has not been initialized");
 
     // shader.set_mat4("model", model[0]);
-    m_mesh.update_model_ssbos(model);
+    m_mesh.draw(shader);
+}
+
+void Model::update(std::span<glm::mat4> models, float animation_time)
+{
+    m_mesh.update_model_ssbos(models);
     if (m_mesh.m_has_bones) {
-        m_timer.update();
-        static float animation_time = 0.0F;
-        animation_time += m_timer.delta_time();
         m_mesh.update_bone_matrices(animation_time);
     }
-    m_mesh.draw(shader);
 }
 
 const Mesh* Model::get_mesh()
@@ -193,7 +193,8 @@ void Model::process_mesh(aiMesh* mesh, const aiScene* scene)
     if (mesh->HasBones()) {
         m_mesh.m_has_bones = true;
         m_mesh.m_vertex_bones.resize(m_mesh.m_vertex_bones.size() + mesh->mNumVertices);
-        // std::println("vertex bones size {}", m_mesh.m_vertex_bones.size());
+        std::println("mesh has bones");
+
         for (u32 i = 0; i < mesh->mNumBones; i++) {
             // Each bone has mName, mNumWeights, mOffsetMatrix, mWeights
 
@@ -207,6 +208,7 @@ void Model::process_mesh(aiMesh* mesh, const aiScene* scene)
             aiBone* bone = mesh->mBones[i];
 
             usize bone_id;
+
             // There might be multiple skeletons/meshes with bones/the same bones
             if (!m_mesh.m_bone_id_map.contains(bone->mName.C_Str())) {
                 bone_id = m_mesh.m_bones.size();

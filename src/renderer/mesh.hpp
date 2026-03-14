@@ -22,7 +22,16 @@ class Mesh : public NoCopyNoMove {
     friend class Model;
 
 public:
+    static constexpr u32 MAX_BONES = 100;
     static constexpr u32 MAX_BONES_PER_VERTEX = 4;
+
+    static constexpr std::string get_bone_defines()
+    {
+        return std::format(
+            "#define ENABLE_BONES\n#define MAX_BONES {}\n#define BONES_PER_VERTEX {}\n",
+            Renderer::Mesh::MAX_BONES,
+            Renderer::Mesh::MAX_BONES_PER_VERTEX);
+    }
 
     struct Vertex {
         glm::vec3 m_pos;
@@ -38,15 +47,16 @@ public:
         VertexBone()
         {
             for (auto& bone : bones) {
-                bone = UINT32_MAX;
-                // bone = 0;
+                // bone = UINT32_MAX;
+                bone = 0;
             }
         }
 
         void add_bone(const u32 bone_id, const float weight)
         {
             for (u32 i = 0; i < MAX_BONES_PER_VERTEX; i++) {
-                if (bones.at(i) == UINT32_MAX) {
+                if (weights.at(i) == 0.0F) {
+                    // if (bones.at(i) == UINT32_MAX) {
                     bones.at(i) = bone_id;
                     weights.at(i) = weight;
                     return;
@@ -85,7 +95,7 @@ public:
     void update_model_ssbos(const std::span<glm::mat4> model_matrices);
     void update_bone_matrices(const float animation_time);
 
-    void draw();
+    void draw_untextured(Renderer::ShaderProgram& shader);
     void draw(ShaderProgram& shader);
 
     std::vector<Vertex> m_vertices;

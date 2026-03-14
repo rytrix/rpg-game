@@ -1,6 +1,7 @@
 #pragma once
 
 #include "../../camera.hpp"
+#include "../../model.hpp"
 #include "../../shader.hpp"
 #include "../../shadowmap.hpp"
 
@@ -20,7 +21,9 @@ public:
 
     void init();
     void update(const Point& light);
-    void shadowmap_draw(Renderer::ShaderProgram& shader, const Point& light, const std::function<void()>& draw_function);
+    void shadowmap_begin();
+    void shadowmap_draw(Renderer::ShaderProgram& shader, const Point& light, Renderer::Model* model);
+    void shadowmap_end();
     void set_uniforms(Renderer::ShaderProgram& shader, const char* light_name);
 
     static constexpr bool USE_GEOMETRY_SHADER = false;

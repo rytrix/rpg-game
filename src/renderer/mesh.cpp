@@ -4,9 +4,6 @@
 
 #include "../utils/helpers.hpp"
 
-#define GLM_ENABLE_EXPERIMENTAL
-#include <glm/gtx/string_cast.hpp>
-
 namespace Renderer {
 
 Mesh::~Mesh()
@@ -42,13 +39,12 @@ void Mesh::update_model_ssbos(const std::span<glm::mat4> model_matrices)
             m_cmd_buff.buffer_sub_data(0, m_commands.size() * sizeof(m_commands[0]), m_commands.data());
         }
     }
-
-    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, m_model_ssbo.get_id());
 }
 
 void Mesh::evaluate_bone_matrices(float animation_time, const aiNode* node, const glm::mat4& parent_transform)
 {
     util_assert(initialized == true, "Mesh has not been initialized");
+    util_assert(m_has_bones == true, "Attempting to update bone matrices with no bones");
 
     glm::mat4 node_transform = mat4_to_mat4(node->mTransformation);
     glm::mat4 global_transform;
@@ -77,6 +73,7 @@ void Mesh::evaluate_bone_matrices(float animation_time, const aiNode* node, cons
 void Mesh::update_bone_matrices(float animation_time)
 {
     util_assert(initialized == true, "Mesh has not been initialized");
+    util_assert(m_has_bones == true, "Attempting to update bone matrices with no bones");
 
     animation_time = std::fmod(animation_time * m_ticks_per_second, m_total_animation_time);
 
@@ -89,14 +86,19 @@ void Mesh::update_bone_matrices(float animation_time)
     evaluate_bone_matrices(animation_time, m_scene->mRootNode, identity);
 }
 
-void Mesh::draw()
+void Mesh::draw_untextured(Renderer::ShaderProgram& shader)
 {
     util_assert(initialized == true, "Mesh has not been initialized");
 
-    // TODO EVERYTHING NEEDS BONES
-
     m_vao.bind();
 
+    if (m_has_bones) {
+        for (u32 i = 0; i < m_final_bone_matrices.size(); i++) {
+            shader.set_mat4(std::format("final_bone_matrices[{}]", i).c_str(), m_final_bone_matrices[i]);
+        }
+    }
+
+    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, m_model_ssbo.get_id());
     if (Renderer::Extensions::is_extension_supported("GL_ARB_bindless_texture")) {
         m_cmd_buff.bind_buffer(GL_DRAW_INDIRECT_BUFFER);
 
@@ -134,6 +136,7 @@ void Mesh::draw(ShaderProgram& shader)
         }
     }
 
+    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, m_model_ssbo.get_id());
     if (Renderer::Extensions::is_extension_supported("GL_ARB_bindless_texture")) {
         glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 2, m_texture_ssbo.get_id());
 

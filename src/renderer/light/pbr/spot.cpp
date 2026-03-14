@@ -43,7 +43,7 @@ void SpotShadow::update(const Spot& light)
     m_light_space_matrix = light_proj * light_view;
 }
 
-void SpotShadow::shadowmap_draw(Renderer::ShaderProgram& shader, const std::function<void()>& draw_function)
+void SpotShadow::shadowmap_begin()
 {
     util_assert(initialized == true, "Light::SpotShadow has not been initialized");
 
@@ -51,9 +51,20 @@ void SpotShadow::shadowmap_draw(Renderer::ShaderProgram& shader, const std::func
     m_shadowmap.bind();
 
     glClear(GL_DEPTH_BUFFER_BIT);
+}
+
+void SpotShadow::shadowmap_draw(Renderer::ShaderProgram& shader, Renderer::Model* model)
+{
+    util_assert(initialized == true, "Light::SpotShadow has not been initialized");
+
     shader.bind();
     shader.set_mat4("light_space_matrix", m_light_space_matrix);
-    draw_function();
+    model->draw_untextured(shader);
+}
+
+void SpotShadow::shadowmap_end()
+{
+    util_assert(initialized == true, "Light::SpotShadow has not been initialized");
 
     m_shadowmap.unbind();
 }

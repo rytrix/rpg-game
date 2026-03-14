@@ -20,8 +20,10 @@ public:
 
     void init(const char* path);
 
-    void draw_untextured(ShaderProgram& shader, const std::span<glm::mat4> model);
-    void draw(ShaderProgram& shader, const std::span<glm::mat4> model);
+    void update(std::span<glm::mat4> models, float animation_time);
+
+    void draw_untextured(ShaderProgram& shader);
+    void draw(ShaderProgram& shader);
 
     const Mesh* get_mesh();
     bool has_bones() const;

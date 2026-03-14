@@ -37,14 +37,19 @@ void PointShadow::update(const Point& light)
     m_light_space_matrices.at(5) = light_projection * glm::lookAt(light.position, light.position + glm::vec3(0.0, 0.0, -1.0), glm::vec3(0.0, -1.0, 0.0));
 }
 
-void PointShadow::shadowmap_draw(Renderer::ShaderProgram& shader, const Point& light, const std::function<void()>& draw_function)
+void PointShadow::shadowmap_begin()
 {
     util_assert(initialized == true, "Light::PointShadow has not been initialized");
 
     glViewport(0, 0, m_shadowmap.get_width(), m_shadowmap.get_height());
     m_shadowmap.bind();
-
     glClear(GL_DEPTH_BUFFER_BIT);
+}
+
+void PointShadow::shadowmap_draw(Renderer::ShaderProgram& shader, const Point& light, Renderer::Model* model)
+{
+    util_assert(initialized == true, "Light::PointShadow has not been initialized");
+
     shader.bind();
 
     shader.set_float("far_plane", m_far);
@@ -56,14 +61,19 @@ void PointShadow::shadowmap_draw(Renderer::ShaderProgram& shader, const Point& l
         shader.set_mat4("light_space_matrices[3]", m_light_space_matrices[3]);
         shader.set_mat4("light_space_matrices[4]", m_light_space_matrices[4]);
         shader.set_mat4("light_space_matrices[5]", m_light_space_matrices[5]);
-        draw_function();
+        model->draw_untextured(shader);
     } else {
         for (u32 i = 0; i < 6; i++) {
             m_shadowmap.bind_texture_layer(static_cast<i32>(i));
             shader.set_mat4("light_space_matrix", m_light_space_matrices.at(i));
-            draw_function();
+            model->draw_untextured(shader);
         }
     }
+}
+
+void PointShadow::shadowmap_end()
+{
+    util_assert(initialized == true, "Light::PointShadow has not been initialized");
 
     m_shadowmap.unbind();
 }

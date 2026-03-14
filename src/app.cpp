@@ -7,7 +7,7 @@ App::App()
     m_window.init(m_window_title, 800, 600);
     m_window.set_relative_mode(m_capture_mouse);
 
-    m_camera.init(90.0F, 1.0F, 200.0F, m_window.get_aspect_ratio(), { -2.0F, 1.5F, 4.0F });
+    m_camera.init(90.0F, 1.0F, 500.0F, m_window.get_aspect_ratio(), { -2.0F, 1.5F, 4.0F });
     m_camera.set_speed(10.0F);
 
     Renderer::Model::init_placeholder_textures();
@@ -51,9 +51,10 @@ App::App()
     m_scene->add_entity(e1);
 
     EntityBuilder e2;
-    // e2.add_model_path("res/models/physics_plane/plane.obj");
-    e2.add_model_path("res/models/Sponza/glTF/Sponza.gltf");
-    glm::mat4 e2_model_matrix = glm::scale(glm::mat4(1.0), glm::vec3(0.1));
+    e2.add_model_path("res/models/physics_plane/plane.obj");
+    // e2.add_model_path("res/models/Sponza/glTF/Sponza.gltf");
+    glm::mat4 e2_model_matrix = glm::scale(glm::mat4(1.0), glm::vec3(2.0));
+    // e2_model_matrix = glm::translate(e2_model_matrix, glm::vec3(0.0, -5.0, 0.0));
     e2.add_model_matrix(e2_model_matrix);
     e2.add_physics_command([&](Physics::System* system, Renderer::Model* model) -> std::pair<JPH::BodyID, JPH::EMotionType> {
         JPH::TriangleList triangles;
@@ -74,6 +75,9 @@ App::App()
     EntityBuilder e3;
     e3.add_name("cube");
     e3.add_model_path("res/models/physics_cube/cube.obj");
+    // This should probably do nothing since it's going to be based off of the physics mat4 anyways
+    // glm::mat4 e3_model_matrix = glm::scale(glm::mat4(1.0), glm::vec3(1.1));
+    // e3.add_model_matrix(e3_model_matrix);
     e3.add_physics_command([](Physics::System* system, [[maybe_unused]] Renderer::Model* _model) -> std::pair<JPH::BodyID, JPH::EMotionType> {
         JPH::BodyCreationSettings cube_settings(
             new JPH::BoxShape(JPH::Vec3(0.5, 0.5, 0.5)),
@@ -112,14 +116,14 @@ App::App()
     point.position = glm::vec3(6.0F, 6.0F, 8.0F);
     point.color = glm::vec3(10.0, 10.0, 10.0);
     e4.add_pbr_point_light(point);
-    // e4.add_pbr_point_light_shadow();
+    e4.add_pbr_point_light_shadow();
     m_scene->add_entity(e4);
 
     EntityBuilder e5;
     point.position = glm::vec3(6.0F, 6.0F, -8.0F);
     point.color = glm::vec3(50.0, 25.0, 25.0);
     e5.add_pbr_point_light(point);
-    // e5.add_pbr_point_light_shadow();
+    e5.add_pbr_point_light_shadow();
     m_scene->add_entity(e5);
 
     EntityBuilder e6;
@@ -139,19 +143,22 @@ App::App()
     });
     m_scene->add_entity(e6);
 
-    EntityBuilder e7;
-    Renderer::Light::Pbr::Spot spot {};
-    spot.position = glm::vec3(-6.0F, 8.0F, 10.0F);
-    spot.direction = glm::vec3(0.2, 0.0, -0.3);
-    spot.color = glm::vec3(50.0, 25.0, 25.0);
-    spot.inner_cutoff = glm::cos(glm::radians(12.5F));
-    spot.outer_cutoff = glm::cos(glm::radians(20.5F));
-    e7.add_pbr_spot_light(spot);
-    // e7.add_pbr_spot_light_shadow();
-    m_scene->add_entity(e7);
+    // EntityBuilder e7;
+    // Renderer::Light::Pbr::Spot spot {};
+    // spot.position = glm::vec3(-6.0F, 8.0F, 10.0F);
+    // spot.direction = glm::vec3(0.2, 0.0, -0.3);
+    // spot.color = glm::vec3(50.0, 25.0, 25.0);
+    // spot.inner_cutoff = glm::cos(glm::radians(12.5F));
+    // spot.outer_cutoff = glm::cos(glm::radians(20.5F));
+    // e7.add_pbr_spot_light(spot);
+    // // e7.add_pbr_spot_light_shadow();
+    // m_scene->add_entity(e7);
 
     EntityBuilder e8;
     e8.add_model_path("res/models/animation/example4.fbx");
+    e8.add_model_path("res/models/dog/scene.gltf");
+    e8.add_model_path("res/models/Defeated.fbx");
+    e8.add_model_matrix(glm::scale(glm::mat4(1.0), glm::vec3(0.1F)));
     m_scene->add_entity(e8);
 
     m_scene->optimize();
@@ -244,11 +251,6 @@ void App::run()
             } else {
                 m_window.set_swap_interval(0);
             }
-        }
-
-        if (ImGui::Checkbox("Toggle deferred shading", &m_deferred_pass)) {
-            LOG_INFO(std::format("Setting deffered shading to {}", m_deferred_pass));
-            m_scene->set_pass(!m_deferred_pass);
         }
 
         ImGui::Checkbox("Toggle physics", &m_physics_on);
