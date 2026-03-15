@@ -24,7 +24,7 @@ private:
     u32 m_prev_scale_frame = 0;
 
     template <typename T>
-    std::array<u32, 2> find_keyframe(u32& cache, const T* keys, u32 keys_size, float animation_time);
+    u32 find_keyframe(u32& cache, const T* keys, u32 keys_size, float animation_time);
 
     template <typename T, typename R>
     R lerp_interpolate(T* p_start, T* p_end, float animation_time);

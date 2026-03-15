@@ -8,7 +8,7 @@ static constexpr bool runtime_checks = true;
 static constexpr bool use_throws = false;
 
 template <typename StrType>
-constexpr void util_error(StrType error_msg, const char* file, int line)
+[[noreturn]] constexpr void util_error(StrType error_msg, const char* file, int line)
 {
     std::string msg = std::format("{}:{}: {}", file, line, error_msg);
     if constexpr (use_throws) {
