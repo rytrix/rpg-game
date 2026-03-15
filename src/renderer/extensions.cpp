@@ -3,12 +3,12 @@
 namespace Renderer::Extensions {
 
 namespace {
-    std::unique_ptr<std::set<std::string>> gl_extensions = nullptr;
+    std::unique_ptr<std::unordered_set<std::string>> gl_extensions = nullptr;
 
-    const std::unique_ptr<std::set<std::string>>& get_opengl_extensions()
+    const std::unique_ptr<std::unordered_set<std::string>>& get_opengl_extensions()
     {
         if (gl_extensions == nullptr) {
-            gl_extensions = std::make_unique<std::set<std::string>>();
+            gl_extensions = std::make_unique<std::unordered_set<std::string>>();
             GLint no_of_extensions = 0;
             glGetIntegerv(GL_NUM_EXTENSIONS, &no_of_extensions);
 
