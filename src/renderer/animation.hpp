@@ -1,8 +1,43 @@
 #pragma once
 
 #include <assimp/scene.h>
+#include <memory_resource>
 
 namespace Renderer {
+
+template <typename T>
+struct KeyFrame {
+    double m_time;
+    T m_value;
+};
+
+struct NodeAnim {
+    u32 m_index;
+    u32 m_parent_index;
+
+    KeyFrame<glm::vec3>* m_scaling;
+    usize m_scaling_size;
+
+    KeyFrame<glm::quat>* m_rotation;
+    usize m_rotation_size;
+
+    KeyFrame<glm::vec3>* m_translation;
+    usize m_translation_size;
+
+    glm::mat4 m_offset;
+};
+
+struct Animation {
+    std::string m_name;
+
+    // Needs to be sorted in a way such that 
+    // all parents get calculated before each child
+    NodeAnim* m_nodes;
+    usize m_node_size;
+
+    // Allocate with an arena
+    std::pmr::monotonic_buffer_resource m_allocator;
+};
 
 class BoneAnimation {
 public:

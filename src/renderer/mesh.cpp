@@ -17,6 +17,11 @@ VertexBone::VertexBone()
 void VertexBone::add_bone(const u32 bone_id, const float weight)
 {
     for (u32 i = 0; i < MAX_BONES_PER_VERTEX; i++) {
+        if (bones.at(i) == bone_id) {
+            return;
+        } 
+    }
+    for (u32 i = 0; i < MAX_BONES_PER_VERTEX; i++) {
         if (weights.at(i) == 0.0F) {
             // if (bones.at(i) == UINT32_MAX) {
             bones.at(i) = bone_id;
@@ -95,6 +100,9 @@ void Mesh::update_bone_matrices(double animation_time)
     util_assert(initialized == true, "Mesh has not been initialized");
     util_assert(m_has_bones == true, "Attempting to update bone matrices with no bones");
 
+    if (m_ticks_per_second == 0.0) {
+        m_ticks_per_second = 25.0;
+    }
     animation_time = std::fmod(animation_time * m_ticks_per_second, m_total_animation_time);
 
     util_assert(m_bones.size() <= MAX_BONES,
@@ -207,8 +215,8 @@ void Mesh::setup_mesh()
 
     m_vao.bind();
 
-    m_vbo.buffer_data(static_cast<i64>(m_vertices.size() * sizeof(Vertex)), m_vertices.data(), GL_STATIC_DRAW);
-    m_ebo.buffer_data(static_cast<i64>(m_indices.size() * sizeof(u32)), m_indices.data(), GL_STATIC_DRAW);
+    m_vbo.buffer_data(static_cast<i64>(m_vertex_data.m_vertices.size() * sizeof(Vertex)), m_vertex_data.m_vertices.data(), GL_STATIC_DRAW);
+    m_ebo.buffer_data(static_cast<i64>(m_vertex_data.m_indices.size() * sizeof(u32)), m_vertex_data.m_indices.data(), GL_STATIC_DRAW);
 
     m_vao.bind_vertex_buffer(0, m_vbo.get_id(), 0, sizeof(Vertex));
     m_vao.bind_element_buffer(m_ebo.get_id());
@@ -220,7 +228,7 @@ void Mesh::setup_mesh()
 
     if (m_has_bones) {
         m_bones_vbo.init();
-        m_bones_vbo.buffer_data(static_cast<i64>(m_vertex_bones.size() * sizeof(VertexBone)), m_vertex_bones.data(), GL_STATIC_DRAW);
+        m_bones_vbo.buffer_data(static_cast<i64>(m_vertex_data.m_bones.size() * sizeof(VertexBone)), m_vertex_data.m_bones.data(), GL_STATIC_DRAW);
         m_vao.bind_vertex_buffer(1, m_bones_vbo.get_id(), 0, sizeof(VertexBone));
 
         m_vao.vertex_attrib_int(4, 1, MAX_BONES_PER_VERTEX, GL_INT, 0);

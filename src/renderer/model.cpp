@@ -50,7 +50,7 @@ void Model::init(const char* file_path)
 
     for (u32 i = 0; i < scene->mNumAnimations; i++) {
         auto* animation = scene->mAnimations[i];
-        LOG_INFO(std::format("Animation info: Name: {}, Duration: {}", animation->mName.C_Str(), animation->mDuration));
+        LOG_INFO(std::format("Animation info: Name: {}, Duration: {}, Ticks Per Second: {}", animation->mName.C_Str(), animation->mDuration, animation->mTicksPerSecond));
         m_mesh.m_total_animation_time = animation->mDuration;
         m_mesh.m_ticks_per_second = animation->mTicksPerSecond;
 
@@ -126,8 +126,8 @@ void Model::process_node(aiNode* node, const aiScene* scene)
 
 void Model::process_mesh(aiMesh* mesh, const aiScene* scene)
 {
-    auto base_vertex = static_cast<GLsizei>(m_mesh.m_vertices.size());
-    auto count = static_cast<GLsizei>(m_mesh.m_indices.size());
+    auto base_vertex = static_cast<GLsizei>(m_mesh.m_vertex_data.m_vertices.size());
+    auto count = static_cast<GLsizei>(m_mesh.m_vertex_data.m_indices.size());
 
     for (u32 i = 0; i < mesh->mNumVertices; i++) {
         Mesh::Vertex vertex {};
@@ -148,14 +148,14 @@ void Model::process_mesh(aiMesh* mesh, const aiScene* scene)
             vertex.m_tex.y = mesh->mTextureCoords[0][i].y;
         }
 
-        m_mesh.m_vertices.push_back(vertex);
+        m_mesh.m_vertex_data.m_vertices.push_back(vertex);
     }
 
     for (u32 i = 0; i < mesh->mNumFaces; i++) {
         aiFace face = mesh->mFaces[i];
 
         for (u32 j = 0; j < face.mNumIndices; j++) {
-            m_mesh.m_indices.push_back(face.mIndices[j]);
+            m_mesh.m_vertex_data.m_indices.push_back(face.mIndices[j]);
         }
     }
 
@@ -192,7 +192,7 @@ void Model::process_mesh(aiMesh* mesh, const aiScene* scene)
 
     if (mesh->HasBones()) {
         m_mesh.m_has_bones = true;
-        m_mesh.m_vertex_bones.resize(m_mesh.m_vertex_bones.size() + mesh->mNumVertices);
+        m_mesh.m_vertex_data.m_bones.resize(m_mesh.m_vertex_data.m_bones.size() + mesh->mNumVertices);
         std::println("mesh has bones");
 
         for (u32 i = 0; i < mesh->mNumBones; i++) {
@@ -209,7 +209,7 @@ void Model::process_mesh(aiMesh* mesh, const aiScene* scene)
 
             usize bone_id;
 
-            // There might be multiple skeletons/meshes with bones/the same bones
+            // There might be multiple meshes with the same bones
             if (!m_mesh.m_bone_id_map.contains(bone->mName.C_Str())) {
                 bone_id = m_mesh.m_bones.size();
                 m_mesh.m_bone_id_map[bone->mName.C_Str()] = bone_id;
@@ -222,14 +222,14 @@ void Model::process_mesh(aiMesh* mesh, const aiScene* scene)
 
             for (u32 j = 0; j < bone->mNumWeights; j++) {
                 const aiVertexWeight vw = bone->mWeights[j];
-                m_mesh.m_vertex_bones
+                m_mesh.m_vertex_data.m_bones
                     .at(base_vertex + vw.mVertexId)
                     .add_bone(bone_id, vw.mWeight);
             }
         }
     }
 
-    count = static_cast<GLsizei>(m_mesh.m_indices.size()) - count;
+    count = static_cast<GLsizei>(m_mesh.m_vertex_data.m_indices.size()) - count;
 
     m_mesh.m_base_vertices.emplace_back(
         count,

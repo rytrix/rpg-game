@@ -70,6 +70,12 @@ public:
         glm::vec3 m_tang;
     };
 
+    struct VertexData {
+        std::vector<Vertex> m_vertices;
+        std::vector<VertexBone> m_bones;
+        std::vector<u32> m_indices;
+    };
+
     Mesh() = default;
     ~Mesh();
 
@@ -79,9 +85,7 @@ public:
     void draw_untextured(Renderer::ShaderProgram& shader);
     void draw(ShaderProgram& shader);
 
-    std::vector<Vertex> m_vertices;
-    std::vector<VertexBone> m_vertex_bones;
-    std::vector<u32> m_indices;
+    VertexData m_vertex_data;
 
     std::vector<Texture*> m_diffuse_textures;
     std::vector<Texture*> m_metallic_roughness_textures;
@@ -111,7 +115,6 @@ private:
 
     Buffer m_bones_vbo;
 
-    // Indirect info
     Buffer m_cmd_buff;
     std::vector<IndirectCommands> m_commands;
 

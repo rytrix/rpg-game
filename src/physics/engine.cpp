@@ -60,10 +60,10 @@ void System::create_mesh_triangle_list(JPH::TriangleList& triangles, const std::
         glm::vec3 v2;
         glm::vec3 v3;
         u32 j = 0;
-        while (j + 2 < mesh->m_indices.size()) {
-            v1 = mesh->m_vertices[mesh->m_indices.at(j + 0)].m_pos;
-            v2 = mesh->m_vertices[mesh->m_indices.at(j + 1)].m_pos;
-            v3 = mesh->m_vertices[mesh->m_indices.at(j + 2)].m_pos;
+        while (j + 2 < mesh->m_vertex_data.m_indices.size()) {
+            v1 = mesh->m_vertex_data.m_vertices[mesh->m_vertex_data.m_indices.at(j + 0)].m_pos;
+            v2 = mesh->m_vertex_data.m_vertices[mesh->m_vertex_data.m_indices.at(j + 1)].m_pos;
+            v3 = mesh->m_vertex_data.m_vertices[mesh->m_vertex_data.m_indices.at(j + 2)].m_pos;
             j += 3;
 
             JPH::Triangle triangle(vec3_to_float3(v1), vec3_to_float3(v2), vec3_to_float3(v3));
@@ -80,10 +80,10 @@ void System::create_mesh_triangle_list(JPH::TriangleList& triangles, const glm::
         glm::vec3 v2;
         glm::vec3 v3;
         u32 j = 0;
-        while (j + 2 < mesh->m_indices.size()) {
-            v1 = glm::vec4(mesh->m_vertices[mesh->m_indices.at(j + 0)].m_pos, 1.0F) * model;
-            v2 = glm::vec4(mesh->m_vertices[mesh->m_indices.at(j + 1)].m_pos, 1.0F) * model;
-            v3 = glm::vec4(mesh->m_vertices[mesh->m_indices.at(j + 2)].m_pos, 1.0F) * model;
+        while (j + 2 < mesh->m_vertex_data.m_indices.size()) {
+            v1 = glm::vec4(mesh->m_vertex_data.m_vertices[mesh->m_vertex_data.m_indices.at(j + 0)].m_pos, 1.0F) * model;
+            v2 = glm::vec4(mesh->m_vertex_data.m_vertices[mesh->m_vertex_data.m_indices.at(j + 1)].m_pos, 1.0F) * model;
+            v3 = glm::vec4(mesh->m_vertex_data.m_vertices[mesh->m_vertex_data.m_indices.at(j + 2)].m_pos, 1.0F) * model;
             j += 3;
 
             JPH::Triangle triangle(vec3_to_float3(v1), vec3_to_float3(v2), vec3_to_float3(v3));
@@ -104,9 +104,9 @@ void System::create_mesh_triangle_list_base_index(JPH::TriangleList& triangles, 
         auto count = mesh->m_base_vertices[i].m_count;
         u32 j = offset;
         while (j + 2 < count + offset) {
-            v1 = mesh->m_vertices[mesh->m_indices.at(j + 0) + base].m_pos;
-            v2 = mesh->m_vertices[mesh->m_indices.at(j + 1) + base].m_pos;
-            v3 = mesh->m_vertices[mesh->m_indices.at(j + 2) + base].m_pos;
+            v1 = mesh->m_vertex_data.m_vertices[mesh->m_vertex_data.m_indices.at(j + 0) + base].m_pos;
+            v2 = mesh->m_vertex_data.m_vertices[mesh->m_vertex_data.m_indices.at(j + 1) + base].m_pos;
+            v3 = mesh->m_vertex_data.m_vertices[mesh->m_vertex_data.m_indices.at(j + 2) + base].m_pos;
             j += 3;
 
             JPH::Triangle triangle(vec3_to_float3(v1), vec3_to_float3(v2), vec3_to_float3(v3));
@@ -129,9 +129,9 @@ void System::create_mesh_triangle_list_base_index(JPH::TriangleList& triangles, 
         auto count = mesh->m_base_vertices[i].m_count;
         u32 j = offset;
         while (j + 2 < count + offset) {
-            v1 = glm::vec4(mesh->m_vertices[mesh->m_indices.at(j + 0) + base].m_pos, 1.0F) * model;
-            v2 = glm::vec4(mesh->m_vertices[mesh->m_indices.at(j + 1) + base].m_pos, 1.0F) * model;
-            v3 = glm::vec4(mesh->m_vertices[mesh->m_indices.at(j + 2) + base].m_pos, 1.0F) * model;
+            v1 = glm::vec4(mesh->m_vertex_data.m_vertices[mesh->m_vertex_data.m_indices.at(j + 0) + base].m_pos, 1.0F) * model;
+            v2 = glm::vec4(mesh->m_vertex_data.m_vertices[mesh->m_vertex_data.m_indices.at(j + 1) + base].m_pos, 1.0F) * model;
+            v3 = glm::vec4(mesh->m_vertex_data.m_vertices[mesh->m_vertex_data.m_indices.at(j + 2) + base].m_pos, 1.0F) * model;
             j += 3;
 
             JPH::Triangle triangle(vec3_to_float3(v1), vec3_to_float3(v2), vec3_to_float3(v3));
