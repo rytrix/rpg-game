@@ -2,24 +2,24 @@
 
 namespace Utils {
 
-class DeltaTime {
+class DeltaTime : NoCopyNoMove {
 public:
     DeltaTime();
     ~DeltaTime() = default;
 
-    DeltaTime(const DeltaTime&) = delete;
-    DeltaTime& operator=(const DeltaTime&) = delete;
-    DeltaTime(DeltaTime&&) = default;
-    DeltaTime& operator=(DeltaTime&&) = default;
-
     void update();
-    [[nodiscard]] float delta_time() const;
+
+    template <typename T>
+    [[nodiscard]] T delta_time() const
+    {
+        return static_cast<T>(m_delta_time);
+    }
 
 private:
     std::chrono::high_resolution_clock m_clock;
     std::chrono::system_clock::time_point m_start_time;
     std::chrono::system_clock::time_point m_current_time;
-    float m_delta_time {};
+    double m_delta_time {};
 };
 
 } // namespace Utils

@@ -93,7 +93,7 @@ void Model::draw(ShaderProgram& shader)
     m_mesh.draw(shader);
 }
 
-void Model::update(std::span<glm::mat4> models, float animation_time)
+void Model::update(std::span<glm::mat4> models, double animation_time)
 {
     m_mesh.update_model_ssbos(models);
     if (m_mesh.m_has_bones) {

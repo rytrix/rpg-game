@@ -17,7 +17,7 @@ void DirectionalShadow::init()
 {
     util_assert(initialized == false, "Light::DirectionalShadow has already been initialized");
     std::string no_defines;
-    std::string bone_defines = Renderer::Mesh::get_bone_defines();
+    std::string bone_defines = Renderer::get_bone_defines();
 
     if constexpr (!USE_GEOMETRY_SHADER) {
         ShaderInfoData<2> shader;

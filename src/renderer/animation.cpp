@@ -30,7 +30,7 @@ BoneAnimation::~BoneAnimation()
     }
 }
 
-glm::mat4 BoneAnimation::keyframe_to_mat4(float animation_time)
+glm::mat4 BoneAnimation::keyframe_to_mat4(double animation_time)
 {
     util_assert(initialized == true, "BoneAnimation has not been initialized");
 
@@ -65,7 +65,7 @@ glm::mat4 BoneAnimation::keyframe_to_mat4(float animation_time)
 }
 
 template <typename T>
-u32 BoneAnimation::find_keyframe(u32& cache, const T* keys, u32 keys_size, float animation_time)
+u32 BoneAnimation::find_keyframe(u32& cache, const T* keys, u32 keys_size, double animation_time)
 {
     util_assert(initialized == true, "BoneAnimation has not been initialized");
     // util_assert(animation_time <= keys[keys_size - 1].mTime, "keyframe time is greater than the max keyframe time");
@@ -73,66 +73,49 @@ u32 BoneAnimation::find_keyframe(u32& cache, const T* keys, u32 keys_size, float
         return keys_size - 1;
     }
 
-    // Cache check
-    if (animation_time >= keys[cache].mTime && animation_time < keys[cache + 1].mTime) {
-        return cache;
+    for (u32 i = cache; i < keys_size - 1; i++) {
+        if (animation_time >= keys[i].mTime && animation_time < keys[i + 1].mTime) {
+            cache = i;
+            return cache;
+        }
     }
-
-    for (u32 i = 0; i < keys_size - 1; i++) {
+    for (u32 i = 0; i < cache; i++) {
         if (animation_time < keys[i + 1].mTime) {
             cache = i;
             return cache;
         }
     }
     util_error("Could not find keyframe");
-
-    // This crashes for some reason
-    // for (u32 i = cache; i < keys_size - 1; i++) {
-    //     if (animation_time < keys[i + 1].mTime) {
-    //         cache = i;
-    //         return { cache, cache + 1 };
-    //     }
-    // }
-    // for (u32 i = 0; i < cache; i++) {
-    //     if (animation_time < keys[i + 1].mTime) {
-    //         cache = i;
-    //         return { cache, cache + 1 };
-    //     }
-    // }
-
-    // util_error("Could not find keyframe");
-    // cache = keys_size - 2;
-    // return { cache, cache + 1 };
 }
 
 template <typename T, typename R>
-R BoneAnimation::lerp_interpolate(T* p_start, T* p_end, float animation_time)
+R BoneAnimation::lerp_interpolate(T* p_start, T* p_end, double animation_time)
 {
     util_assert(initialized == true, "BoneAnimation has not been initialized");
-    float delta_time = static_cast<float>(p_end->mTime - p_start->mTime);
-    float factor = (animation_time - static_cast<float>(p_start->mTime)) / delta_time;
-    // util_assert(factor >= 0.0F && factor <= 1.0F, std::format("Lerp({}) factor not in range 0 to 1", factor));
-    if (factor >= 0.0F && factor <= 1.0F) {
+    double delta_time = p_end->mTime - p_start->mTime;
+    double factor = (animation_time - p_start->mTime) / delta_time;
+    // util_assert(factor >= 0.0 && factor <= 1.0, std::format("Lerp({}) factor not in range 0 to 1", factor));
+    if (factor < 0.0 || factor > 1.0) {
         LOG_WARN(std::format("Lerp({}) factor not in range 0 to 1", factor));
     }
-    factor = std::min(1.0F, std::max(0.0F, factor));
+    factor = std::min(1.0, std::max(0.0, factor));
 
-    return p_start->mValue + factor * (p_end->mValue - p_start->mValue);
+    return p_start->mValue + static_cast<float>(factor) * (p_end->mValue - p_start->mValue);
 }
 
-aiQuaternion BoneAnimation::slerp_interpolate(aiQuatKey* p_start, aiQuatKey* p_end, float animation_time)
+aiQuaternion BoneAnimation::slerp_interpolate(aiQuatKey* p_start, aiQuatKey* p_end, double animation_time)
 {
     util_assert(initialized == true, "BoneAnimation has not been initialized");
     aiQuaternion result;
-    float delta_time = static_cast<float>(p_end->mTime - p_start->mTime);
-    float factor = (animation_time - static_cast<float>(p_start->mTime)) / delta_time;
-    // util_assert(factor >= 0.0F && factor <= 1.0F, std::format("Slerp({}) factor not in range 0 to 1", factor));
-    if (factor >= 0.0F && factor <= 1.0F) {
+    double delta_time = p_end->mTime - p_start->mTime;
+    double factor = (animation_time - p_start->mTime) / delta_time;
+    // util_assert(factor >= 0.0 && factor <= 1.0, std::format("Slerp({}) factor not in range 0 to 1", factor));
+    if (factor < 0.0 || factor > 1.0) {
         LOG_WARN(std::format("Slerp({}) factor not in range 0 to 1", factor));
     }
-    factor = std::min(1.0F, std::max(0.0F, factor));
+    factor = std::min(1.0, std::max(0.0, factor));
 
-    aiQuaternion::Interpolate(result, p_start->mValue, p_end->mValue, factor);
+    aiQuaternion::Interpolate(result, p_start->mValue, p_end->mValue, static_cast<float>(factor));
     result.Normalize();
 
     return result;

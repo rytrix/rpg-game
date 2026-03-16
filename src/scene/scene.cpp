@@ -95,7 +95,7 @@ void Scene::update()
 
 void Scene::physics()
 {
-    m_physics_system->update(m_clock.delta_time());
+    m_physics_system->update(m_clock.delta_time<float>());
 
     auto view = m_registry.view<glm::mat4, JPH::BodyID, JPH::EMotionType>();
 
@@ -151,8 +151,8 @@ void Scene::draw()
     }
 
     for (auto& model : m_models_instance_draw_cache) {
-        static float animation_time = 0.0F;
-        animation_time += m_clock.delta_time();
+        static double animation_time = 0.0;
+        animation_time += m_clock.delta_time<double>();
         model.m_model->update(model.m_model_matrices, animation_time);
     }
 
@@ -380,7 +380,7 @@ void Scene::compile_shaders()
     LOG_INFO("Compiling shaders");
 
     std::string no_defines;
-    std::string bone_defines = Renderer::Mesh::get_bone_defines();
+    std::string bone_defines = Renderer::get_bone_defines();
 
     compile_pbr_shaders(bone_defines);
 

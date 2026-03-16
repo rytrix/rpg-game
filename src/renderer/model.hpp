@@ -20,7 +20,7 @@ public:
 
     void init(const char* path);
 
-    void update(std::span<glm::mat4> models, float animation_time);
+    void update(std::span<glm::mat4> models, double animation_time);
 
     void draw_untextured(ShaderProgram& shader);
     void draw(ShaderProgram& shader);

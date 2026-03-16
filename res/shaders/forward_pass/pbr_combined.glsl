@@ -8,7 +8,9 @@ layout (location = 3) in vec3 inTangent;
 #ifdef ENABLE_BONES
 layout (location = 4) in ivec4 inBoneIDs;
 layout (location = 5) in vec4 inBoneWeights;
-uniform mat4 final_bone_matrices[MAX_BONES];
+layout(binding = 2, std430) readonly buffer ssbo1 {
+    mat4 final_bone_matrices[];
+};
 #endif
 
 out vec3 Normal;
@@ -45,11 +47,6 @@ void main()
 #ifdef ENABLE_BONES
     vec4 world_pos = model * (bone_transform * vec4(inPos, 1.0));
     // Normal and Tangent should be different because of bones
-
-    // TODO: does this work correctly??
-    // Normal = (model * (bone_transform * vec4(inNormal, 1.0))).xyz;
-    // Tangent = (model * (bone_transform * vec4(inTangent, 1.0))).xyz;
-
     mat3 transposed_model = mat3(transpose(inverse(model)));
     mat3 transposed_bone_transform = mat3(transpose(inverse(bone_transform)));
     Normal = transposed_model * (transposed_bone_transform * inNormal);
@@ -126,7 +123,7 @@ uniform sampler2D tex_normals;
 #endif
 
 #ifdef BindlessTextures
-layout(binding = 2, std430) readonly buffer ssbo1 {
+layout(binding = 3, std430) readonly buffer ssbo2 {
     sampler2D ssbo_textures[];
 };
 #endif

@@ -183,7 +183,7 @@ void App::fps_counter()
         frames = 0;
         initialized = true;
     } else {
-        time_passed += m_scene->get_clock().delta_time();
+        time_passed += m_scene->get_clock().delta_time<float>();
         frames += 1;
         if (time_passed >= 1.0F) {
             time_passed = 0;
@@ -199,7 +199,7 @@ void App::run()
     auto scancodes = [&]() {
         if (m_capture_mouse) {
             const bool* keys = SDL_GetKeyboardState(nullptr);
-            float delta_time = m_scene->get_clock().delta_time();
+            float delta_time = m_scene->get_clock().delta_time<float>();
             using Dir = Renderer::Camera::Movement;
             if (keys[SDL_SCANCODE_W]) {
                 m_camera.move(Dir::Forward, delta_time);

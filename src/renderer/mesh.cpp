@@ -41,7 +41,7 @@ void Mesh::update_model_ssbos(const std::span<glm::mat4> model_matrices)
     }
 }
 
-void Mesh::evaluate_bone_matrices(float animation_time, const aiNode* node, const glm::mat4& parent_transform)
+void Mesh::evaluate_bone_matrices(double animation_time, const aiNode* node, const glm::mat4& parent_transform)
 {
     util_assert(initialized == true, "Mesh has not been initialized");
     util_assert(m_has_bones == true, "Attempting to update bone matrices with no bones");
@@ -70,7 +70,7 @@ void Mesh::evaluate_bone_matrices(float animation_time, const aiNode* node, cons
     }
 }
 
-void Mesh::update_bone_matrices(float animation_time)
+void Mesh::update_bone_matrices(double animation_time)
 {
     util_assert(initialized == true, "Mesh has not been initialized");
     util_assert(m_has_bones == true, "Attempting to update bone matrices with no bones");
@@ -78,12 +78,13 @@ void Mesh::update_bone_matrices(float animation_time)
     animation_time = std::fmod(animation_time * m_ticks_per_second, m_total_animation_time);
 
     m_final_bone_matrices.resize(m_bones.size());
-    // for (auto& matrix : m_final_bone_matrices) {
-    //     matrix = glm::mat4(1.0F);
-    // }
 
     glm::mat4 identity(1.0F);
     evaluate_bone_matrices(animation_time, m_scene->mRootNode, identity);
+
+    m_bone_ssbo.buffer_sub_data(0,
+        static_cast<GLsizeiptr>(sizeof(glm::mat4) * m_final_bone_matrices.size()),
+        m_final_bone_matrices.data());
 }
 
 void Mesh::draw_untextured(Renderer::ShaderProgram& shader)
@@ -92,13 +93,10 @@ void Mesh::draw_untextured(Renderer::ShaderProgram& shader)
 
     m_vao.bind();
 
-    if (m_has_bones) {
-        for (u32 i = 0; i < m_final_bone_matrices.size(); i++) {
-            shader.set_mat4(std::format("final_bone_matrices[{}]", i).c_str(), m_final_bone_matrices[i]);
-        }
-    }
-
     glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, m_model_ssbo.get_id());
+    if (m_has_bones) {
+        glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 2, m_bone_ssbo.get_id());
+    }
     if (Renderer::Extensions::is_extension_supported("GL_ARB_bindless_texture")) {
         m_cmd_buff.bind_buffer(GL_DRAW_INDIRECT_BUFFER);
 
@@ -130,15 +128,12 @@ void Mesh::draw(ShaderProgram& shader)
 
     m_vao.bind();
 
-    if (m_has_bones) {
-        for (u32 i = 0; i < m_final_bone_matrices.size(); i++) {
-            shader.set_mat4(std::format("final_bone_matrices[{}]", i).c_str(), m_final_bone_matrices[i]);
-        }
-    }
-
     glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, m_model_ssbo.get_id());
+    if (m_has_bones) {
+        glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 2, m_bone_ssbo.get_id());
+    }
     if (Renderer::Extensions::is_extension_supported("GL_ARB_bindless_texture")) {
-        glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 2, m_texture_ssbo.get_id());
+        glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 3, m_texture_ssbo.get_id());
 
         m_cmd_buff.bind_buffer(GL_DRAW_INDIRECT_BUFFER);
 
@@ -244,6 +239,11 @@ void Mesh::setup_mesh()
         if (m_texture_bindless_ids.size() > 0) {
             m_texture_ssbo.buffer_storage(m_texture_bindless_ids.size() * sizeof(GLuint64), m_texture_bindless_ids.data(), 0);
         }
+    }
+
+    if (m_has_bones) {
+        m_bone_ssbo.init();
+        m_bone_ssbo.buffer_storage(sizeof(glm::mat4) * MAX_BONES, nullptr, GL_DYNAMIC_STORAGE_BIT);
     }
 
     initialized = true;
