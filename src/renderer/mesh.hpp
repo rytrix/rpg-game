@@ -18,41 +18,34 @@ struct IndirectCommands {
     GLuint base_instance;
 };
 
+struct BaseVertex {
+    GLsizei m_count {};
+    GLsizei m_base {};
+    GLuint m_offset {};
+
+    BaseVertex(GLsizei count, GLsizei base)
+        : m_count(count)
+        , m_base(base)
+    {
+    }
+};
+
 static constexpr u32 MAX_BONES = 100;
 static constexpr u32 MAX_BONES_PER_VERTEX = 4;
 
 static constexpr std::string get_bone_defines()
 {
     return std::format(
-        "#define ENABLE_BONES\n#define MAX_BONES {}\n#define BONES_PER_VERTEX {}\n",
-        MAX_BONES,
+        "#define ENABLE_BONES\n#define BONES_PER_VERTEX {}\n",
         MAX_BONES_PER_VERTEX);
 }
 
 struct VertexBone {
+    VertexBone();
+    void add_bone(const u32 bone_id, const float weight);
+
     std::array<u32, MAX_BONES_PER_VERTEX> bones {};
     std::array<float, MAX_BONES_PER_VERTEX> weights {};
-
-    VertexBone()
-    {
-        for (auto& bone : bones) {
-            // bone = UINT32_MAX;
-            bone = 0;
-        }
-    }
-
-    void add_bone(const u32 bone_id, const float weight)
-    {
-        for (u32 i = 0; i < MAX_BONES_PER_VERTEX; i++) {
-            if (weights.at(i) == 0.0F) {
-                // if (bones.at(i) == UINT32_MAX) {
-                bones.at(i) = bone_id;
-                weights.at(i) = weight;
-                return;
-            }
-        }
-        util_error("Exceded max number of bones per vertex");
-    }
 };
 
 struct BoneInfo {
@@ -62,18 +55,6 @@ struct BoneInfo {
     BoneInfo(glm::mat4 offset, aiNodeAnim* anim)
         : m_offset(offset)
         , m_animation(anim)
-    {
-    }
-};
-
-struct BaseVertex {
-    GLsizei m_count {};
-    GLsizei m_base {};
-    GLuint m_offset {};
-
-    BaseVertex(GLsizei count, GLsizei base)
-        : m_count(count)
-        , m_base(base)
     {
     }
 };
@@ -109,7 +90,6 @@ public:
     bool m_has_bones = false;
     std::unordered_map<std::string, u32> m_bone_id_map;
     std::vector<BoneInfo> m_bones;
-    std::vector<glm::mat4> m_final_bone_matrices;
     glm::mat4 m_global_inverse_transform;
 
     const aiScene* m_scene = nullptr;
@@ -142,6 +122,7 @@ private:
     std::vector<GLuint64> m_texture_bindless_ids;
 
     Buffer m_bone_ssbo;
+    std::vector<glm::mat4> m_final_bone_matrices;
 };
 
 } // namespace Renderer

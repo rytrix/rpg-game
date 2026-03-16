@@ -284,9 +284,7 @@ void Texture::from_file(const char* file, bool flip, GLint mipmap_levels)
         util_error("currently only 2D textures are supported from files");
     }
 
-    if (flip) {
-        stbi_set_flip_vertically_on_load(1);
-    }
+    stbi_set_flip_vertically_on_load((int)flip);
 
     TextureSize size {};
     int nr_channels {};

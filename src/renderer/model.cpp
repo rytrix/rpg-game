@@ -271,9 +271,7 @@ Texture* Model::load_material_texture(const aiMaterial* mat, const aiTextureType
             } else {
                 int width, height, channels;
                 TextureSubimageInfo subimage_info;
-                if (texture_info.flip) {
-                    stbi_set_flip_vertically_on_load(1);
-                }
+                stbi_set_flip_vertically_on_load((int)texture_info.flip);
                 unsigned char* data = stbi_load_from_memory((const stbi_uc*)embedded_texture->pcData, embedded_texture->mWidth, &width, &height, &channels, 0);
 
                 texture_info.from_file = GL_FALSE;

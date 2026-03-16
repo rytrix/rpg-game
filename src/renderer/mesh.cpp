@@ -6,6 +6,27 @@
 
 namespace Renderer {
 
+VertexBone::VertexBone()
+{
+    for (auto& bone : bones) {
+        // bone = UINT32_MAX;
+        bone = 0;
+    }
+}
+
+void VertexBone::add_bone(const u32 bone_id, const float weight)
+{
+    for (u32 i = 0; i < MAX_BONES_PER_VERTEX; i++) {
+        if (weights.at(i) == 0.0F) {
+            // if (bones.at(i) == UINT32_MAX) {
+            bones.at(i) = bone_id;
+            weights.at(i) = weight;
+            return;
+        }
+    }
+    util_error("Exceded max number of bones per vertex");
+}
+
 Mesh::~Mesh()
 {
     initialized = false;
@@ -51,7 +72,6 @@ void Mesh::evaluate_bone_matrices(double animation_time, const aiNode* node, con
 
     if (m_bone_id_map.contains(node->mName.C_Str())) {
         u32 index = m_bone_id_map[node->mName.C_Str()];
-        // std::println("Bone id map contains \"{}\" at index {}", node->mName.C_Str(), index);
 
         // If animated
         if (m_bones[index].m_animation.is_initialized()) {
@@ -77,6 +97,10 @@ void Mesh::update_bone_matrices(double animation_time)
 
     animation_time = std::fmod(animation_time * m_ticks_per_second, m_total_animation_time);
 
+    util_assert(m_bones.size() <= MAX_BONES,
+        std::format("Exceded max bone limit of {} with {} bones",
+            MAX_BONES,
+            m_bones.size()));
     m_final_bone_matrices.resize(m_bones.size());
 
     glm::mat4 identity(1.0F);

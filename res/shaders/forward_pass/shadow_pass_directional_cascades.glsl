@@ -5,7 +5,9 @@ layout (location = 0) in vec3 inPos;
 #ifdef ENABLE_BONES
 layout (location = 4) in ivec4 inBoneIDs;
 layout (location = 5) in vec4 inBoneWeights;
-uniform mat4 final_bone_matrices[MAX_BONES];
+layout(binding = 2, std430) readonly buffer ssbo1 {
+    mat4 final_bone_matrices[];
+};
 #endif
 
 layout(binding = 1, std430) readonly buffer ssbo0 {
