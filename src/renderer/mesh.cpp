@@ -268,6 +268,8 @@ void Mesh::setup_mesh()
     if (m_has_bones) {
         m_bone_ssbo.init();
         m_bone_ssbo.buffer_storage(sizeof(glm::mat4) * MAX_BONES, nullptr, GL_DYNAMIC_STORAGE_BIT);
+
+        m_final_bone_matrices.reserve(MAX_BONES);
     }
 
     initialized = true;
