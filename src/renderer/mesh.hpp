@@ -48,17 +48,6 @@ struct VertexBone {
     std::array<float, MAX_BONES_PER_VERTEX> weights {};
 };
 
-struct BoneInfo {
-    glm::mat4 m_offset;
-    BoneAnimation m_animation;
-
-    BoneInfo(glm::mat4 offset, aiNodeAnim* anim)
-        : m_offset(offset)
-        , m_animation(anim)
-    {
-    }
-};
-
 class Mesh : public NoCopyNoMove {
     friend class Model;
 
@@ -93,19 +82,12 @@ public:
 
     bool m_has_bones = false;
     std::unordered_map<std::string, u32> m_bone_id_map;
-    std::vector<BoneInfo> m_bones;
-    glm::mat4 m_global_inverse_transform;
-
-    const aiScene* m_scene = nullptr;
+    Animation m_animation;
 
     std::vector<BaseVertex> m_base_vertices;
 
-    double m_total_animation_time = 0.0;
-    double m_ticks_per_second = 0.0;
-
 private:
     void setup_mesh();
-    void evaluate_bone_matrices(double animation_time, const aiNode* node, const glm::mat4& parent_transform);
 
     bool initialized = false;
 

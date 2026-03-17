@@ -25,10 +25,11 @@ void Model::init(const char* file_path)
 
     util_assert(std::filesystem::exists(file_path), std::format("Model \"{}\" is an invalid path", file_path));
 
-    // m_importer.SetPropertyFloat(AI_CONFIG_GLOBAL_SCALE_FACTOR_KEY, 10.0F);
-    m_importer.SetPropertyBool(AI_CONFIG_IMPORT_FBX_PRESERVE_PIVOTS, false);
+    Assimp::Importer importer;
+    // importer.SetPropertyFloat(AI_CONFIG_GLOBAL_SCALE_FACTOR_KEY, 10.0F);
+    importer.SetPropertyBool(AI_CONFIG_IMPORT_FBX_PRESERVE_PIVOTS, false);
 
-    const aiScene* scene = m_importer.ReadFile(file_path,
+    const aiScene* scene = importer.ReadFile(file_path,
         aiProcess_Triangulate
             | aiProcess_FlipUVs
             | aiProcess_CalcTangentSpace
@@ -37,8 +38,7 @@ void Model::init(const char* file_path)
 
     util_assert(scene->mRootNode != nullptr, "Model::Model: Root node is nullptr");
 
-    m_mesh.m_scene = scene;
-    m_mesh.m_global_inverse_transform = glm::inverse(mat4_to_mat4(scene->mRootNode->mTransformation));
+    glm::mat4 global_inverse_transform = glm::inverse(mat4_to_mat4(scene->mRootNode->mTransformation));
 
     process_node(scene->mRootNode, scene);
 
@@ -51,20 +51,8 @@ void Model::init(const char* file_path)
     for (u32 i = 0; i < scene->mNumAnimations; i++) {
         auto* animation = scene->mAnimations[i];
         LOG_INFO(std::format("Animation info: Name: {}, Duration: {}, Ticks Per Second: {}", animation->mName.C_Str(), animation->mDuration, animation->mTicksPerSecond));
-        m_mesh.m_total_animation_time = animation->mDuration;
-        m_mesh.m_ticks_per_second = animation->mTicksPerSecond;
 
-        for (u32 j = 0; j < animation->mNumChannels; j++) {
-            auto* bone_animation = animation->mChannels[j];
-            if (m_mesh.m_bone_id_map.contains(bone_animation->mNodeName.C_Str())) {
-                u32 value = m_mesh.m_bone_id_map.at(bone_animation->mNodeName.C_Str());
-                LOG_DEBUG(std::format("Loaded node name: \"{}\", index: {}", bone_animation->mNodeName.C_Str(), value));
-                m_mesh.m_bones.at(value).m_animation.init(bone_animation);
-            } else {
-                LOG_WARN(std::format("Failed to load node name: \"{}\"", bone_animation->mNodeName.C_Str()));
-            }
-        }
-        break;
+        m_mesh.m_animation.init(scene, animation, m_mesh.m_bone_id_map, global_inverse_transform, animation->mDuration, animation->mTicksPerSecond);
     }
 
     m_mesh.setup_mesh();
@@ -204,16 +192,14 @@ void Model::process_mesh(aiMesh* mesh, const aiScene* scene)
             // Each bone has a ID (and its mat4 transformation)
             // Each vertex has a list of IDs and Weights that correspond to those bones
 
-            // Also all of these bones have to be kept inside of each base vertex...
             aiBone* bone = mesh->mBones[i];
 
             usize bone_id;
 
             // There might be multiple meshes with the same bones
             if (!m_mesh.m_bone_id_map.contains(bone->mName.C_Str())) {
-                bone_id = m_mesh.m_bones.size();
+                bone_id = m_mesh.m_bone_id_map.size();
                 m_mesh.m_bone_id_map[bone->mName.C_Str()] = bone_id;
-                m_mesh.m_bones.emplace_back(mat4_to_mat4(bone->mOffsetMatrix), nullptr);
 
                 LOG_DEBUG(std::format("Loaded bone: \"{}\" at index {}", bone->mName.C_Str(), i));
             } else {

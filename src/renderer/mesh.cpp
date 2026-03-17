@@ -19,7 +19,7 @@ void VertexBone::add_bone(const u32 bone_id, const float weight)
     for (u32 i = 0; i < MAX_BONES_PER_VERTEX; i++) {
         if (bones.at(i) == bone_id) {
             return;
-        } 
+        }
     }
     for (u32 i = 0; i < MAX_BONES_PER_VERTEX; i++) {
         if (weights.at(i) == 0.0F) {
@@ -67,56 +67,15 @@ void Mesh::update_model_ssbos(const std::span<glm::mat4> model_matrices)
     }
 }
 
-void Mesh::evaluate_bone_matrices(double animation_time, const aiNode* node, const glm::mat4& parent_transform)
-{
-    util_assert(initialized == true, "Mesh has not been initialized");
-    util_assert(m_has_bones == true, "Attempting to update bone matrices with no bones");
-
-    glm::mat4 node_transform = mat4_to_mat4(node->mTransformation);
-    glm::mat4 global_transform;
-
-    if (m_bone_id_map.contains(node->mName.C_Str())) {
-        u32 index = m_bone_id_map[node->mName.C_Str()];
-
-        // If animated
-        if (m_bones[index].m_animation.is_initialized()) {
-            node_transform = m_bones[index].m_animation.keyframe_to_mat4(animation_time);
-        }
-
-        global_transform = parent_transform * node_transform;
-
-        m_final_bone_matrices[index] = m_global_inverse_transform * global_transform * m_bones[index].m_offset;
-    } else {
-        global_transform = parent_transform * node_transform;
-    }
-
-    for (u32 i = 0; i < node->mNumChildren; i++) {
-        evaluate_bone_matrices(animation_time, node->mChildren[i], global_transform);
-    }
-}
-
 void Mesh::update_bone_matrices(double animation_time)
 {
     util_assert(initialized == true, "Mesh has not been initialized");
     util_assert(m_has_bones == true, "Attempting to update bone matrices with no bones");
 
-    if (m_ticks_per_second == 0.0) {
-        m_ticks_per_second = 25.0;
-    }
-    animation_time = std::fmod(animation_time * m_ticks_per_second, m_total_animation_time);
-
-    util_assert(m_bones.size() <= MAX_BONES,
-        std::format("Exceded max bone limit of {} with {} bones",
-            MAX_BONES,
-            m_bones.size()));
-    m_final_bone_matrices.resize(m_bones.size());
-
-    glm::mat4 identity(1.0F);
-    evaluate_bone_matrices(animation_time, m_scene->mRootNode, identity);
-
+    m_animation.update_transforms(animation_time);
     m_bone_ssbo.buffer_sub_data(0,
-        static_cast<GLsizeiptr>(sizeof(glm::mat4) * m_final_bone_matrices.size()),
-        m_final_bone_matrices.data());
+        static_cast<GLsizeiptr>(sizeof(glm::mat4) * m_animation.m_final_transforms.size()),
+        m_animation.m_final_transforms.data());
 }
 
 void Mesh::draw_untextured(Renderer::ShaderProgram& shader)
