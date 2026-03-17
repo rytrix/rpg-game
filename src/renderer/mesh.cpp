@@ -72,10 +72,12 @@ void Mesh::update_bone_matrices(double animation_time)
     util_assert(initialized == true, "Mesh has not been initialized");
     util_assert(m_has_bones == true, "Attempting to update bone matrices with no bones");
 
-    m_animation.update_transforms(animation_time);
-    m_bone_ssbo.buffer_sub_data(0,
-        static_cast<GLsizeiptr>(sizeof(glm::mat4) * m_animation.m_final_transforms.size()),
-        m_animation.m_final_transforms.data());
+    if (m_animation != nullptr) {
+        m_animation->update_transforms(animation_time);
+        m_bone_ssbo.buffer_sub_data(0,
+            static_cast<GLsizeiptr>(sizeof(glm::mat4) * m_animation->m_final_transforms.size()),
+            m_animation->m_final_transforms.data());
+    }
 }
 
 void Mesh::draw_untextured(Renderer::ShaderProgram& shader)

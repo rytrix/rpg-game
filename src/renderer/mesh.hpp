@@ -82,7 +82,8 @@ public:
 
     bool m_has_bones = false;
     std::unordered_map<std::string, u32> m_bone_id_map;
-    Animation m_animation;
+
+    Animation* m_animation = nullptr;
 
     std::vector<BaseVertex> m_base_vertices;
 

@@ -48,11 +48,16 @@ void Model::init(const char* file_path)
         offset += m_mesh.m_base_vertices.at(i).m_count;
     }
 
+    m_animations.resize(scene->mNumAnimations);
+
     for (u32 i = 0; i < scene->mNumAnimations; i++) {
         auto* animation = scene->mAnimations[i];
         LOG_INFO(std::format("Animation info: Name: {}, Duration: {}, Ticks Per Second: {}", animation->mName.C_Str(), animation->mDuration, animation->mTicksPerSecond));
 
-        m_mesh.m_animation.init(scene, animation, m_mesh.m_bone_id_map, global_inverse_transform, animation->mDuration, animation->mTicksPerSecond);
+        m_animations[i].init(scene, animation, m_mesh.m_bone_id_map, global_inverse_transform, animation->mDuration, animation->mTicksPerSecond);
+    }
+    if (m_animations.size() >= 1) {
+        set_animation(0);
     }
 
     m_mesh.setup_mesh();
@@ -98,6 +103,24 @@ const Mesh* Model::get_mesh()
 bool Model::has_bones() const
 {
     return m_mesh.m_has_bones;
+}
+
+std::deque<Animation>& Model::get_animations()
+{
+    return m_animations;
+}
+
+u32 Model::get_current_animation() const
+{
+    return m_current_animation;
+}
+
+void Model::set_animation(u32 value)
+{
+    if (value < m_animations.size()) {
+        m_mesh.m_animation = &m_animations[value];
+        m_current_animation = value;
+    }
 }
 
 void Model::process_node(aiNode* node, const aiScene* scene)

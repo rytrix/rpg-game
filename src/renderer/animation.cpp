@@ -115,10 +115,8 @@ void Animation::init(const aiScene* scene, const aiAnimation* animation, const s
 
     m_global_inverse_transform = global_inverse_transform;
 
-    auto* root_node = scene->mRootNode;
-
-    evaluate_scene(scene, root_node, bone_indices);
-    evaluate_parents(root_node, bone_indices, UINT32_MAX);
+    evaluate_scene(scene, scene->mRootNode, bone_indices);
+    evaluate_parents(scene->mRootNode, bone_indices, UINT32_MAX);
 
     for (u32 i = 0; i < animation->mNumChannels; i++) {
         aiNodeAnim* ai_node_anim = animation->mChannels[i];
@@ -197,6 +195,9 @@ void Animation::evaluate_scene(const aiScene* scene, const aiNode* node, const s
                 m_nodes[index].m_index = index;
                 m_nodes[index].m_has_animation = false;
                 m_nodes[index].m_offset = mat4_to_mat4(bone->mOffsetMatrix);
+                m_nodes[index].m_prev_position_frame = 0;
+                m_nodes[index].m_prev_rotation_frame = 0;
+                m_nodes[index].m_prev_scaling_frame = 0;
             }
         }
     }

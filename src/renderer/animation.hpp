@@ -25,9 +25,9 @@ struct NodeAnim {
     KeyFrame<aiVector3D>* m_position_keys;
     usize m_position_size;
 
-    u32 m_prev_position_frame = 0;
-    u32 m_prev_rotation_frame = 0;
-    u32 m_prev_scaling_frame = 0;
+    u32 m_prev_position_frame;
+    u32 m_prev_rotation_frame;
+    u32 m_prev_scaling_frame;
 
     glm::mat4 m_global_transform;
     glm::mat4 m_node_transform;
@@ -63,6 +63,11 @@ struct Animation {
 
     void update_transforms(double animation_time);
 
+    [[nodiscard]] double get_ticks_per_second() const { return m_ticks_per_second; };
+    void set_ticks_per_second(double ticks_per_second) { m_ticks_per_second = ticks_per_second; };
+
+    [[nodiscard]] double get_total_animation_time() const { return m_total_animation_time; };
+
 private:
     // Allocate with an arena
     std::pmr::monotonic_buffer_resource m_allocator;
@@ -74,4 +79,4 @@ private:
     void evaluate_parents(const aiNode* node, const std::unordered_map<std::string, u32>& bone_indices, u32 parent_index);
 };
 
-} //  namespace Renderer
+} // namespace Renderer

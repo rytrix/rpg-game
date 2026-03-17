@@ -270,6 +270,49 @@ void Scene::draw_debug_imgui()
     constexpr float MIN_COLOR = 0.0F;
 
     i32 i = 0;
+    if (ImGui::CollapsingHeader("Models")) {
+        auto view = m_registry.view<glm::mat4, Renderer::Model*>();
+        for (auto [entity, model_matrix, model] : view.each()) {
+            ImGui::PushID(i);
+
+            if (ImGui::CollapsingHeader(std::format("model_{}", i).c_str())) {
+                if (model->has_bones()) {
+                    auto& animations = model->get_animations();
+                    i32 current_animation = static_cast<int>(model->get_current_animation());
+
+                    for (u32 j = 0; j < animations.size(); j++) {
+                        double total_animation_time = animations[j].get_total_animation_time();
+                        if ((int)j == current_animation) {
+                            ImGui::Text("(Selected) Animation: %s, %lf ticks", animations[j].m_name.c_str(), total_animation_time);
+
+                        } else {
+                            ImGui::Text("Animation: %s, %lf ticks", animations[j].m_name.c_str(), total_animation_time);
+                        }
+                    }
+
+                    if (ImGui::DragInt("Current Animation", &current_animation, 1.0F, 0, static_cast<int>(animations.size() - 1))) {
+                        if (current_animation >= static_cast<i32>(animations.size())) {
+                            current_animation = static_cast<i32>(animations.size() - 1);
+                        }
+                        model->set_animation(current_animation);
+                    }
+                    float ticks_per_second = static_cast<float>(animations[current_animation].get_ticks_per_second());
+                    ImGui::Text("Current ticks per second: %f", ticks_per_second);
+                    if (ImGui::DragFloat("Set ticks per second", &ticks_per_second)) {
+                        animations[current_animation].set_ticks_per_second(static_cast<double>(ticks_per_second));
+                    }
+
+                    glm::vec4& cube_pos = model_matrix[3];
+                    ImGui::DragFloat3("XYZ", &cube_pos.x, 1.0F, MIN_TRANSFORM, MAX_TRANSFORM);
+                }
+            }
+
+            ImGui::PopID();
+            i++;
+        }
+    }
+
+    i = 0;
     if (ImGui::CollapsingHeader("Physics Objects")) {
         auto view = m_registry.view<glm::mat4, JPH::BodyID, JPH::EMotionType>();
         for (auto [entity, model_matrix, body, motion_type] : view.each()) {
