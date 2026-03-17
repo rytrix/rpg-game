@@ -6,7 +6,7 @@
 
 namespace Renderer {
 
-glm::mat4 NodeAnim::keyframe_to_mat4(double animation_time)
+glm::mat4 NodeAnim::keyframe_to_mat4(float animation_time)
 {
     aiVector3D pos;
     if (m_position_size == 1) {
@@ -39,7 +39,7 @@ glm::mat4 NodeAnim::keyframe_to_mat4(double animation_time)
 }
 
 template <typename T>
-u32 NodeAnim::find_keyframe(u32& cache, const T* keys, u32 keys_size, double animation_time)
+u32 NodeAnim::find_keyframe(u32& cache, const T* keys, u32 keys_size, float animation_time)
 {
     // util_assert(animation_time <= keys[keys_size - 1].m_time, "keyframe time is greater than the max keyframe time");
     if (animation_time > keys[keys_size - 1].m_time) {
@@ -62,44 +62,44 @@ u32 NodeAnim::find_keyframe(u32& cache, const T* keys, u32 keys_size, double ani
 }
 
 template <typename T, typename R>
-R NodeAnim::lerp_interpolate(T* p_start, T* p_end, double animation_time)
+R NodeAnim::lerp_interpolate(T* p_start, T* p_end, float animation_time)
 {
-    double delta_time = p_end->m_time - p_start->m_time;
-    double factor = (animation_time - p_start->m_time) / delta_time;
+    float delta_time = p_end->m_time - p_start->m_time;
+    float factor = (animation_time - p_start->m_time) / delta_time;
     // util_assert(factor >= 0.0 && factor <= 1.0, std::format("Lerp({}) factor not in range 0 to 1", factor));
-    if (factor < 0.0 || factor > 1.0) {
+    if (factor < 0.0F || factor > 1.0F) {
         LOG_WARN(std::format("Lerp({}) factor not in range 0 to 1", factor));
     }
-    factor = std::min(1.0, std::max(0.0, factor));
+    factor = std::min(1.0F, std::max(0.0F, factor));
 
-    return p_start->m_value + static_cast<float>(factor) * (p_end->m_value - p_start->m_value);
+    return p_start->m_value + factor * (p_end->m_value - p_start->m_value);
 }
 
-aiQuaternion NodeAnim::slerp_interpolate(KeyFrame<aiQuaternion>* p_start, KeyFrame<aiQuaternion>* p_end, double animation_time)
+aiQuaternion NodeAnim::slerp_interpolate(KeyFrame<aiQuaternion>* p_start, KeyFrame<aiQuaternion>* p_end, float animation_time)
 {
     aiQuaternion result;
-    double delta_time = p_end->m_time - p_start->m_time;
-    double factor = (animation_time - p_start->m_time) / delta_time;
-    // util_assert(factor >= 0.0 && factor <= 1.0, std::format("Slerp({}) factor not in range 0 to 1", factor));
-    if (factor < 0.0 || factor > 1.0) {
+    float delta_time = p_end->m_time - p_start->m_time;
+    float factor = (animation_time - p_start->m_time) / delta_time;
+    // util_assert(factor >= 0.0F && factor <= 1.0F, std::format("Slerp({}) factor not in range 0 to 1", factor));
+    if (factor < 0.0F || factor > 1.0F) {
         LOG_WARN(std::format("Slerp({}) factor not in range 0 to 1", factor));
     }
-    factor = std::min(1.0, std::max(0.0, factor));
+    factor = std::min(1.0F, std::max(0.0F, factor));
 
-    aiQuaternion::Interpolate(result, p_start->m_value, p_end->m_value, static_cast<float>(factor));
+    aiQuaternion::Interpolate(result, p_start->m_value, p_end->m_value, factor);
     result.Normalize();
 
     return result;
 }
 
-void Animation::init(const aiScene* scene, const aiAnimation* animation, const std::unordered_map<std::string, u32>& bone_indices, const glm::mat4& global_inverse_transform, double total_animation_time, double ticks_per_second)
+void Animation::init(const aiScene* scene, const aiAnimation* animation, const std::unordered_map<std::string, u32>& bone_indices, const glm::mat4& global_inverse_transform, float total_animation_time, float ticks_per_second)
 {
     m_name = animation->mName.C_Str();
 
     m_total_animation_time = total_animation_time;
     m_ticks_per_second = ticks_per_second;
-    if (m_ticks_per_second == 0.0) {
-        m_ticks_per_second = 25.0;
+    if (m_ticks_per_second == 0.0F) {
+        m_ticks_per_second = 25.0F;
     }
 
     m_nodes_size = bone_indices.size();
@@ -137,27 +137,27 @@ void Animation::init(const aiScene* scene, const aiAnimation* animation, const s
         node_anim->m_position_size = ai_node_anim->mNumPositionKeys;
         node_anim->m_position_keys = (KeyFrame<aiVector3D>*)m_allocator.allocate(node_anim->m_position_size * sizeof(KeyFrame<aiVector3D>));
         for (u32 j = 0; j < ai_node_anim->mNumPositionKeys; j++) {
-            node_anim->m_position_keys[j].m_time = ai_node_anim->mPositionKeys[j].mTime;
+            node_anim->m_position_keys[j].m_time = static_cast<float>(ai_node_anim->mPositionKeys[j].mTime);
             node_anim->m_position_keys[j].m_value = ai_node_anim->mPositionKeys[j].mValue;
         }
 
         node_anim->m_rotation_size = ai_node_anim->mNumRotationKeys;
         node_anim->m_rotation_keys = (KeyFrame<aiQuaternion>*)m_allocator.allocate(node_anim->m_rotation_size * sizeof(KeyFrame<aiQuaternion>));
         for (u32 j = 0; j < ai_node_anim->mNumRotationKeys; j++) {
-            node_anim->m_rotation_keys[j].m_time = ai_node_anim->mRotationKeys[j].mTime;
+            node_anim->m_rotation_keys[j].m_time = static_cast<float>(ai_node_anim->mRotationKeys[j].mTime);
             node_anim->m_rotation_keys[j].m_value = ai_node_anim->mRotationKeys[j].mValue;
         }
 
         node_anim->m_scaling_size = ai_node_anim->mNumScalingKeys;
         node_anim->m_scaling_keys = (KeyFrame<aiVector3D>*)m_allocator.allocate(node_anim->m_scaling_size * sizeof(KeyFrame<aiVector3D>));
         for (u32 j = 0; j < ai_node_anim->mNumScalingKeys; j++) {
-            node_anim->m_scaling_keys[j].m_time = ai_node_anim->mScalingKeys[j].mTime;
+            node_anim->m_scaling_keys[j].m_time = static_cast<float>(ai_node_anim->mScalingKeys[j].mTime);
             node_anim->m_scaling_keys[j].m_value = ai_node_anim->mScalingKeys[j].mValue;
         }
     }
 }
 
-void Animation::update_transforms(double animation_time)
+void Animation::update_transforms(float animation_time)
 {
     animation_time = std::fmod(animation_time * m_ticks_per_second, m_total_animation_time);
 

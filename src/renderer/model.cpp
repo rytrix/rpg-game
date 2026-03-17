@@ -54,7 +54,12 @@ void Model::init(const char* file_path)
         auto* animation = scene->mAnimations[i];
         LOG_INFO(std::format("Animation info: Name: {}, Duration: {}, Ticks Per Second: {}", animation->mName.C_Str(), animation->mDuration, animation->mTicksPerSecond));
 
-        m_animations[i].init(scene, animation, m_mesh.m_bone_id_map, global_inverse_transform, animation->mDuration, animation->mTicksPerSecond);
+        m_animations[i].init(scene,
+            animation,
+            m_mesh.m_bone_id_map,
+            global_inverse_transform,
+            static_cast<float>(animation->mDuration),
+            static_cast<float>(animation->mTicksPerSecond));
     }
     if (m_animations.size() >= 1) {
         set_animation(0);

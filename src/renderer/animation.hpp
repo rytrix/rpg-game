@@ -7,7 +7,7 @@ namespace Renderer {
 
 template <typename T>
 struct KeyFrame {
-    double m_time;
+    float m_time;
     T m_value;
 };
 
@@ -33,15 +33,15 @@ struct NodeAnim {
     glm::mat4 m_node_transform;
     glm::mat4 m_offset;
 
-    glm::mat4 keyframe_to_mat4(double animation_time);
+    glm::mat4 keyframe_to_mat4(float animation_time);
 
 private:
     template <typename T>
-    u32 find_keyframe(u32& cache, const T* keys, u32 keys_size, double animation_time);
+    u32 find_keyframe(u32& cache, const T* keys, u32 keys_size, float animation_time);
 
     template <typename T, typename R>
-    R lerp_interpolate(T* p_start, T* p_end, double animation_time);
-    aiQuaternion slerp_interpolate(KeyFrame<aiQuaternion>* p_start, KeyFrame<aiQuaternion>* p_end, double animation_time);
+    R lerp_interpolate(T* p_start, T* p_end, float animation_time);
+    aiQuaternion slerp_interpolate(KeyFrame<aiQuaternion>* p_start, KeyFrame<aiQuaternion>* p_end, float animation_time);
 };
 
 struct Animation {
@@ -58,22 +58,22 @@ struct Animation {
     void init(const aiScene* scene, const aiAnimation* animation,
         const std::unordered_map<std::string, u32>& bone_indices,
         const glm::mat4& global_inverse_transform,
-        double total_animation_time,
-        double ticks_per_second);
+        float total_animation_time,
+        float ticks_per_second);
 
-    void update_transforms(double animation_time);
+    void update_transforms(float animation_time);
 
-    [[nodiscard]] double get_ticks_per_second() const { return m_ticks_per_second; };
-    void set_ticks_per_second(double ticks_per_second) { m_ticks_per_second = ticks_per_second; };
+    [[nodiscard]] float get_ticks_per_second() const { return m_ticks_per_second; };
+    void set_ticks_per_second(float ticks_per_second) { m_ticks_per_second = ticks_per_second; };
 
-    [[nodiscard]] double get_total_animation_time() const { return m_total_animation_time; };
+    [[nodiscard]] float get_total_animation_time() const { return m_total_animation_time; };
 
 private:
     // Allocate with an arena
     std::pmr::monotonic_buffer_resource m_allocator;
 
-    double m_total_animation_time = 0.0;
-    double m_ticks_per_second = 0.0;
+    float m_total_animation_time = 0.0;
+    float m_ticks_per_second = 0.0;
 
     void evaluate_scene(const aiScene* scene, const aiNode* node, const std::unordered_map<std::string, u32>& bone_indices);
     void evaluate_parents(const aiNode* node, const std::unordered_map<std::string, u32>& bone_indices, u32 parent_index);

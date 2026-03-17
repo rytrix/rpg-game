@@ -281,12 +281,12 @@ void Scene::draw_debug_imgui()
                     i32 current_animation = static_cast<int>(model->get_current_animation());
 
                     for (u32 j = 0; j < animations.size(); j++) {
-                        double total_animation_time = animations[j].get_total_animation_time();
+                        float total_animation_time = animations[j].get_total_animation_time();
                         if ((int)j == current_animation) {
-                            ImGui::Text("(Selected) Animation: %s, %lf ticks", animations[j].m_name.c_str(), total_animation_time);
+                            ImGui::Text("(Selected) Animation: %s, %f ticks", animations[j].m_name.c_str(), total_animation_time);
 
                         } else {
-                            ImGui::Text("Animation: %s, %lf ticks", animations[j].m_name.c_str(), total_animation_time);
+                            ImGui::Text("Animation: %s, %f ticks", animations[j].m_name.c_str(), total_animation_time);
                         }
                     }
 
@@ -296,10 +296,10 @@ void Scene::draw_debug_imgui()
                         }
                         model->set_animation(current_animation);
                     }
-                    float ticks_per_second = static_cast<float>(animations[current_animation].get_ticks_per_second());
+                    float ticks_per_second = animations[current_animation].get_ticks_per_second();
                     ImGui::Text("Current ticks per second: %f", ticks_per_second);
                     if (ImGui::DragFloat("Set ticks per second", &ticks_per_second)) {
-                        animations[current_animation].set_ticks_per_second(static_cast<double>(ticks_per_second));
+                        animations[current_animation].set_ticks_per_second(ticks_per_second);
                     }
 
                     glm::vec4& cube_pos = model_matrix[3];
