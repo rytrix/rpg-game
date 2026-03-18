@@ -30,7 +30,7 @@ struct BaseVertex {
     }
 };
 
-static constexpr u32 MAX_BONES = 100;
+static constexpr u32 MAX_BONES = 150;
 static constexpr u32 MAX_BONES_PER_VERTEX = 4;
 
 static constexpr std::string get_bone_defines()

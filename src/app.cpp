@@ -155,10 +155,16 @@ App::App()
     // m_scene->add_entity(e7);
 
     EntityBuilder e8;
-    e8.add_model_path("res/models/animation/example4.fbx");
+    e8.add_model_path("res/models/Walking.fbx");
+    e8.add_model_path("res/models/Jogging.fbx");
+    glm::mat4 e8_model_matrix = glm::scale(glm::mat4(1.0), glm::vec3(0.1F));
+    e8.add_model_matrix(e8_model_matrix);
+    m_scene->add_entity(e8);
+
     e8.add_model_path("res/models/dog/scene.gltf");
-    e8.add_model_path("res/models/Defeated.fbx");
-    e8.add_model_matrix(glm::scale(glm::mat4(1.0), glm::vec3(0.1F)));
+    e8_model_matrix = glm::scale(glm::mat4(1.0), glm::vec3(10.0F));
+    e8_model_matrix = glm::rotate(e8_model_matrix, glm::radians(-90.0F), glm::vec3(1.0, 0.0, 0.0));
+    e8.add_model_matrix(e8_model_matrix);
     m_scene->add_entity(e8);
 
     m_scene->optimize();

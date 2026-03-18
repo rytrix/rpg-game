@@ -12,6 +12,7 @@ add_executable(${PROJECT_NAME}
     src/scene/scene.cpp
     src/scene/entity_builder.cpp
     src/scene/shader_preprocessor.cpp
+    src/scene/resource_manager.cpp
 
     src/physics/engine.cpp
     
@@ -47,38 +48,38 @@ add_executable(${PROJECT_NAME}
 
 target_precompile_headers(${PROJECT_NAME} PUBLIC src/pch.hpp)
 
-add_subdirectory(dep/sqlite)
-add_subdirectory(dep/glad)
-add_subdirectory(dep/stb)
+add_subdirectory(vendor/sqlite)
+add_subdirectory(vendor/glad)
+add_subdirectory(vendor/stb)
 
 set(SDL_SHARED OFF CACHE BOOL "Prefer building static" FORCE)
 set(SDL_STATIC ON CACHE BOOL "Prefer building static" FORCE)
 set(SDL_TEST_LIBRARY OFF CACHE BOOL "Not testing SDL3")
-add_subdirectory(dep/sdl3)
+add_subdirectory(vendor/sdl3)
 
 set(ASSIMP_WARNINGS_AS_ERRORS OFF CACHE BOOL "Enable compiling with extra warnings" FORCE)
 set(ASSIMP_BUILD_TESTS OFF CACHE BOOL "Disable building assimp tests" FORCE)
-add_subdirectory(dep/assimp)
+add_subdirectory(vendor/assimp)
 
 set(ENABLE_ALL_WARNINGS OFF CACHE BOOL "Stop warnings as errors for JoltPhysics" FORCE)
 set(BUILD_SHARED_LIBS OFF CACHE BOOL "Build static libs for JoltPhysics" FORCE)
 set(DOUBLE_PRECISION OFF CACHE BOOL "Double precision floats for JoltPhysics" FORCE)
-add_subdirectory(dep/JoltPhysics/Build)
+add_subdirectory(vendor/JoltPhysics/Build)
 
 add_library(imgui 
-    dep/imgui/imgui.cpp
-    dep/imgui/imgui_demo.cpp
-    dep/imgui/imgui_draw.cpp
-    dep/imgui/imgui_tables.cpp
-    dep/imgui/imgui_widgets.cpp
+    vendor/imgui/imgui.cpp
+    vendor/imgui/imgui_demo.cpp
+    vendor/imgui/imgui_draw.cpp
+    vendor/imgui/imgui_tables.cpp
+    vendor/imgui/imgui_widgets.cpp
 
-    dep/imgui/backends/imgui_impl_sdl3.cpp
-    dep/imgui/backends/imgui_impl_opengl3.cpp
+    vendor/imgui/backends/imgui_impl_sdl3.cpp
+    vendor/imgui/backends/imgui_impl_opengl3.cpp
 )
 
 target_include_directories(imgui
-    PUBLIC dep/imgui
-    PUBLIC dep/imgui/backends
+    PUBLIC vendor/imgui
+    PUBLIC vendor/imgui/backends
 )
 
 target_link_libraries(imgui
@@ -98,13 +99,13 @@ target_link_libraries(${PROJECT_NAME}
 
 target_include_directories(${PROJECT_NAME} 
     PUBLIC src/renderer/include
-    PUBLIC dep
-	PUBLIC dep/glad/include/
-	PUBLIC dep/stb/include
-	PUBLIC dep/sdl3/include
-	PUBLIC dep/glm/
-    PUBLIC dep/assimp/include
-    PUBLIC ${CMAKE_CURRENT_BINARY_DIR}/dep/assimp/include
-    PUBLIC dep/JoltPhysics
-    PUBLIC dep/entt/single_include
+    PUBLIC vendor
+	PUBLIC vendor/glad/include/
+	PUBLIC vendor/stb/include
+	PUBLIC vendor/sdl3/include
+	PUBLIC vendor/glm/
+    PUBLIC vendor/assimp/include
+    PUBLIC ${CMAKE_CURRENT_BINARY_DIR}/vendor/assimp/include
+    PUBLIC vendor/JoltPhysics
+    PUBLIC vendor/entt/single_include
 )

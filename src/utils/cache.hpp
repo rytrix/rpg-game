@@ -15,7 +15,7 @@ public:
     [[nodiscard]] bool contains(const ID& id);
 
 private:
-    Mapping<ID> m_mapping;
+    Mapping<ID, u64> m_mapping;
     std::deque<Type> m_types;
 };
 

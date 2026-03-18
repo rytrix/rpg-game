@@ -58,6 +58,8 @@ u32 NodeAnim::find_keyframe(u32& cache, const T* keys, u32 keys_size, float anim
             return cache;
         }
     }
+    cache = 0;
+    return cache;
     util_error("Could not find keyframe");
 }
 

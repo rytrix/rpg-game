@@ -1,15 +1,15 @@
-[submodule "dep/glm"]
-    path = dep/glm
+[submodule "vendor/glm"]
+    path = vendor/glm
     url = https://github.com/g-truc/glm.git
-[submodule "dep/assimp"]
-	path = dep/assimp
+[submodule "vendor/assimp"]
+	path = vendor/assimp
 	url = https://github.com/assimp/assimp.git
-[submodule "dep/JoltPhysics"]
-	path = dep/JoltPhysics
+[submodule "vendor/JoltPhysics"]
+	path = vendor/JoltPhysics
 	url = https://github.com/jrouwe/JoltPhysics.git
-[submodule "dep/imgui"]
-	path = dep/imgui
+[submodule "vendor/imgui"]
+	path = vendor/imgui
 	url = https://github.com/ocornut/imgui.git
-[submodule "dep/entt"]
-	path = dep/entt
+[submodule "vendor/entt"]
+	path = vendor/entt
 	url = https://github.com/skypjack/entt.git

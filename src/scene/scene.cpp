@@ -9,6 +9,7 @@ Scene::Scene(Renderer::Window& window, Renderer::Camera& camera)
     , m_camera_speed(m_camera.get_speed())
 {
     m_physics_system = std::make_unique<Physics::System>();
+    m_model_cache.init();
 
     update();
 }
@@ -30,8 +31,10 @@ void Scene::add_entity(const EntityBuilder& entity_builder)
     }
 
     if (entity_builder.m_model_path != nullptr) {
-        Renderer::Model& model = m_model_cache.get_or_create(entity_builder.m_model_path, entity_builder.m_model_path);
-        m_registry.emplace<Renderer::Model*>(entity, &model);
+        // Renderer::Model& model = m_model_cache.get_or_create(entity_builder.m_model_path, entity_builder.m_model_path);
+        auto handle = m_model_cache.add(entity_builder.m_model_path, entity_builder.m_model_path);
+        auto* model = m_model_cache.get(handle);
+        m_registry.emplace<Renderer::Model*>(entity, model);
         // TODO: Decide if I want physics objects without models someday
         if (entity_builder.m_create_body != nullptr) {
             auto physics_info

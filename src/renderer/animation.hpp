@@ -40,8 +40,8 @@ private:
     u32 find_keyframe(u32& cache, const T* keys, u32 keys_size, float animation_time);
 
     template <typename T, typename R>
-    R lerp_interpolate(T* p_start, T* p_end, float animation_time);
-    aiQuaternion slerp_interpolate(KeyFrame<aiQuaternion>* p_start, KeyFrame<aiQuaternion>* p_end, float animation_time);
+    static R lerp_interpolate(T* p_start, T* p_end, float animation_time);
+    static aiQuaternion slerp_interpolate(KeyFrame<aiQuaternion>* p_start, KeyFrame<aiQuaternion>* p_end, float animation_time);
 };
 
 struct Animation {

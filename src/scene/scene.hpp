@@ -4,6 +4,8 @@
 #include "../utils/cache.hpp"
 #include "../utils/deltatime.hpp"
 
+#include "resource_manager.hpp"
+
 #include "renderer.hpp"
 
 #include "entity_builder.hpp"
@@ -48,7 +50,8 @@ private:
     Renderer::ShaderProgram m_shadowmap_cubemap_shader_bones;
 
     entt::registry m_registry;
-    Utils::Cache<const char*, Renderer::Model> m_model_cache;
+    // Utils::Cache<const char*, Renderer::Model> m_model_cache;
+    ResourceManager<const char*, Renderer::Model, 100> m_model_cache;
 
     struct ModelMatrix {
         Renderer::Model* m_model;

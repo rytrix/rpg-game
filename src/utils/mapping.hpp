@@ -2,46 +2,93 @@
 
 namespace Utils {
 
-template <typename T>
+template <typename IDType, typename MapType>
 class Mapping : public NoCopyNoMove {
 public:
     Mapping() = default;
 
-    u64 map(const T& id);
-    [[nodiscard]] u64 at(const T& id) const;
+    MapType map(const IDType& id);
+    void remove(const IDType& id);
+    void remove(const MapType& id);
+    auto begin() {
+        return m_map.begin();
+    }
+    auto end() {
+        return m_map.end();
+    }
+    [[nodiscard]] MapType at(const IDType& id) const;
     [[nodiscard]] usize size() const;
-    [[nodiscard]] bool contains(const T& id) const;
+    [[nodiscard]] bool contains(const IDType& id) const;
 
 private:
-    std::unordered_map<T, u64> m_map;
-    u64 m_id_counter = 0;
+    std::unordered_map<IDType, MapType> m_map;
+    MapType m_size;
+    MapType m_id_counter = 0;
+    std::vector<MapType> m_free_ids;
 };
 
-template <typename T>
-u64 Mapping<T>::map(const T& id)
+template <typename IDType, typename MapType>
+MapType Mapping<IDType, MapType>::map(const IDType& id)
 {
     if (m_map.contains(id)) {
         return m_map.at(id);
     } else {
-        m_map.insert({ id, m_id_counter });
-        return m_id_counter++;
+        if (m_free_ids.size() == 0) {
+            m_map.insert({ id, m_id_counter });
+            m_size++;
+            return m_id_counter++;
+        } else {
+            MapType map_id = m_free_ids.back();
+            m_free_ids.pop_back();
+            m_map.insert({ id, map_id });
+            m_size++;
+            return map_id;
+        }
     }
 }
 
-template <typename T>
-u64 Mapping<T>::at(const T& id) const
+template <typename IDType, typename MapType>
+void Mapping<IDType, MapType>::remove(const IDType& id)
+{
+    auto removed = m_map.erase(id);
+    if (removed != m_map.end()) {
+        MapType removed_id = removed;
+        if (m_id_counter - 1 == removed_id) {
+            m_id_counter--;
+        } else {
+            m_free_ids.push_back(removed_id);
+        }
+    }
+}
+
+template <typename IDType, typename MapType>
+void Mapping<IDType, MapType>::remove(const MapType& id)
+{
+    auto removed = m_map.erase(id);
+    if (removed != m_map.end()) {
+        util_assert(*removed == id, std::format("Mapping: removed id {}, and got id {}", id, *removed));
+        if (m_id_counter - 1 == id) {
+            m_id_counter--;
+        } else {
+            m_free_ids.push_back(id);
+        }
+    }
+}
+
+template <typename IDType, typename MapType>
+MapType Mapping<IDType, MapType>::at(const IDType& id) const
 {
     return m_map.at(id);
 }
 
-template <typename T>
-usize Mapping<T>::size() const
+template <typename IDType, typename MapType>
+usize Mapping<IDType, MapType>::size() const
 {
-    return m_id_counter;
+    return m_size;
 }
 
-template <typename T>
-[[nodiscard]] bool Mapping<T>::contains(const T& id) const
+template <typename IDType, typename MapType>
+[[nodiscard]] bool Mapping<IDType, MapType>::contains(const IDType& id) const
 {
     return m_map.contains(id);
 }
