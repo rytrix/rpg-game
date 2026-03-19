@@ -52,7 +52,9 @@ struct Animation {
     NodeAnim* m_nodes;
     usize m_nodes_size;
 
-    std::vector<glm::mat4> m_final_transforms;
+    glm::mat4* m_final_transforms;
+    usize m_final_transforms_size;
+
     glm::mat4 m_global_inverse_transform;
 
     void init(const aiScene* scene, const aiAnimation* animation,

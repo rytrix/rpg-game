@@ -75,8 +75,8 @@ void Mesh::update_bone_matrices(double animation_time)
     if (m_animation != nullptr) {
         m_animation->update_transforms(animation_time);
         m_bone_ssbo.buffer_sub_data(0,
-            static_cast<GLsizeiptr>(sizeof(glm::mat4) * m_animation->m_final_transforms.size()),
-            m_animation->m_final_transforms.data());
+            static_cast<GLsizeiptr>(sizeof(glm::mat4) * m_animation->m_final_transforms_size),
+            m_animation->m_final_transforms);
     }
 }
 

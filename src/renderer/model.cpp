@@ -6,22 +6,19 @@
 
 #include "../utils/helpers.hpp"
 
-namespace {
-
-} // anonymous namespace
-
 namespace Renderer {
 
-Model::Model(const char* file_path)
+Model::Model(const char* file_path, TextureCache* texture_cache)
 {
-    init(file_path);
+    init(file_path, texture_cache);
 }
 
-void Model::init(const char* file_path)
+void Model::init(const char* file_path, TextureCache* texture_cache)
 {
     util_assert(initialized == false, "Model::init() has already been initialized");
 
     m_directory = file_path;
+    m_texture_cache = texture_cache;
 
     util_assert(std::filesystem::exists(file_path), std::format("Model \"{}\" is an invalid path", file_path));
 
@@ -61,13 +58,14 @@ void Model::init(const char* file_path)
             static_cast<float>(animation->mDuration),
             static_cast<float>(animation->mTicksPerSecond));
     }
+
+    initialized = true;
+
     if (m_animations.size() >= 1) {
         set_animation(0);
     }
 
     m_mesh.setup_mesh();
-
-    initialized = true;
 }
 
 Model::~Model()
@@ -107,21 +105,25 @@ const Mesh* Model::get_mesh()
 
 bool Model::has_bones() const
 {
+    util_assert(initialized == true, "Model has not been initialized");
     return m_mesh.m_has_bones;
 }
 
 std::deque<Animation>& Model::get_animations()
 {
+    util_assert(initialized == true, "Model has not been initialized");
     return m_animations;
 }
 
 u32 Model::get_current_animation() const
 {
+    util_assert(initialized == true, "Model has not been initialized");
     return m_current_animation;
 }
 
 void Model::set_animation(u32 value)
 {
+    util_assert(initialized == true, "Model has not been initialized");
     if (value < m_animations.size()) {
         m_mesh.m_animation = &m_animations[value];
         m_current_animation = value;
@@ -271,17 +273,24 @@ Texture* Model::load_material_texture(const aiMaterial* mat, const aiTextureType
             texture_info.file_path = texture_path.c_str();
 
             LOG_INFO(std::format("Loading {} type {}", texture_path, aiTextureTypeToString(type)));
-
-            Texture& texture = m_texture_cache.get_or_create(texture_path, texture_info);
-            texture.set_max_anisotropy(16.0F);
-            return &texture;
+            Texture* texture = nullptr;
+            if (m_texture_cache->contains(texture_path)) {
+                auto handle = m_texture_cache->add(texture_path, texture_info);
+                texture = m_texture_cache->get(handle);
+            } else {
+                auto handle = m_texture_cache->add(texture_path, texture_info);
+                texture = m_texture_cache->get(handle);
+                texture->set_max_anisotropy(16.0F);
+            }
+            return texture;
         } else {
             std::string texture_path = str.C_Str();
 
             LOG_INFO(std::format("Loading {} type {}", texture_path, aiTextureTypeToString(type)));
-            if (m_texture_cache.contains(texture_path)) {
-                Texture& texture = m_texture_cache.get_or_create(texture_path, texture_info);
-                return &texture;
+            if (m_texture_cache->contains(texture_path)) {
+                auto handle = m_texture_cache->add(texture_path, texture_info);
+                Texture* texture = m_texture_cache->get(handle);
+                return texture;
             } else {
                 int width, height, channels;
                 TextureSubimageInfo subimage_info;
@@ -299,17 +308,18 @@ Texture* Model::load_material_texture(const aiMaterial* mat, const aiTextureType
                 texture_info.size.width = width;
                 texture_info.size.height = height;
                 texture_info.size.depth = 0;
-                Texture& texture = m_texture_cache.get_or_create(texture_path, texture_info);
+                auto handle = m_texture_cache->add(texture_path, texture_info);
+                Texture* texture = m_texture_cache->get(handle);
 
                 subimage_info.pixels = data;
                 subimage_info.size = texture_info.size;
                 subimage_info.type = GL_UNSIGNED_BYTE;
-                texture.sub_image(subimage_info);
-                texture.set_max_anisotropy(16.0F);
+                texture->sub_image(subimage_info);
+                texture->set_max_anisotropy(16.0F);
 
                 stbi_image_free(data);
 
-                return &texture;
+                return texture;
             }
         }
     } else {

@@ -10,6 +10,8 @@
 
 #include "entity_builder.hpp"
 
+#include "cache_types.hpp"
+
 class Scene : public NoCopyNoMove {
 public:
     explicit Scene(Renderer::Window& window, Renderer::Camera& camera);
@@ -51,7 +53,8 @@ private:
 
     entt::registry m_registry;
     // Utils::Cache<const char*, Renderer::Model> m_model_cache;
-    ResourceManager<const char*, Renderer::Model, 100> m_model_cache;
+    ModelCache m_model_cache;
+    TextureCache m_texture_cache;
 
     struct ModelMatrix {
         Renderer::Model* m_model;

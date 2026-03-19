@@ -107,13 +107,13 @@ void Animation::init(const aiScene* scene, const aiAnimation* animation, const s
     m_nodes_size = bone_indices.size();
     m_nodes = (NodeAnim*)m_allocator.allocate(sizeof(NodeAnim) * m_nodes_size);
 
-    m_final_transforms.reserve(MAX_BONES);
-
     util_assert(m_nodes_size <= MAX_BONES,
         std::format("Exceded max bone limit of {} with {} bones",
             MAX_BONES,
             m_nodes_size));
-    m_final_transforms.resize(m_nodes_size);
+
+    m_final_transforms = (glm::mat4*)m_allocator.allocate(sizeof(glm::mat4) * m_nodes_size);
+    m_final_transforms_size = m_nodes_size;
 
     m_global_inverse_transform = global_inverse_transform;
 

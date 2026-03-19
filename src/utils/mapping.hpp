@@ -2,7 +2,7 @@
 
 namespace Utils {
 
-template <typename IDType, typename MapType>
+template <typename IDType = std::string, typename MapType = u32>
 class Mapping : public NoCopyNoMove {
 public:
     Mapping() = default;
@@ -10,12 +10,8 @@ public:
     MapType map(const IDType& id);
     void remove(const IDType& id);
     void remove(const MapType& id);
-    auto begin() {
-        return m_map.begin();
-    }
-    auto end() {
-        return m_map.end();
-    }
+    auto begin() { return m_map.begin(); }
+    auto end() { return m_map.end(); }
     [[nodiscard]] MapType at(const IDType& id) const;
     [[nodiscard]] usize size() const;
     [[nodiscard]] bool contains(const IDType& id) const;
@@ -64,13 +60,16 @@ void Mapping<IDType, MapType>::remove(const IDType& id)
 template <typename IDType, typename MapType>
 void Mapping<IDType, MapType>::remove(const MapType& id)
 {
-    auto removed = m_map.erase(id);
-    if (removed != m_map.end()) {
-        util_assert(*removed == id, std::format("Mapping: removed id {}, and got id {}", id, *removed));
-        if (m_id_counter - 1 == id) {
-            m_id_counter--;
-        } else {
-            m_free_ids.push_back(id);
+    for (auto& pair : m_map) {
+        if (pair.second == id) {
+            m_map.erase(pair.first);
+            if (m_id_counter - 1 == id) {
+                m_id_counter--;
+            } else {
+                m_free_ids.push_back(id);
+            }
+
+            break;
         }
     }
 }

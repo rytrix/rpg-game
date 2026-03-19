@@ -10,6 +10,7 @@ Scene::Scene(Renderer::Window& window, Renderer::Camera& camera)
 {
     m_physics_system = std::make_unique<Physics::System>();
     m_model_cache.init();
+    m_texture_cache.init();
 
     update();
 }
@@ -31,8 +32,7 @@ void Scene::add_entity(const EntityBuilder& entity_builder)
     }
 
     if (entity_builder.m_model_path != nullptr) {
-        // Renderer::Model& model = m_model_cache.get_or_create(entity_builder.m_model_path, entity_builder.m_model_path);
-        auto handle = m_model_cache.add(entity_builder.m_model_path, entity_builder.m_model_path);
+        auto handle = m_model_cache.add(entity_builder.m_model_path, entity_builder.m_model_path, &m_texture_cache);
         auto* model = m_model_cache.get(handle);
         m_registry.emplace<Renderer::Model*>(entity, model);
         // TODO: Decide if I want physics objects without models someday
@@ -304,10 +304,10 @@ void Scene::draw_debug_imgui()
                     if (ImGui::DragFloat("Set ticks per second", &ticks_per_second)) {
                         animations[current_animation].set_ticks_per_second(ticks_per_second);
                     }
-
-                    glm::vec4& cube_pos = model_matrix[3];
-                    ImGui::DragFloat3("XYZ", &cube_pos.x, 1.0F, MIN_TRANSFORM, MAX_TRANSFORM);
                 }
+
+                glm::vec4& cube_pos = model_matrix[3];
+                ImGui::DragFloat3("XYZ", &cube_pos.x, 1.0F, MIN_TRANSFORM, MAX_TRANSFORM);
             }
 
             ImGui::PopID();

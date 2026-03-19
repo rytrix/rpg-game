@@ -7,18 +7,23 @@
 
 #include "../utils/cache.hpp"
 #include "../utils/deltatime.hpp"
+#include "../scene/resource_manager.hpp"
 
 #include <assimp/scene.h>
 
 namespace Renderer {
 
+class Model;
+
+#include "../scene/cache_types.hpp"
+
 class Model : public NoCopyNoMove {
 public:
     Model() = default;
-    explicit Model(const char* path);
+    Model(const char* path, TextureCache* texture_cache);
     ~Model();
 
-    void init(const char* path);
+    void init(const char* path, TextureCache* texture_cache);
 
     void update(std::span<glm::mat4> models, float animation_time);
 
@@ -40,7 +45,8 @@ public:
 private:
     bool initialized = false;
 
-    Utils::Cache<std::string, Texture> m_texture_cache;
+    // Utils::Cache<std::string, Texture> m_texture_cache;
+    TextureCache* m_texture_cache = nullptr;
 
     Mesh m_mesh;
     std::string m_directory;
