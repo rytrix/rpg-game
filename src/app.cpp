@@ -4,40 +4,41 @@ App::App()
 {
     Physics::Engine::setup_singletons();
 
-    m_window.init(m_window_title, 800, 600);
-    m_window.set_relative_mode(m_capture_mouse);
+    m_data.m_window.init(m_window_title, 800, 600);
+    m_data.m_window.set_relative_mode(m_capture_mouse);
 
-    m_camera.init(90.0F, 1.0F, 500.0F, m_window.get_aspect_ratio(), { -2.0F, 1.5F, 4.0F });
-    m_camera.set_speed(10.0F);
+    m_data.m_camera.init(90.0F, 1.0F, 500.0F, m_data.m_window.get_aspect_ratio(), { -2.0F, 1.5F, 4.0F });
+    m_data.m_camera.set_speed(10.0F);
 
+    m_data.m_resources.init();
     Renderer::Model::init_placeholder_textures();
 
-    m_scene = new Scene(m_window, m_camera);
+    m_scene = new Scene(&m_data);
 
-    m_window.process_input_callback([&](SDL_Event& event) {
+    m_data.m_window.process_input_callback([&](SDL_Event& event) {
         if (event.type == SDL_EVENT_WINDOW_RESIZED) {
-            m_camera.update_aspect(m_window.get_aspect_ratio());
+            m_data.m_camera.update_aspect(m_data.m_window.get_aspect_ratio());
             m_scene->update();
         }
         if (event.type == SDL_EVENT_MOUSE_MOTION) {
             if (m_capture_mouse) {
-                m_camera.rotate(event.motion.xrel, -event.motion.yrel);
+                m_data.m_camera.rotate(event.motion.xrel, -event.motion.yrel);
             }
         }
         if (event.type == SDL_EVENT_KEY_DOWN) {
             if (event.key.key == SDLK_ESCAPE) {
                 m_capture_mouse = !m_capture_mouse;
-                m_window.set_relative_mode(m_capture_mouse);
+                m_data.m_window.set_relative_mode(m_capture_mouse);
             }
             if (event.key.key == SDLK_E) {
                 m_physics_on = !m_physics_on;
             }
             if (event.key.key == SDLK_P) {
-                glm::vec3 pos = m_camera.get_pos();
+                glm::vec3 pos = m_data.m_camera.get_pos();
                 std::println("Camera_position: {}, {}, {}", pos.x, pos.y, pos.z);
             }
             if (event.key.key == SDLK_Q) {
-                m_window.set_should_close();
+                m_data.m_window.set_should_close();
             }
         }
     });
@@ -193,7 +194,7 @@ void App::fps_counter()
         if (time_passed >= 1.0F) {
             time_passed = 0;
             auto title = std::format("{} {} fps", m_window_title, frames);
-            m_window.set_window_title(title.c_str());
+            m_data.m_window.set_window_title(title.c_str());
             frames = 0;
         }
     }
@@ -207,27 +208,27 @@ void App::run()
             float delta_time = m_scene->get_clock().delta_time<float>();
             using Dir = Renderer::Camera::Movement;
             if (keys[SDL_SCANCODE_W]) {
-                m_camera.move(Dir::Forward, delta_time);
+                m_data.m_camera.move(Dir::Forward, delta_time);
             }
             if (keys[SDL_SCANCODE_S]) {
-                m_camera.move(Dir::Backward, delta_time);
+                m_data.m_camera.move(Dir::Backward, delta_time);
             }
             if (keys[SDL_SCANCODE_A]) {
-                m_camera.move(Dir::Left, delta_time);
+                m_data.m_camera.move(Dir::Left, delta_time);
             }
             if (keys[SDL_SCANCODE_D]) {
-                m_camera.move(Dir::Right, delta_time);
+                m_data.m_camera.move(Dir::Right, delta_time);
             }
             if (keys[SDL_SCANCODE_SPACE]) {
-                m_camera.move(Dir::Up, delta_time);
+                m_data.m_camera.move(Dir::Up, delta_time);
             }
             if (keys[SDL_SCANCODE_LSHIFT]) {
-                m_camera.move(Dir::Down, delta_time);
+                m_data.m_camera.move(Dir::Down, delta_time);
             }
         }
     };
 
-    m_window.loop([&]() {
+    m_data.m_window.loop([&]() {
         m_scene->update();
         scancodes();
         fps_counter();
@@ -252,9 +253,9 @@ void App::run()
         if (ImGui::Checkbox("Toggle vsync", &m_vsync)) {
             LOG_INFO(std::format("Setting swap interval to {}", m_vsync));
             if (m_vsync) {
-                m_window.set_swap_interval(1);
+                m_data.m_window.set_swap_interval(1);
             } else {
-                m_window.set_swap_interval(0);
+                m_data.m_window.set_swap_interval(0);
             }
         }
 

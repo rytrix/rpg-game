@@ -1,24 +1,26 @@
 #include "model.hpp"
 
+#include "assimp/Importer.hpp"
 #include <assimp/postprocess.h>
 #include <assimp/scene.h>
+
 #include <filesystem>
 
 #include "../utils/helpers.hpp"
 
 namespace Renderer {
 
-Model::Model(const char* file_path, TextureCache* texture_cache)
+Model::Model(const char* file_path, GlobalAppData* app_data)
 {
-    init(file_path, texture_cache);
+    init(file_path, app_data);
 }
 
-void Model::init(const char* file_path, TextureCache* texture_cache)
+void Model::init(const char* file_path, GlobalAppData* app_data)
 {
     util_assert(initialized == false, "Model::init() has already been initialized");
 
     m_directory = file_path;
-    m_texture_cache = texture_cache;
+    m_app_data = app_data;
 
     util_assert(std::filesystem::exists(file_path), std::format("Model \"{}\" is an invalid path", file_path));
 
@@ -203,9 +205,6 @@ void Model::process_mesh(aiMesh* mesh, const aiScene* scene)
         } else {
             m_mesh.m_normal_textures.push_back(normal_map);
         }
-
-        // Texture* ao_map = load_material_textures(material, aiTextureType_AMBIENT_OCCLUSION);
-        // m_mesh.m_textures.push_back(ao_map);
     }
 
     if (mesh->HasBones()) {
@@ -267,6 +266,7 @@ Texture* Model::load_material_texture(const aiMaterial* mat, const aiTextureType
         texture_info.mipmap_levels = 0;
         texture_info.flip = false;
 
+        auto* texture_cache = &m_app_data->m_resources.m_texture_cache;
         if (embedded_texture == nullptr) {
             std::string texture_path = (m_directory + "/" + str.C_Str());
             texture_info.from_file = GL_TRUE;
@@ -274,12 +274,13 @@ Texture* Model::load_material_texture(const aiMaterial* mat, const aiTextureType
 
             LOG_INFO(std::format("Loading {} type {}", texture_path, aiTextureTypeToString(type)));
             Texture* texture = nullptr;
-            if (m_texture_cache->contains(texture_path)) {
-                auto handle = m_texture_cache->add(texture_path, texture_info);
-                texture = m_texture_cache->get(handle);
+
+            if (texture_cache->contains(texture_path)) {
+                auto handle = texture_cache->add(texture_path, texture_info);
+                texture = texture_cache->get(handle);
             } else {
-                auto handle = m_texture_cache->add(texture_path, texture_info);
-                texture = m_texture_cache->get(handle);
+                auto handle = texture_cache->add(texture_path, texture_info);
+                texture = texture_cache->get(handle);
                 texture->set_max_anisotropy(16.0F);
             }
             return texture;
@@ -287,9 +288,9 @@ Texture* Model::load_material_texture(const aiMaterial* mat, const aiTextureType
             std::string texture_path = str.C_Str();
 
             LOG_INFO(std::format("Loading {} type {}", texture_path, aiTextureTypeToString(type)));
-            if (m_texture_cache->contains(texture_path)) {
-                auto handle = m_texture_cache->add(texture_path, texture_info);
-                Texture* texture = m_texture_cache->get(handle);
+            if (texture_cache->contains(texture_path)) {
+                auto handle = texture_cache->add(texture_path, texture_info);
+                Texture* texture = texture_cache->get(handle);
                 return texture;
             } else {
                 int width, height, channels;
@@ -308,8 +309,8 @@ Texture* Model::load_material_texture(const aiMaterial* mat, const aiTextureType
                 texture_info.size.width = width;
                 texture_info.size.height = height;
                 texture_info.size.depth = 0;
-                auto handle = m_texture_cache->add(texture_path, texture_info);
-                Texture* texture = m_texture_cache->get(handle);
+                auto handle = texture_cache->add(texture_path, texture_info);
+                Texture* texture = texture_cache->get(handle);
 
                 subimage_info.pixels = data;
                 subimage_info.size = texture_info.size;

@@ -1,29 +1,25 @@
 #pragma once
 
-#include "assimp/Importer.hpp"
 #include "mesh.hpp"
 #include "shader.hpp"
 #include "texture.hpp"
 
-#include "../utils/cache.hpp"
-#include "../utils/deltatime.hpp"
 #include "../scene/resource_manager.hpp"
+#include "../utils/deltatime.hpp"
+
+#include "../app_data.hpp"
 
 #include <assimp/scene.h>
 
 namespace Renderer {
 
-class Model;
-
-#include "../scene/cache_types.hpp"
-
 class Model : public NoCopyNoMove {
 public:
     Model() = default;
-    Model(const char* path, TextureCache* texture_cache);
+    Model(const char* path, GlobalAppData* app_data);
     ~Model();
 
-    void init(const char* path, TextureCache* texture_cache);
+    void init(const char* path, GlobalAppData* app_data);
 
     void update(std::span<glm::mat4> models, float animation_time);
 
@@ -45,8 +41,7 @@ public:
 private:
     bool initialized = false;
 
-    // Utils::Cache<std::string, Texture> m_texture_cache;
-    TextureCache* m_texture_cache = nullptr;
+    GlobalAppData* m_app_data = nullptr;
 
     Mesh m_mesh;
     std::string m_directory;

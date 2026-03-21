@@ -3,6 +3,7 @@
 #include "model.hpp"
 
 #include "../utils/helpers.hpp"
+#include "assimp/material.h"
 
 namespace Renderer {
 
@@ -67,7 +68,7 @@ void Mesh::update_model_ssbos(const std::span<glm::mat4> model_matrices)
     }
 }
 
-void Mesh::update_bone_matrices(double animation_time)
+void Mesh::update_bone_matrices(float animation_time)
 {
     util_assert(initialized == true, "Mesh has not been initialized");
     util_assert(m_has_bones == true, "Attempting to update bone matrices with no bones");
@@ -237,8 +238,6 @@ void Mesh::setup_mesh()
     if (m_has_bones) {
         m_bone_ssbo.init();
         m_bone_ssbo.buffer_storage(sizeof(glm::mat4) * MAX_BONES, nullptr, GL_DYNAMIC_STORAGE_BIT);
-
-        m_final_bone_matrices.reserve(MAX_BONES);
     }
 
     initialized = true;

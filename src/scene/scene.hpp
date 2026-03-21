@@ -1,20 +1,18 @@
 #pragma once
 
 #include "../physics/engine.hpp"
-#include "../utils/cache.hpp"
 #include "../utils/deltatime.hpp"
-
-#include "resource_manager.hpp"
 
 #include "renderer.hpp"
 
 #include "entity_builder.hpp"
 
-#include "cache_types.hpp"
+#include "resource_manager.hpp"
+#include "../app_data.hpp"
 
 class Scene : public NoCopyNoMove {
 public:
-    explicit Scene(Renderer::Window& window, Renderer::Camera& camera);
+    explicit Scene(GlobalAppData* app_data);
     ~Scene();
 
     void add_entity(const EntityBuilder& entity);
@@ -37,8 +35,7 @@ private:
 
     Utils::DeltaTime m_clock;
 
-    Renderer::Window& m_window;
-    Renderer::Camera& m_camera;
+    GlobalAppData* m_app_data;
     float m_camera_speed = 5.0F;
 
     bool m_shaders_need_update = true;
@@ -52,7 +49,7 @@ private:
     Renderer::ShaderProgram m_shadowmap_cubemap_shader_bones;
 
     entt::registry m_registry;
-    // Utils::Cache<const char*, Renderer::Model> m_model_cache;
+
     ModelCache m_model_cache;
     TextureCache m_texture_cache;
 

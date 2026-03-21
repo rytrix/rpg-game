@@ -91,3 +91,25 @@ DataType* ResourceManager<MapType, DataType, MaxResources>::get(ResourceHandle h
     util_assert(handle < MaxResources, std::format("ResourceManager handle {} >= MaxResources {}", handle, MaxResources));
     return &m_dense_storage[handle];
 }
+
+#include "cache_types.hpp"
+
+namespace Renderer {
+class Model;
+class Texture;
+} // namespace Renderer
+
+struct SceneResources : public NoCopyNoMove {
+    SceneResources() = default;
+    ~SceneResources();
+    void init();
+
+    ModelCache m_model_cache;
+    TextureCache m_texture_cache;
+
+    Renderer::Model* get_model(ResourceHandle handle);
+    Renderer::Texture* get_texture(ResourceHandle handle);
+
+private:
+    bool initialized = false;
+};

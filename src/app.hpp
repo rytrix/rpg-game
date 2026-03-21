@@ -3,6 +3,8 @@
 #include "renderer.hpp"
 #include "scene/scene.hpp"
 
+#include "app_data.hpp"
+
 class App : public NoCopyNoMove {
 public:
     App();
@@ -18,8 +20,8 @@ private:
     bool m_vsync = true;
 
     const char* m_window_title = "test window";
-    Renderer::Window m_window;
-    Renderer::Camera m_camera;
+
+    GlobalAppData m_data;
 
     Scene* m_scene = nullptr;
 };

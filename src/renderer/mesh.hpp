@@ -1,7 +1,6 @@
 #pragma once
 
 #include "animation.hpp"
-#include "assimp/material.h"
 #include "buffer.hpp"
 #include "extensions.hpp"
 #include "shader.hpp"
@@ -69,7 +68,7 @@ public:
     ~Mesh();
 
     void update_model_ssbos(const std::span<glm::mat4> model_matrices);
-    void update_bone_matrices(const double animation_time);
+    void update_bone_matrices(const float animation_time);
 
     void draw_untextured(Renderer::ShaderProgram& shader);
     void draw(ShaderProgram& shader);
@@ -108,7 +107,6 @@ private:
     std::vector<GLuint64> m_texture_bindless_ids;
 
     Buffer m_bone_ssbo;
-    std::vector<glm::mat4> m_final_bone_matrices;
 };
 
 } // namespace Renderer

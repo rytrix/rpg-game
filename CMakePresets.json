@@ -35,7 +35,7 @@
             "inherits": "Defaults",
             "cacheVariables": {
                 "CMAKE_BUILD_TYPE": "Release",
-		"CMAKE_INTERPROCEDURAL_OPTIMIZATION": "ON"
+                "CMAKE_INTERPROCEDURAL_OPTIMIZATION": "ON"
             }
         },
         {
@@ -53,16 +53,19 @@
             }
         },
         {
-            "name": "msvc", 
-            "description": "msvc configuration", 
-            "cacheVariables": { 
+            "name": "msvc",
+            "description": "msvc configuration",
+            "cacheVariables": {
                 "CMAKE_CXX_FLAGS": "/W4 /w14242 /w14254 /w14263 /w14265 /w14287 /we4289 /w14296 /w14311 /w14545 /w14546 /w14547 /w14549 /w14555 /w14619 /w14640 /w14826 /w14905 /w14906 /w14928 /permissive-"
             }
         },
         {
             "name": "linux-clang-debug",
             "description": "clang linux debug configuration",
-            "inherits": [ "Debug", "clang" ],
+            "inherits": [
+                "Debug",
+                "clang"
+            ],
             "cacheVariables": {
                 "CMAKE_C_COMPILER": "clang",
                 "CMAKE_CXX_COMPILER": "clang++"
@@ -71,7 +74,10 @@
         {
             "name": "linux-clang-release",
             "description": "clang linux release configuration",
-            "inherits": [ "Release", "clang" ],
+            "inherits": [
+                "Release",
+                "clang"
+            ],
             "cacheVariables": {
                 "CMAKE_C_COMPILER": "clang",
                 "CMAKE_CXX_COMPILER": "clang++"
@@ -80,7 +86,10 @@
         {
             "name": "linux-gcc-debug",
             "description": "gcc linux debug configuration",
-            "inherits": [ "Debug", "gcc" ],
+            "inherits": [
+                "Debug",
+                "gcc"
+            ],
             "cacheVariables": {
                 "CMAKE_C_COMPILER": "gcc",
                 "CMAKE_CXX_COMPILER": "g++"
@@ -89,7 +98,10 @@
         {
             "name": "linux-gcc-release",
             "description": "gcc linux release configuration",
-            "inherits": [ "Release", "gcc" ],
+            "inherits": [
+                "Release",
+                "gcc"
+            ],
             "cacheVariables": {
                 "CMAKE_C_COMPILER": "gcc",
                 "CMAKE_CXX_COMPILER": "g++"
@@ -98,7 +110,10 @@
         {
             "name": "windows-clang-debug",
             "description": "clang windows debug configuration",
-            "inherits": [ "Debug", "clang" ],
+            "inherits": [
+                "Debug",
+                "clang"
+            ],
             "cacheVariables": {
                 "CMAKE_C_COMPILER": "clang-cl",
                 "CMAKE_CXX_COMPILER": "clang-cl"
@@ -112,7 +127,10 @@
         {
             "name": "windows-clang-release",
             "description": "clang windows release configuration",
-            "inherits": [ "Release", "clang" ],
+            "inherits": [
+                "Release",
+                "clang"
+            ],
             "cacheVariables": {
                 "CMAKE_C_COMPILER": "clang-cl",
                 "CMAKE_CXX_COMPILER": "clang-cl"
@@ -126,7 +144,10 @@
         {
             "name": "windows-msvc-debug",
             "description": "msvc windows debug configuration",
-            "inherits": [ "Debug", "msvc" ],
+            "inherits": [
+                "Debug",
+                "msvc"
+            ],
             "cacheVariables": {
                 "CMAKE_C_COMPILER": "cl",
                 "CMAKE_CXX_COMPILER": "cl"
@@ -135,7 +156,10 @@
         {
             "name": "windows-msvc-release",
             "description": "msvc windows release configuration",
-            "inherits": [ "Release", "msvc" ],
+            "inherits": [
+                "Release",
+                "msvc"
+            ],
             "cacheVariables": {
                 "CMAKE_C_COMPILER": "cl",
                 "CMAKE_CXX_COMPILER": "cl"

@@ -3,10 +3,9 @@
 
 #include "scene_shaders.hpp"
 
-Scene::Scene(Renderer::Window& window, Renderer::Camera& camera)
-    : m_window(window)
-    , m_camera(camera)
-    , m_camera_speed(m_camera.get_speed())
+Scene::Scene(GlobalAppData* app_data)
+    : m_app_data(app_data)
+    , m_camera_speed(app_data->m_camera.get_speed())
 {
     m_physics_system = std::make_unique<Physics::System>();
     m_model_cache.init();
@@ -32,7 +31,7 @@ void Scene::add_entity(const EntityBuilder& entity_builder)
     }
 
     if (entity_builder.m_model_path != nullptr) {
-        auto handle = m_model_cache.add(entity_builder.m_model_path, entity_builder.m_model_path, &m_texture_cache);
+        auto handle = m_model_cache.add(entity_builder.m_model_path, entity_builder.m_model_path, m_app_data);
         auto* model = m_model_cache.get(handle);
         m_registry.emplace<Renderer::Model*>(entity, model);
         // TODO: Decide if I want physics objects without models someday
@@ -154,8 +153,8 @@ void Scene::draw()
     }
 
     for (auto& model : m_models_instance_draw_cache) {
-        static double animation_time = 0.0;
-        animation_time += m_clock.delta_time<double>();
+        static float animation_time = 0.0;
+        animation_time += m_clock.delta_time<float>();
         model.m_model->update(model.m_model_matrices, animation_time);
     }
 
@@ -171,12 +170,12 @@ void Scene::draw()
 
     glClearColor(0.0F, 0.0F, 0.0F, 1.0F);
 
-    m_camera.update();
+    m_app_data->m_camera.update();
 
     glCullFace(GL_FRONT);
     auto directional_shadow_view = m_registry.view<Renderer::Light::Pbr::Directional, Renderer::Light::Pbr::DirectionalShadow>();
     for (auto [entity, light, shadow] : directional_shadow_view.each()) {
-        shadow.update(light, m_camera);
+        shadow.update(light, m_app_data->m_camera);
         shadow.shadowmap_begin();
         for (auto& model : m_models_instance_draw_cache) {
             shadow.shadowmap_draw(model.m_model);
@@ -207,15 +206,15 @@ void Scene::draw()
     }
 
     glCullFace(GL_BACK);
-    glViewport(0, 0, m_window.get_width(), m_window.get_height());
+    glViewport(0, 0, m_app_data->m_window.get_width(), m_app_data->m_window.get_height());
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
     for (auto& model : m_models_instance_draw_cache) {
         Renderer::ShaderProgram& shader = model.m_model->has_bones() ? m_shader_bones : m_shader;
         shader.bind();
-        shader.set_mat4("proj", m_camera.get_proj());
-        shader.set_mat4("view", m_camera.get_view());
-        shader.set_vec3("view_position", m_camera.get_pos());
+        shader.set_mat4("proj", m_app_data->m_camera.get_proj());
+        shader.set_mat4("view", m_app_data->m_camera.get_view());
+        shader.set_vec3("view_position", m_app_data->m_camera.get_pos());
 
         auto pbr_directional_view = m_registry.view<Renderer::Light::Pbr::Directional>();
         auto pbr_point_view = m_registry.view<Renderer::Light::Pbr::Point>();
@@ -260,10 +259,10 @@ void Scene::draw_debug_imgui()
         m_shaders_need_update = true;
     }
 
-    glm::vec3 cam_pos = m_camera.get_pos();
+    glm::vec3 cam_pos = m_app_data->m_camera.get_pos();
     ImGui::Text("%s", std::format("Camera Pos: {}, {}, {}", cam_pos.x, cam_pos.y, cam_pos.z).c_str());
     if (ImGui::DragFloat("Camera Speed", &m_camera_speed, 0.1F, 1.0F, 20.0F)) {
-        m_camera.set_speed(m_camera_speed);
+        m_app_data->m_camera.set_speed(m_camera_speed);
     }
 
     constexpr float MAX_TRANSFORM = 32.0F;
@@ -410,7 +409,7 @@ void Scene::draw_debug_imgui()
 
 Renderer::Camera& Scene::get_camera()
 {
-    return m_camera;
+    return m_app_data->m_camera;
 }
 
 const Utils::DeltaTime& Scene::get_clock()
