@@ -6,20 +6,12 @@ spell system
   - wait until there is gameplay
 
 lighting
-  - depreciate phong lighting
-  - spot lights
-  - reimplement shadowmaps for pbr
-  - find a good way to make shadows less pixelated
-  - change depth map size on a per light basis
-  - cascading shadow maps
+  - random sampling for soft shadows  
 
 rendering engine
-  - remove deferred pipeline
   - particles
 
 models
-  - I need some sort of a cool example scene
-  - animation graphs? (research needed)
   - learn more blender
 
 ECS
