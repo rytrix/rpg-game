@@ -11,7 +11,7 @@ App::App()
     m_data.m_camera.set_speed(10.0F);
 
     m_data.m_resources.init();
-    Renderer::Model::init_placeholder_textures();
+    m_data.m_default_textures.init(&m_data.m_resources.m_texture_cache);
 
     m_scene = new Scene(&m_data);
 
@@ -156,7 +156,7 @@ App::App()
     // m_scene->add_entity(e7);
 
     EntityBuilder e8;
-    e8.add_model_path("res/models/Defeated.fbx");
+    e8.add_model_path("res/models/Jogging.fbx");
     Transform e8_transform;
     e8_transform.set_scale(glm::vec3(0.1));
     e8.add_transform(e8_transform);
@@ -175,7 +175,6 @@ App::App()
 App::~App()
 {
     delete m_scene;
-    Renderer::Model::destroy_placeholder_textures();
     Physics::Engine::cleanup_singletons();
 }
 

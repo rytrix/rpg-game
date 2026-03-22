@@ -33,11 +33,6 @@ public:
     u32 get_current_animation() const;
     void set_animation(u32 value);
 
-    // Doesn't need to be called it will lazy load (or do before model loading if it is multi-threaded)
-    static void init_placeholder_textures();
-    // Call this before the opengl context is killed (or don't the os will clean it up)
-    static void destroy_placeholder_textures();
-
 private:
     bool initialized = false;
 
@@ -46,14 +41,12 @@ private:
     Mesh m_mesh;
     std::string m_directory;
 
-    Utils::DeltaTime m_timer;
-
     std::deque<Animation> m_animations;
     u32 m_current_animation = 0;
 
     void process_node(aiNode* node, const aiScene* scene);
     void process_mesh(aiMesh* mesh, const aiScene* scene);
-    Texture* load_material_texture(const aiMaterial* mat, const aiTextureType type, const aiScene* scene);
+    ResourceHandle load_material_texture(const aiMaterial* mat, const aiTextureType type, const aiScene* scene);
 
     static Texture* get_placeholder_texture_albedo();
     static Texture* get_placeholder_texture_normal();

@@ -89,6 +89,7 @@ DataType* ResourceManager<MapType, DataType, MaxResources>::get(ResourceHandle h
 {
     util_assert(initialized == true, "ResourceManager has not been initialized");
     util_assert(handle < MaxResources, std::format("ResourceManager handle {} >= MaxResources {}", handle, MaxResources));
+    util_assert(handle != 0, "ResourceManager: attempting to get a handle of 0 (invalid)");
     return &m_dense_storage[handle];
 }
 

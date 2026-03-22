@@ -10,6 +10,7 @@
 #include "../texture.hpp"
 #include "../vertex.hpp"
 #include "../window.hpp"
+#include "../default_textures.hpp"
 
 #include "../gbuffer.hpp"
 #include "../model.hpp"

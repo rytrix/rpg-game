@@ -7,6 +7,8 @@
 #include "texture.hpp"
 #include "vertex.hpp"
 
+#include "../app_data.hpp"
+
 namespace Renderer {
 
 struct IndirectCommands {
@@ -75,14 +77,15 @@ public:
 
     VertexData m_vertex_data;
 
-    std::vector<Texture*> m_diffuse_textures;
-    std::vector<Texture*> m_metallic_roughness_textures;
-    std::vector<Texture*> m_normal_textures;
+    std::vector<ResourceHandle> m_diffuse_textures;
+    std::vector<ResourceHandle> m_metallic_roughness_textures;
+    std::vector<ResourceHandle> m_normal_textures;
 
     bool m_has_bones = false;
     std::unordered_map<std::string, u32> m_bone_id_map;
 
     Animation* m_animation = nullptr;
+    GlobalAppData* m_app_data = nullptr;
 
     std::vector<BaseVertex> m_base_vertices;
 
