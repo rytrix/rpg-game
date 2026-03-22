@@ -167,7 +167,6 @@ void Scene::draw()
 
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-    // glBlendFuncSeparate(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA, GL_ONE, GL_ZERO);
 
     glClearColor(0.0F, 0.0F, 0.0F, 1.0F);
 
@@ -303,7 +302,6 @@ void Scene::draw_debug_imgui()
                         model->set_animation(current_animation);
                     }
                     float ticks_per_second = animations[current_animation].get_ticks_per_second();
-                    ImGui::Text("Current ticks per second: %f", ticks_per_second);
                     if (ImGui::DragFloat("Set ticks per second", &ticks_per_second)) {
                         animations[current_animation].set_ticks_per_second(ticks_per_second);
                     }
