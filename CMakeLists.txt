@@ -11,6 +11,7 @@ add_executable(${PROJECT_NAME}
 
     src/scene/scene.cpp
     src/scene/entity_builder.cpp
+    src/scene/transform.cpp
     src/scene/shader_preprocessor.cpp
     src/scene/resource_manager.cpp
 
@@ -57,6 +58,7 @@ set(SDL_STATIC ON CACHE BOOL "Prefer building static" FORCE)
 set(SDL_TEST_LIBRARY OFF CACHE BOOL "Not testing SDL3")
 add_subdirectory(vendor/sdl3)
 
+include_directories(/usr/include/minizip)
 set(ASSIMP_WARNINGS_AS_ERRORS OFF CACHE BOOL "Enable compiling with extra warnings" FORCE)
 set(ASSIMP_BUILD_TESTS OFF CACHE BOOL "Disable building assimp tests" FORCE)
 add_subdirectory(vendor/assimp)
