@@ -19,7 +19,7 @@ public:
 private:
     std::unordered_map<IDType, MapType> m_map;
     MapType m_size;
-    MapType m_id_counter = 0;
+    MapType m_id_counter = 1; // 0 is meant to be invalid
     std::vector<MapType> m_free_ids;
 };
 

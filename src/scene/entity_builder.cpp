@@ -54,8 +54,14 @@ EntityBuilder& EntityBuilder::add_pbr_spot_light_shadow()
     return *this;
 }
 
-EntityBuilder& EntityBuilder::add_model_matrix(glm::mat4 model)
+EntityBuilder& EntityBuilder::add_transform(const Transform& transform)
 {
-    m_model_matrix = model;
+    m_transform = transform;
     return *this;
 }
+
+// EntityBuilder& EntityBuilder::add_model_matrix(const glm::mat4& model)
+// {
+//     m_model_matrix = model;
+//     return *this;
+// }

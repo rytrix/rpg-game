@@ -50,9 +50,6 @@ private:
 
     entt::registry m_registry;
 
-    ModelCache m_model_cache;
-    TextureCache m_texture_cache;
-
     struct ModelMatrix {
         Renderer::Model* m_model;
         std::vector<glm::mat4> m_model_matrices;

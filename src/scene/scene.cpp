@@ -1,6 +1,7 @@
 #include "scene.hpp"
 #include "../physics/helpers.hpp"
 
+#include "glm/gtc/quaternion.hpp"
 #include "scene_shaders.hpp"
 
 Scene::Scene(GlobalAppData* app_data)
@@ -8,8 +9,6 @@ Scene::Scene(GlobalAppData* app_data)
     , m_camera_speed(app_data->m_camera.get_speed())
 {
     m_physics_system = std::make_unique<Physics::System>();
-    m_model_cache.init();
-    m_texture_cache.init();
 
     update();
 }
@@ -31,8 +30,9 @@ void Scene::add_entity(const EntityBuilder& entity_builder)
     }
 
     if (entity_builder.m_model_path != nullptr) {
-        auto handle = m_model_cache.add(entity_builder.m_model_path, entity_builder.m_model_path, m_app_data);
-        auto* model = m_model_cache.get(handle);
+        auto* model_cache = &m_app_data->m_resources.m_model_cache;
+        auto handle = model_cache->add(entity_builder.m_model_path, entity_builder.m_model_path, m_app_data);
+        auto* model = model_cache->get(handle);
         m_registry.emplace<Renderer::Model*>(entity, model);
         // TODO: Decide if I want physics objects without models someday
         if (entity_builder.m_create_body != nullptr) {
@@ -72,7 +72,7 @@ void Scene::add_entity(const EntityBuilder& entity_builder)
         m_shaders_need_update = true;
     }
 
-    m_registry.emplace<glm::mat4>(entity, entity_builder.m_model_matrix);
+    m_registry.emplace<Transform>(entity, entity_builder.m_transform);
 }
 
 void Scene::optimize()
@@ -99,10 +99,11 @@ void Scene::physics()
 {
     m_physics_system->update(m_clock.delta_time<float>());
 
-    auto view = m_registry.view<glm::mat4, JPH::BodyID, JPH::EMotionType>();
+    auto view = m_registry.view<Transform, JPH::BodyID, JPH::EMotionType>();
 
-    for (auto [entity, model, body, motion] : view.each()) {
+    for (auto [entity, transform, body, motion] : view.each()) {
         if (motion != JPH::EMotionType::Static) {
+            auto& model = transform.get_model_ref();
             model = mat4_to_mat4(m_physics_system->m_body_interface->GetCenterOfMassTransform(body));
 
             auto* point_light = m_registry.try_get<Renderer::Light::Pbr::Point>(entity);
@@ -121,32 +122,32 @@ void Scene::physics()
 void Scene::draw()
 {
     if (m_models_instance_draw_cache_needs_update) {
-        auto model_view = m_registry.view<glm::mat4, Renderer::Model*>();
+        auto model_view = m_registry.view<Transform, Renderer::Model*>();
 
         m_models_instance_draw_cache.clear();
-        for (auto [entity, model_matrix, model] : model_view.each()) {
+        for (auto [entity, transform, model] : model_view.each()) {
             for (auto& model_cached : m_models_instance_draw_cache) {
                 if (model == model_cached.m_model) {
-                    model_cached.m_model_matrices.emplace_back(model_matrix);
+                    model_cached.m_model_matrices.emplace_back(transform.get_model());
                     goto end_model_matrix_label;
                 }
             }
-            m_models_instance_draw_cache.emplace_back(model, model_matrix);
+            m_models_instance_draw_cache.emplace_back(model, transform.get_model());
         end_model_matrix_label:
         }
 
         LOG_INFO("Updated scene instanced draw cache");
         m_models_instance_draw_cache_needs_update = false;
     } else {
-        auto model_view = m_registry.view<glm::mat4, Renderer::Model*>();
+        auto model_view = m_registry.view<Transform, Renderer::Model*>();
 
         for (auto& model : m_models_instance_draw_cache) {
             model.m_model_matrices.clear();
         }
-        for (auto [entity, model_matrix, model] : model_view.each()) {
+        for (auto [entity, transform, model] : model_view.each()) {
             for (usize j = 0; j < m_models_instance_draw_cache.size(); j++) {
                 if (model == m_models_instance_draw_cache[j].m_model) {
-                    m_models_instance_draw_cache[j].m_model_matrices.emplace_back(model_matrix);
+                    m_models_instance_draw_cache[j].m_model_matrices.emplace_back(transform.get_model());
                 }
             }
         }
@@ -265,16 +266,19 @@ void Scene::draw_debug_imgui()
         m_app_data->m_camera.set_speed(m_camera_speed);
     }
 
-    constexpr float MAX_TRANSFORM = 32.0F;
-    constexpr float MIN_TRANSFORM = -32.0F;
+    constexpr float MAX_TRANSFORM = 64.0F;
+    constexpr float MIN_TRANSFORM = -64.0F;
+
+    constexpr float MAX_ROTATION = 360.0F;
+    constexpr float MIN_ROTATION = -360.0F;
 
     constexpr float MAX_COLOR = 3000.0F;
     constexpr float MIN_COLOR = 0.0F;
 
     i32 i = 0;
     if (ImGui::CollapsingHeader("Models")) {
-        auto view = m_registry.view<glm::mat4, Renderer::Model*>();
-        for (auto [entity, model_matrix, model] : view.each()) {
+        auto view = m_registry.view<Transform, Renderer::Model*>();
+        for (auto [entity, transform, model] : view.each()) {
             ImGui::PushID(i);
 
             if (ImGui::CollapsingHeader(std::format("model_{}", i).c_str())) {
@@ -305,8 +309,23 @@ void Scene::draw_debug_imgui()
                     }
                 }
 
-                glm::vec4& cube_pos = model_matrix[3];
-                ImGui::DragFloat3("XYZ", &cube_pos.x, 1.0F, MIN_TRANSFORM, MAX_TRANSFORM);
+                glm::vec3 transform_pos = transform.get_position();
+                if (ImGui::DragFloat3("Position: XYZ", &transform_pos.x, 1.0F, MIN_TRANSFORM, MAX_TRANSFORM)) {
+                    transform.set_position(transform_pos);
+                }
+
+                glm::vec3 transform_rot = transform.get_euler_angles();
+                if (ImGui::DragFloat3("Rotation: XYZ", &transform_rot.x, 1.0F, MIN_ROTATION, MAX_ROTATION)) {
+                    transform.set_euler_angles(transform_rot);
+                }
+
+                glm::vec3 transform_scale = transform.get_scale();
+                if (ImGui::DragFloat3("Scale: XYZ", &transform_scale.x, 1.0F, MIN_TRANSFORM, MAX_TRANSFORM)) {
+                    transform.set_scale(transform_scale);
+                }
+                if (ImGui::DragFloat("Scale: All", &transform_scale.x, 1.0F, MIN_TRANSFORM, MAX_TRANSFORM)) {
+                    transform.set_scale(glm::vec3(transform_scale.x));
+                }
             }
 
             ImGui::PopID();
@@ -316,8 +335,8 @@ void Scene::draw_debug_imgui()
 
     i = 0;
     if (ImGui::CollapsingHeader("Physics Objects")) {
-        auto view = m_registry.view<glm::mat4, JPH::BodyID, JPH::EMotionType>();
-        for (auto [entity, model_matrix, body, motion_type] : view.each()) {
+        auto view = m_registry.view<Transform, JPH::BodyID, JPH::EMotionType>();
+        for (auto [entity, transform, body, motion_type] : view.each()) {
             if (motion_type != JPH::EMotionType::Static) {
                 ImGui::PushID(i);
                 const char** name_check = m_registry.try_get<const char*>(entity);
@@ -329,12 +348,22 @@ void Scene::draw_debug_imgui()
                 }
 
                 if (ImGui::CollapsingHeader(std::format("{}_e{}", name, i).c_str())) {
-                    glm::vec4& cube_pos = model_matrix[3];
-                    ImGui::DragFloat3("XYZ", &cube_pos.x, 1.0F, MIN_TRANSFORM, MAX_TRANSFORM);
-                    m_physics_system->m_body_interface->SetPosition(
-                        body,
-                        vec3_to_vec3(cube_pos),
-                        JPH::EActivation::Activate);
+                    glm::vec3 cube_pos = vec3_to_vec3(m_physics_system->m_body_interface->GetPosition(body));
+                    if (ImGui::DragFloat3("XYZ", &cube_pos.x, 1.0F, MIN_TRANSFORM, MAX_TRANSFORM)) {
+                        m_physics_system->m_body_interface->SetPosition(
+                            body,
+                            vec3_to_vec3(cube_pos),
+                            JPH::EActivation::Activate);
+                    }
+
+                    glm::quat cube_rot = quat_to_quat(m_physics_system->m_body_interface->GetRotation(body));
+                    glm::vec3 euler_angles = glm::degrees(glm::eulerAngles(cube_rot));
+                    if (ImGui::DragFloat3("Rotation: XYZ", &euler_angles.x, 1.0F, MIN_ROTATION, MAX_ROTATION)) {
+                        m_physics_system->m_body_interface->SetRotation(
+                            body,
+                            quat_to_quat(glm::quat(glm::radians(euler_angles))),
+                            JPH::EActivation::Activate);
+                    }
                 }
                 ImGui::PopID();
                 i++;

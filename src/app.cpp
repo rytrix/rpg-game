@@ -54,13 +54,13 @@ App::App()
     EntityBuilder e2;
     // e2.add_model_path("res/models/physics_plane/plane.obj");
     e2.add_model_path("res/models/Sponza/glTF/Sponza.gltf");
-    glm::mat4 e2_model_matrix = glm::scale(glm::mat4(1.0), glm::vec3(0.1));
-    // e2_model_matrix = glm::translate(e2_model_matrix, glm::vec3(0.0, -5.0, 0.0));
-    e2.add_model_matrix(e2_model_matrix);
+    Transform e2_transform;
+    e2_transform.set_scale(glm::vec3(0.1));
+    e2.add_transform(e2_transform);
     e2.add_physics_command([&](Physics::System* system, Renderer::Model* model) -> std::pair<JPH::BodyID, JPH::EMotionType> {
         JPH::TriangleList triangles;
         const auto* mesh = model->get_mesh();
-        Physics::System::create_mesh_triangle_list_base_index(triangles, e2_model_matrix, mesh);
+        Physics::System::create_mesh_triangle_list_base_index(triangles, e2_transform.get_model(), mesh);
         // Physics::System::create_mesh_triangle_list_base_index(triangles, mesh);
         JPH::BodyID plane_id = system->m_body_interface->CreateAndAddBody(
             JPH::BodyCreationSettings(
@@ -76,7 +76,7 @@ App::App()
     EntityBuilder e3;
     e3.add_name("cube");
     e3.add_model_path("res/models/physics_cube/cube.obj");
-    // This should probably do nothing since it's going to be based off of the physics mat4 anyways
+    // This will do nothing since it's going to be based off of the physics mat4 anyways
     // glm::mat4 e3_model_matrix = glm::scale(glm::mat4(1.0), glm::vec3(1.1));
     // e3.add_model_matrix(e3_model_matrix);
     e3.add_physics_command([](Physics::System* system, [[maybe_unused]] Renderer::Model* _model) -> std::pair<JPH::BodyID, JPH::EMotionType> {
@@ -157,14 +157,15 @@ App::App()
 
     EntityBuilder e8;
     e8.add_model_path("res/models/Defeated.fbx");
-    glm::mat4 e8_model_matrix = glm::scale(glm::mat4(1.0), glm::vec3(0.1F));
-    e8.add_model_matrix(e8_model_matrix);
+    Transform e8_transform;
+    e8_transform.set_scale(glm::vec3(0.1));
+    e8.add_transform(e8_transform);
     m_scene->add_entity(e8);
 
     e8.add_model_path("res/models/dog/scene.gltf");
-    e8_model_matrix = glm::scale(glm::mat4(1.0), glm::vec3(10.0F));
-    e8_model_matrix = glm::rotate(e8_model_matrix, glm::radians(-90.0F), glm::vec3(1.0, 0.0, 0.0));
-    e8.add_model_matrix(e8_model_matrix);
+    e8_transform.set_scale(glm::vec3(10.0F));
+    e8_transform.rotate(-90.0F, glm::vec3(1.0, 0.0, 0.0));
+    e8.add_transform(e8_transform);
     m_scene->add_entity(e8);
 
     m_scene->optimize();
