@@ -269,15 +269,18 @@ Handle Model::load_material_texture(const aiMaterial* mat, const aiTextureType t
 
         auto* texture_cache = &m_app_data->m_texture_cache;
         if (embedded_texture == nullptr) {
-            std::string texture_path = (m_directory + "/" + str.C_Str());
+            Utils::String texture_path;
+            // std::string texture_path = (m_directory + "/" + str.C_Str());
+            usize size = snprintf(texture_path.data(), texture_path.capacity(), "%s/%s", m_directory.c_str(), str.C_Str());
+            texture_path.set_size(size);
+            
             texture_info.from_file = GL_TRUE;
-            texture_info.file_path = texture_path.c_str();
+            texture_info.file_path = texture_path.cstr();
 
-            LOG_INFO(std::format("Loading {} type {}", texture_path, aiTextureTypeToString(type)));
+            LOG_INFO(std::format("Loading {} type {}", texture_path.view(), aiTextureTypeToString(type)));
             // Texture* texture = nullptr;
 
             Handle handle;//= texture_cache->get_or_create(texture_path, texture_info);
-            // TODO: IDK WHY MY UNORDERED_MAP THINKS IT ALREADY HAS THESE TEXTURES WHEN IT DOESN'T
             if (texture_cache->contains(texture_path)) {
                 handle = texture_cache->get(texture_path);
                 // texture = texture_cache->get(handle);
@@ -288,9 +291,9 @@ Handle Model::load_material_texture(const aiMaterial* mat, const aiTextureType t
             }
             return handle;
         } else {
-            std::string texture_path = str.C_Str();
+            Utils::String texture_path(str.C_Str());
 
-            LOG_INFO(std::format("Loading {} type {}", texture_path, aiTextureTypeToString(type)));
+            LOG_INFO(std::format("Loading {} type {}", texture_path.view(), aiTextureTypeToString(type)));
             if (texture_cache->contains(texture_path)) {
                 return texture_cache->get(texture_path);
             } else {

@@ -1,5 +1,10 @@
 #include "resource_manager2.hpp"
 
+bool Handle::operator==(const Handle& other)
+{
+    return memcmp(this, &other, sizeof(Handle)) == 0;
+}
+
 void run_resoure_manager_fuzzer(size_t iterations, size_t pool_size)
 {
     ResourceManager2<u32> manager;

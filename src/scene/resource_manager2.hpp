@@ -10,6 +10,8 @@ struct Generation {
 struct Handle {
     Generation generation;
     u32 index;
+
+    bool operator==(const Handle& other);
 };
 
 template <typename DataType>
@@ -184,12 +186,12 @@ public:
     void init(usize size);
 
     template <typename... Args>
-    Handle get_or_create(std::string_view name, Args&&... args);
+    Handle get_or_create(const Utils::String& name, Args&&... args);
     template <typename... Args>
     Handle create(Args&&... args);
 
-    bool contains(std::string_view name);
-    Handle get(std::string_view name);
+    bool contains(const Utils::String& name);
+    Handle get(const Utils::String& name);
 
     T* get(Handle handle);
     void destroy(Handle handle);
@@ -207,18 +209,17 @@ void SceneResourceManager<T>::init(usize size)
 
 template <typename T>
 template <typename... Args>
-Handle SceneResourceManager<T>::get_or_create(std::string_view name, Args&&... args)
+Handle SceneResourceManager<T>::get_or_create(const Utils::String& name, Args&&... args)
 {
-    Utils::String string(name);
-    if (m_map.contains(string)) {
-        Handle handle = m_map[string];
+    if (m_map.contains(name)) {
+        Handle handle = m_map[name];
         if (m_cache.get(handle) != nullptr) {
             return handle;
         }
     }
 
     Handle handle = m_cache.create_handle();
-    m_map[string] = handle;
+    m_map[name] = handle;
     m_cache.create(handle, std::forward<Args>(args)...);
 
     return handle;
@@ -235,17 +236,15 @@ Handle SceneResourceManager<T>::create(Args&&... args)
 }
 
 template <typename T>
-bool SceneResourceManager<T>::contains(std::string_view name)
+bool SceneResourceManager<T>::contains(const Utils::String& name)
 {
-    Utils::String string(name);
-    return m_map.contains(string);
+    return m_map.contains(name);
 }
 
 template <typename T>
-Handle SceneResourceManager<T>::get(std::string_view name)
+Handle SceneResourceManager<T>::get(const Utils::String& name)
 {
-    Utils::String string(name);
-    Handle handle = m_map[string];
+    Handle handle = m_map[name];
     if (m_cache.get(handle) == nullptr) {
         util_error("Attempting to get invalid handle");
     }
@@ -262,6 +261,12 @@ template <typename T>
 void SceneResourceManager<T>::destroy(Handle handle)
 {
     m_cache.destroy_handle(handle);
+    for (const auto& pair : m_map) {
+        if (pair.second == handle) {
+            m_map.erase(pair.first);
+            break;
+        }
+    }
 }
 
 #define TextureCache SceneResourceManager<Renderer::Texture>

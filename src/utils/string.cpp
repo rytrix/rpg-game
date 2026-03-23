@@ -26,6 +26,33 @@ String::String(const std::string_view string)
     memcpy(m_data, string.data(), len);
 }
 
+String& String::operator=(const char* string)
+{
+    usize len = strlen(string);
+    util_assert(len < SIZE, std::format("String size of {} overflowed by const char* string of {}", SIZE, len));
+    m_size = len;
+    memcpy(m_data, string, len);
+    return *this;
+}
+
+String& String::operator=(const std::string& string)
+{
+    usize len = string.size();
+    util_assert(len < SIZE, std::format("String size of {} overflowed by std::string of {}", SIZE, len));
+    m_size = len;
+    memcpy(m_data, string.data(), len);
+    return *this;
+}
+
+String& String::operator=(const std::string_view string)
+{
+    usize len = string.size();
+    util_assert(len < SIZE, std::format("String size of {} overflowed by std::string_view of {}", SIZE, len));
+    m_size = len;
+    memcpy(m_data, string.data(), len);
+    return *this;
+}
+
 const char* String::cstr() const
 {
     return m_data;
@@ -36,6 +63,11 @@ std::string_view String::view() const
     return { m_data, m_size };
 }
 
+char* String::data()
+{
+    return m_data;
+}
+
 const char* String::data() const
 {
     return m_data;
@@ -44,6 +76,11 @@ const char* String::data() const
 usize String::size() const
 {
     return m_size;
+}
+
+usize String::capacity() const
+{
+    return SIZE;
 }
 
 bool String::operator==(String other) const
@@ -74,6 +111,11 @@ bool String::operator==(const char* other) const
         }
     }
     return false;
+}
+
+void String::set_size(usize size)
+{
+    m_size = size;
 }
 
 } // namespace Utils

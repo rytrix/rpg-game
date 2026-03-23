@@ -5,18 +5,27 @@ namespace Utils {
 // A staticly sized string
 class String {
 public:
-    explicit String(const char* string);
-    explicit String(const std::string& string);
-    explicit String(const std::string_view string);
+    String() = default;
+    String(const char* string);
+    String(const std::string& string);
+    String(const std::string_view string);
+
+    String& operator=(const char* string);
+    String& operator=(const std::string& string);
+    String& operator=(const std::string_view string);
 
     [[nodiscard]] const char* cstr() const;
     [[nodiscard]] std::string_view view() const;
+    [[nodiscard]] char* data();
     [[nodiscard]] const char* data() const;
     [[nodiscard]] usize size() const;
+    [[nodiscard]] usize capacity() const;
 
     bool operator==(String other) const;
     bool operator==(std::string_view other) const;
     bool operator==(const char* other) const;
+
+    void set_size(usize size);
 
 private:
     static constexpr usize SIZE = 255;
