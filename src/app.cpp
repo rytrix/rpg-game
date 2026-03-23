@@ -156,7 +156,7 @@ App::App()
     // m_scene->add_entity(e7);
 
     EntityBuilder e8;
-    e8.add_model_path("res/models/Jogging.fbx");
+    e8.add_model_path("res/models/Defeated.fbx");
     Transform e8_transform;
     e8_transform.set_scale(glm::vec3(0.1));
     e8.add_transform(e8_transform);

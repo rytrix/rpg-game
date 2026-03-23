@@ -2,7 +2,7 @@
 
 namespace Utils {
 
-class DeltaTime : NoCopyNoMove {
+class DeltaTime : public NoCopyNoMove {
 public:
     DeltaTime();
     ~DeltaTime() = default;

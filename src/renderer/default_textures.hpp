@@ -4,7 +4,7 @@
 
 namespace Renderer {
 
-struct DefaultTextures : NoCopyNoMove {
+struct DefaultTextures : public NoCopyNoMove {
     DefaultTextures() = default;
     explicit DefaultTextures(TextureCache* cache);
     ~DefaultTextures();
