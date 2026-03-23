@@ -105,8 +105,6 @@ void ResourceManager2<DataType>::destroy_handle(Handle handle)
     util_assert(handle.generation.valid == 1, "ResourceManager2 attempting to remove invalid handle");
     util_assert(handle.index < m_data_size, std::format("ResourceManager2 handle index {} >= data_size {}", handle.index, m_data_size));
 
-    // TODO: next_free not getting properly set to INVALID_NEXT_FREE 
-    // or m_next_free_index is pointing to invalid data
     m_data[handle.index].generation.valid = 0;
     m_data[handle.index].generation.generation++;
 
