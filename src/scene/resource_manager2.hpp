@@ -1,5 +1,7 @@
 #pragma once
 
+#include "../utils/string.hpp"
+
 struct Generation {
     u32 valid : 1;
     u32 generation : 31;
@@ -16,8 +18,8 @@ public:
     void init(usize size);
     ~ResourceManager2();
 
-    Handle new_handle();
-    void remove_handle(Handle handle);
+    Handle create_handle();
+    void destroy_handle(Handle handle);
     DataType* get(Handle handle);
     template <typename... Args>
     DataType* create(Handle handle, Args&&... args);
@@ -27,7 +29,7 @@ private:
     struct InternalData {
         Generation generation = { .valid = 0, .generation = 0 };
         union {
-            DataType data; // Valid == 1
+            DataType data {}; // Valid == 1
             u32 next_free; // Valid == 0
         };
     };
@@ -39,6 +41,15 @@ private:
 };
 
 template <typename DataType>
+void ResourceManager2<DataType>::init(usize size)
+{
+    util_assert(size < INVALID_NEXT_FREE, std::format("ResourceManager2 size {} greater than UINT32_MAX", size));
+    m_data = (InternalData*)malloc(sizeof(InternalData) * size);
+    memset((void*)m_data, 0, sizeof(InternalData) * size);
+    m_data_capacity = size;
+}
+
+template <typename DataType>
 ResourceManager2<DataType>::~ResourceManager2()
 {
     for (u32 i = 0; i < m_data_size; i++) {
@@ -47,19 +58,11 @@ ResourceManager2<DataType>::~ResourceManager2()
         }
     }
 
-    delete[] m_data;
+    free(m_data);
 }
 
 template <typename DataType>
-void ResourceManager2<DataType>::init(usize size)
-{
-    util_assert(size < INVALID_NEXT_FREE, std::format("ResourceManager2 size {} greater than UINT32_MAX", size));
-    m_data = new InternalData[size]();
-    m_data_capacity = size;
-}
-
-template <typename DataType>
-Handle ResourceManager2<DataType>::new_handle()
+Handle ResourceManager2<DataType>::create_handle()
 {
     util_assert(m_data_size < m_data_capacity,
         std::format("ResourceManager2 data_size {} >= data_capacity {}", m_data_size, m_data_capacity));
@@ -95,15 +98,17 @@ Handle ResourceManager2<DataType>::new_handle()
 }
 
 template <typename DataType>
-void ResourceManager2<DataType>::remove_handle(Handle handle)
+void ResourceManager2<DataType>::destroy_handle(Handle handle)
 {
     util_assert(handle.generation.valid == 1, "ResourceManager2 attempting to remove invalid handle");
     util_assert(handle.index < m_data_size, std::format("ResourceManager2 handle index {} >= data_size {}", handle.index, m_data_size));
 
+    // TODO: next_free not getting properly set to INVALID_NEXT_FREE 
+    // or m_next_free_index is pointing to invalid data
     m_data[handle.index].generation.valid = 0;
     m_data[handle.index].generation.generation++;
-    // TODO: check if DataType has ~DataType?
-    m_data->data.~DataType();
+
+    m_data[handle.index].data.~DataType();
     m_data[handle.index].next_free = INVALID_NEXT_FREE;
 
     if (handle.index == m_data_size - 1) {
@@ -132,7 +137,7 @@ template <typename DataType>
 DataType* ResourceManager2<DataType>::get(Handle handle)
 {
     util_assert(handle.index < m_data_capacity, std::format("ResourceManager2 handle index {} >= data_capacity {}", handle.index, m_data_size));
-    util_assert(handle.generation.valid == 1, "ResourceManager2 attempting to remove invalid handle");
+    util_assert(handle.generation.valid == 1, "ResourceManager2 attempting to get invalid handle");
 
     if (handle.index >= m_data_size) {
         LOG_WARN(std::format("ResourceManager2 data at handle index {} has been invalidated", handle.index));
@@ -162,7 +167,102 @@ DataType* ResourceManager2<DataType>::create(Handle handle, Args&&... args)
         return data;
     } else {
         new (data) DataType(std::forward<Args>(args)...);
+        return data;
     }
 }
 
-void run_fuzzer(size_t iterations, size_t pool_size);
+void run_resoure_manager_fuzzer(size_t iterations, size_t pool_size);
+
+namespace Renderer {
+class Texture;
+class Model;
+}
+
+template <typename T>
+class SceneResourceManager {
+public:
+    void init(usize size);
+
+    template <typename... Args>
+    Handle get_or_create(std::string_view name, Args&&... args);
+    template <typename... Args>
+    Handle create(Args&&... args);
+
+    bool contains(std::string_view name);
+    Handle get(std::string_view name);
+
+    T* get(Handle handle);
+    void destroy(Handle handle);
+
+private:
+    std::unordered_map<Utils::String, Handle> m_map;
+    ResourceManager2<T> m_cache;
+};
+
+template <typename T>
+void SceneResourceManager<T>::init(usize size)
+{
+    m_cache.init(size);
+}
+
+template <typename T>
+template <typename... Args>
+Handle SceneResourceManager<T>::get_or_create(std::string_view name, Args&&... args)
+{
+    Utils::String string(name);
+    if (m_map.contains(string)) {
+        Handle handle = m_map[string];
+        if (m_cache.get(handle) != nullptr) {
+            return handle;
+        }
+    }
+
+    Handle handle = m_cache.create_handle();
+    m_map[string] = handle;
+    m_cache.create(handle, std::forward<Args>(args)...);
+
+    return handle;
+}
+
+template <typename T>
+template <typename... Args>
+Handle SceneResourceManager<T>::create(Args&&... args)
+{
+    Handle handle = m_cache.create_handle();
+    m_cache.create(handle, std::forward<Args>(args)...);
+
+    return handle;
+}
+
+template <typename T>
+bool SceneResourceManager<T>::contains(std::string_view name)
+{
+    Utils::String string(name);
+    return m_map.contains(string);
+}
+
+template <typename T>
+Handle SceneResourceManager<T>::get(std::string_view name)
+{
+    Utils::String string(name);
+    Handle handle = m_map[string];
+    if (m_cache.get(handle) == nullptr) {
+        util_error("Attempting to get invalid handle");
+    }
+    return handle;
+}
+
+template <typename T>
+T* SceneResourceManager<T>::get(Handle handle)
+{
+    return m_cache.get(handle);
+}
+
+template <typename T>
+void SceneResourceManager<T>::destroy(Handle handle)
+{
+    m_cache.destroy_handle(handle);
+}
+
+#define TextureCache SceneResourceManager<Renderer::Texture>
+#define ModelCache SceneResourceManager<Renderer::Model>

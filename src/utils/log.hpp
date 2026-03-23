@@ -38,7 +38,7 @@ constexpr void log(StrType msg, LogLevel level, const char* file, int line)
         } else if constexpr (SHOW_LINE) {
             local_msg += std::format("{}", line);
         }
-        std::println("{}: {}", local_msg, msg);
+        std::println(stderr, "{}: {}", local_msg, msg);
     }
 }
 

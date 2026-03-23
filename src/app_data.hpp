@@ -3,11 +3,16 @@
 #include "renderer/window.hpp"
 #include "renderer/camera.hpp"
 #include "renderer/default_textures.hpp"
-#include "scene/resource_manager.hpp"
+// #include "scene/resource_manager.hpp"
+#include "scene/resource_manager2.hpp"
 
 struct GlobalAppData {
     Renderer::Window m_window;
     Renderer::Camera m_camera;
-    SceneResources m_resources;
+    // SceneResources m_resources;
+
+    TextureCache m_texture_cache;
+    ModelCache m_model_cache;
+    
     Renderer::DefaultTextures m_default_textures;
 };

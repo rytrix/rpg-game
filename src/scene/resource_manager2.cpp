@@ -1,6 +1,6 @@
 #include "resource_manager2.hpp"
 
-void run_fuzzer(size_t iterations, size_t pool_size)
+void run_resoure_manager_fuzzer(size_t iterations, size_t pool_size)
 {
     ResourceManager2<u32> manager;
     manager.init(pool_size);
@@ -17,7 +17,7 @@ void run_fuzzer(size_t iterations, size_t pool_size)
 
         // allocate
         if (action <= 6 || active_handles.empty()) {
-            Handle handle = manager.new_handle();
+            Handle handle = manager.create_handle();
             size_t unique_id = i;
             active_handles[unique_id] = handle;
             handle_keys.push_back(unique_id);
@@ -27,7 +27,7 @@ void run_fuzzer(size_t iterations, size_t pool_size)
             size_t key_idx = std::uniform_int_distribution<size_t>(0, handle_keys.size() - 1)(rng);
             size_t unique_id = handle_keys[key_idx];
 
-            manager.remove_handle(active_handles[unique_id]);
+            manager.destroy_handle(active_handles[unique_id]);
 
             // validate
             if (manager.get(active_handles[unique_id]) != nullptr) {

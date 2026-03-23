@@ -56,4 +56,24 @@ bool String::operator==(String other) const
     return false;
 }
 
+bool String::operator==(std::string_view other) const
+{
+    if (m_size == other.size()) {
+        if (memcmp(m_data, other.data(), m_size) == 0) {
+            return true;
+        }
+    }
+    return false;
+}
+
+bool String::operator==(const char* other) const
+{
+    if (m_size == strlen(other)) {
+        if (memcmp(m_data, other, m_size) == 0) {
+            return true;
+        }
+    }
+    return false;
+}
+
 } // namespace Utils

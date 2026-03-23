@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../scene/resource_manager.hpp"
+#include "../scene/resource_manager2.hpp"
 
 namespace Renderer {
 
@@ -9,15 +9,17 @@ struct DefaultTextures : public NoCopyNoMove {
     explicit DefaultTextures(TextureCache* cache);
     ~DefaultTextures();
     void init(TextureCache* cache);
-    [[nodiscard]] u32 get_albedo() const;
-    [[nodiscard]] u32 get_metallic() const;
-    [[nodiscard]] u32 get_normal() const;
+
+    [[nodiscard]] Handle get_albedo() const;
+    [[nodiscard]] Handle get_metallic() const;
+    [[nodiscard]] Handle get_normal() const;
 
 private:
     bool initialized = false;
-    u32 m_albedo = 0;
-    u32 m_metallic = 0;
-    u32 m_normal = 0;
+    Handle m_albedo;
+    Handle m_metallic;
+    Handle m_normal;
+
     TextureCache* m_cache = nullptr;
 };
 

@@ -7,7 +7,6 @@
 
 #include "entity_builder.hpp"
 
-#include "resource_manager.hpp"
 #include "../app_data.hpp"
 
 class Scene : public NoCopyNoMove {

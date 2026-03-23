@@ -12,14 +12,11 @@ DefaultTextures::DefaultTextures(TextureCache* cache)
 DefaultTextures::~DefaultTextures()
 {
     if (m_cache != nullptr) {
-        m_cache->remove(m_albedo);
-        m_cache->remove(m_metallic);
-        m_cache->remove(m_normal);
+        m_cache->destroy(m_albedo);
+        m_cache->destroy(m_metallic);
+        m_cache->destroy(m_normal);
         m_cache = nullptr;
     }
-    m_albedo = 0;
-    m_metallic = 0;
-    m_normal = 0;
     initialized = false;
 }
 
@@ -44,38 +41,38 @@ void DefaultTextures::init(TextureCache* cache)
 
     std::array<u8, 4> data_albedo = { 255, 255, 255, 255 };
     subimage_info.pixels = data_albedo.data();
-    m_albedo = cache->add("DefaultTextureAlbedo", texture_info);
+    m_albedo = cache->create(texture_info);
     cache->get(m_albedo)->sub_image(subimage_info);
 
     std::array<u8, 4> data_metallic = { 255, 0, 0, 0 };
     subimage_info.pixels = data_metallic.data();
-    m_metallic = cache->add("DefaultTextureMetallic", texture_info);
+    m_metallic = cache->create(texture_info);
     cache->get(m_metallic)->sub_image(subimage_info);
 
     subimage_info.format = GL_RGBA;
     subimage_info.type = GL_FLOAT;
     std::array<float, 4> data_normal = { 0.5F, 0.5F, 1.0F, 0.0F };
     subimage_info.pixels = data_normal.data();
-    m_normal = cache->add("DefaultTextureNormal", texture_info);
+    m_normal = cache->create(texture_info);
     cache->get(m_normal)->sub_image(subimage_info);
 
     m_cache = cache;
     initialized = true;
 }
 
-u32 DefaultTextures::get_albedo() const
+Handle DefaultTextures::get_albedo() const
 {
     util_assert(initialized == true, "DefaultTextures not initialized");
     return m_albedo;
 }
 
-u32 DefaultTextures::get_metallic() const
+Handle DefaultTextures::get_metallic() const
 {
     util_assert(initialized == true, "DefaultTextures not initialized");
     return m_metallic;
 }
 
-u32 DefaultTextures::get_normal() const
+Handle DefaultTextures::get_normal() const
 {
     util_assert(initialized == true, "DefaultTextures not initialized");
     return m_normal;

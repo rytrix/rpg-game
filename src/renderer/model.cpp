@@ -185,7 +185,7 @@ void Model::process_mesh(aiMesh* mesh, const aiScene* scene)
         aiMaterial* material = scene->mMaterials[mesh->mMaterialIndex];
 
         auto diffuse_map = load_material_texture(material, aiTextureType_DIFFUSE, scene);
-        if (diffuse_map == 0) {
+        if (diffuse_map.generation.valid == 0) {
             LOG_WARN("Using default albedo texture map");
             m_mesh.m_diffuse_textures.push_back(m_app_data->m_default_textures.get_albedo());
         } else {
@@ -193,7 +193,7 @@ void Model::process_mesh(aiMesh* mesh, const aiScene* scene)
         }
 
         auto metallic_roughness_map = load_material_texture(material, aiTextureType_GLTF_METALLIC_ROUGHNESS, scene);
-        if (metallic_roughness_map == 0) {
+        if (metallic_roughness_map.generation.valid == 0) {
             LOG_WARN("Using default metallic texture map");
             m_mesh.m_metallic_roughness_textures.push_back(m_app_data->m_default_textures.get_metallic());
         } else {
@@ -201,7 +201,7 @@ void Model::process_mesh(aiMesh* mesh, const aiScene* scene)
         }
 
         auto normal_map = load_material_texture(material, aiTextureType_NORMALS, scene);
-        if (normal_map == 0) {
+        if (normal_map.generation.valid == 0) {
             LOG_WARN("Using default normal texture map");
             m_mesh.m_normal_textures.push_back(m_app_data->m_default_textures.get_normal());
         } else {
@@ -252,7 +252,7 @@ void Model::process_mesh(aiMesh* mesh, const aiScene* scene)
         base_vertex);
 }
 
-ResourceHandle Model::load_material_texture(const aiMaterial* mat, const aiTextureType type, const aiScene* scene)
+Handle Model::load_material_texture(const aiMaterial* mat, const aiTextureType type, const aiScene* scene)
 {
     if (mat->GetTextureCount(type) > 0) {
         aiString str;
@@ -267,22 +267,23 @@ ResourceHandle Model::load_material_texture(const aiMaterial* mat, const aiTextu
         texture_info.mipmap_levels = 0;
         texture_info.flip = false;
 
-        auto* texture_cache = &m_app_data->m_resources.m_texture_cache;
+        auto* texture_cache = &m_app_data->m_texture_cache;
         if (embedded_texture == nullptr) {
             std::string texture_path = (m_directory + "/" + str.C_Str());
             texture_info.from_file = GL_TRUE;
             texture_info.file_path = texture_path.c_str();
 
             LOG_INFO(std::format("Loading {} type {}", texture_path, aiTextureTypeToString(type)));
-            Texture* texture = nullptr;
+            // Texture* texture = nullptr;
 
-            ResourceHandle handle = 0;
+            Handle handle;//= texture_cache->get_or_create(texture_path, texture_info);
+            // TODO: IDK WHY MY UNORDERED_MAP THINKS IT ALREADY HAS THESE TEXTURES WHEN IT DOESN'T
             if (texture_cache->contains(texture_path)) {
-                handle = texture_cache->add(texture_path, texture_info);
-                texture = texture_cache->get(handle);
+                handle = texture_cache->get(texture_path);
+                // texture = texture_cache->get(handle);
             } else {
-                handle = texture_cache->add(texture_path, texture_info);
-                texture = texture_cache->get(handle);
+                handle = texture_cache->get_or_create(texture_path, texture_info);
+                auto* texture = texture_cache->get(handle);
                 texture->set_max_anisotropy(16.0F);
             }
             return handle;
@@ -291,7 +292,7 @@ ResourceHandle Model::load_material_texture(const aiMaterial* mat, const aiTextu
 
             LOG_INFO(std::format("Loading {} type {}", texture_path, aiTextureTypeToString(type)));
             if (texture_cache->contains(texture_path)) {
-                return texture_cache->add(texture_path, texture_info);
+                return texture_cache->get(texture_path);
             } else {
                 int width, height, channels;
                 TextureSubimageInfo subimage_info;
@@ -309,7 +310,7 @@ ResourceHandle Model::load_material_texture(const aiMaterial* mat, const aiTextu
                 texture_info.size.width = width;
                 texture_info.size.height = height;
                 texture_info.size.depth = 0;
-                auto handle = texture_cache->add(texture_path, texture_info);
+                auto handle = texture_cache->get_or_create(texture_path, texture_info);
                 Texture* texture = texture_cache->get(handle);
 
                 subimage_info.pixels = data;
@@ -324,7 +325,7 @@ ResourceHandle Model::load_material_texture(const aiMaterial* mat, const aiTextu
             }
         }
     } else {
-        return 0;
+        return { .generation = { .valid = 0, .generation = 0 }, .index = 0 };
     }
 }
 

@@ -142,17 +142,17 @@ void Mesh::draw(ShaderProgram& shader)
     } else {
         for (usize i = 0; i < m_commands.size(); i++) {
             GLuint texture_unit = Texture::get_texture_unit();
-            auto* diffuse_texture = m_app_data->m_resources.get_texture(m_diffuse_textures[i]);
+            auto* diffuse_texture = m_app_data->m_texture_cache.get(m_diffuse_textures[i]);
             diffuse_texture->bind(texture_unit);
             shader.set_int("tex_diffuse", static_cast<int>(texture_unit));
 
             texture_unit = Texture::get_texture_unit();
-            auto* metallic_roughness_texture = m_app_data->m_resources.get_texture(m_metallic_roughness_textures[i]);
+            auto* metallic_roughness_texture = m_app_data->m_texture_cache.get(m_metallic_roughness_textures[i]);
             metallic_roughness_texture->bind(texture_unit);
             shader.set_int("tex_metallic_roughness", static_cast<int>(texture_unit));
 
             texture_unit = Texture::get_texture_unit();
-            auto* normal_texture = m_app_data->m_resources.get_texture(m_normal_textures[i]);
+            auto* normal_texture = m_app_data->m_texture_cache.get(m_normal_textures[i]);
             normal_texture->bind(texture_unit);
             shader.set_int("tex_normals", static_cast<int>(texture_unit));
 
@@ -218,19 +218,19 @@ void Mesh::setup_mesh()
         m_texture_bindless_ids.resize(m_commands.size() * 3);
         for (usize i = 0; i < m_commands.size(); i++) {
             // 1 diffuse 1 metallic_roughness 1 normal (at most.. or its broken)
-            auto* diffuse_texture = m_app_data->m_resources.get_texture(m_diffuse_textures[i]);
+            auto* diffuse_texture = m_app_data->m_texture_cache.get(m_diffuse_textures[i]);
             m_texture_bindless_ids.at((i * 3) + 0) = diffuse_texture->get_bindless_texture_id();
             if (!diffuse_texture->is_bindless_texture_mapped()) {
                 diffuse_texture->map_bindless_texture();
             }
 
-            auto* metallic_roughness_texture = m_app_data->m_resources.get_texture(m_metallic_roughness_textures[i]);
+            auto* metallic_roughness_texture = m_app_data->m_texture_cache.get(m_metallic_roughness_textures[i]);
             m_texture_bindless_ids.at((i * 3) + 1) = metallic_roughness_texture->get_bindless_texture_id();
             if (!metallic_roughness_texture->is_bindless_texture_mapped()) {
                 metallic_roughness_texture->map_bindless_texture();
             }
 
-            auto* normal_texture = m_app_data->m_resources.get_texture(m_normal_textures[i]);
+            auto* normal_texture = m_app_data->m_texture_cache.get(m_normal_textures[i]);
             m_texture_bindless_ids.at((i * 3) + 2) = normal_texture->get_bindless_texture_id();
             if (!normal_texture->is_bindless_texture_mapped()) {
                 normal_texture->map_bindless_texture();

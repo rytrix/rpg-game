@@ -30,9 +30,13 @@ void Scene::add_entity(const EntityBuilder& entity_builder)
     }
 
     if (entity_builder.m_model_path != nullptr) {
-        auto* model_cache = &m_app_data->m_resources.m_model_cache;
-        auto handle = model_cache->add(entity_builder.m_model_path, entity_builder.m_model_path, m_app_data);
+        auto* model_cache = &m_app_data->m_model_cache;
+        auto handle = model_cache->get_or_create(entity_builder.m_model_path, entity_builder.m_model_path, m_app_data);
         auto* model = model_cache->get(handle);
+
+        // auto* model_cache = &m_app_data->m_resources.m_model_cache;
+        // auto handle = model_cache->add(entity_builder.m_model_path, entity_builder.m_model_path, m_app_data);
+        // auto* model = model_cache->get(handle);
         m_registry.emplace<Renderer::Model*>(entity, model);
         // TODO: Decide if I want physics objects without models someday
         if (entity_builder.m_create_body != nullptr) {

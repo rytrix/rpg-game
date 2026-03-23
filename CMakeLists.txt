@@ -13,12 +13,13 @@ add_executable(${PROJECT_NAME}
     src/scene/entity_builder.cpp
     src/scene/transform.cpp
     src/scene/shader_preprocessor.cpp
-    src/scene/resource_manager.cpp
+    # src/scene/resource_manager.cpp
     src/scene/resource_manager2.cpp
 
     src/physics/engine.cpp
     
 	src/utils/deltatime.cpp
+	src/utils/string.cpp
 
     src/game_logic/gear.cpp 
     src/game_logic/character.cpp

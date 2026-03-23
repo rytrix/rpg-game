@@ -77,9 +77,9 @@ public:
 
     VertexData m_vertex_data;
 
-    std::vector<ResourceHandle> m_diffuse_textures;
-    std::vector<ResourceHandle> m_metallic_roughness_textures;
-    std::vector<ResourceHandle> m_normal_textures;
+    std::vector<Handle> m_diffuse_textures;
+    std::vector<Handle> m_metallic_roughness_textures;
+    std::vector<Handle> m_normal_textures;
 
     bool m_has_bones = false;
     std::unordered_map<std::string, u32> m_bone_id_map;

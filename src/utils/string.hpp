@@ -3,7 +3,7 @@
 namespace Utils {
 
 // A staticly sized string
-class String : public NoCopyNoMove {
+class String {
 public:
     explicit String(const char* string);
     explicit String(const std::string& string);
@@ -15,6 +15,8 @@ public:
     [[nodiscard]] usize size() const;
 
     bool operator==(String other) const;
+    bool operator==(std::string_view other) const;
+    bool operator==(const char* other) const;
 
 private:
     static constexpr usize SIZE = 255;

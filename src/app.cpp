@@ -10,8 +10,11 @@ App::App()
     m_data.m_camera.init(90.0F, 1.0F, 500.0F, m_data.m_window.get_aspect_ratio(), { -2.0F, 1.5F, 4.0F });
     m_data.m_camera.set_speed(10.0F);
 
-    m_data.m_resources.init();
-    m_data.m_default_textures.init(&m_data.m_resources.m_texture_cache);
+    m_data.m_model_cache.init(100);
+    m_data.m_texture_cache.init(500);
+
+    // m_data.m_resources.init();
+    m_data.m_default_textures.init(&m_data.m_texture_cache);
 
     m_scene = new Scene(&m_data);
 

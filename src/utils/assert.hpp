@@ -14,7 +14,7 @@ template <typename StrType>
     if constexpr (use_throws) {
         throw std::runtime_error(msg);
     } else {
-        std::println("{}", msg);
+        std::println(stderr, "{}", msg);
         std::quick_exit(EXIT_FAILURE);
     }
 }
