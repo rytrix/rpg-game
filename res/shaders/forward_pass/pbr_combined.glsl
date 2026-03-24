@@ -116,6 +116,13 @@ struct SpotLightShadow {
     mat4 light_space_matrix;
 };
 
+struct ShadowOffsetTexture {
+    sampler3D texture;
+    int filter_size;
+    int window_size;
+    int radius;
+};
+
 #ifdef UniformTextures
 uniform sampler2D tex_diffuse;
 uniform sampler2D tex_metallic_roughness;
@@ -130,6 +137,10 @@ layout(binding = 3, std430) readonly buffer ssbo2 {
 
 uniform vec3 view_position;
 uniform mat4 view;
+
+#ifdef RandomSampling
+uniform ShadowOffsetTexture tex_random_offset;
+#endif
 
 const float PI = 3.14159265359;
 
@@ -266,7 +277,7 @@ vec3 calc_bumped_normal(vec3 bump_map_normal)
     return new_normal;
 }
 
-float shadow_calculation_directional(DirectionalLightShadow light, float bias)
+float shadow_calculation_directional_pcf(DirectionalLightShadow light, float bias)
 {
     vec4 frag_pos_view_space = view * vec4(FragPos, 1.0);
     float depth_value = abs(frag_pos_view_space.z);
@@ -290,7 +301,7 @@ float shadow_calculation_directional(DirectionalLightShadow light, float bias)
     // transform to [0,1] range
     proj_coords = proj_coords * 0.5 + 0.5;
 
-    float closest_depth = texture(light.shadow_map, vec3(proj_coords.xy, layer)).x;
+    // float closest_depth = texture(light.shadow_map, vec3(proj_coords.xy, layer)).x;
 
     float current_depth = proj_coords.z;
 
@@ -315,7 +326,89 @@ float shadow_calculation_directional(DirectionalLightShadow light, float bias)
     return shadow;
 }
 
-vec3 sample_offset_directions[20] = vec3[]
+#ifdef RandomSampling
+float shadow_calculation_directional_rs(DirectionalLightShadow light, float bias)
+{
+    vec4 frag_pos_view_space = view * vec4(FragPos, 1.0);
+    float depth_value = abs(frag_pos_view_space.z);
+
+    int layer = -1;
+
+    for (int i = 0; i < light.cascade_count; i++) {
+        if (depth_value < light.cascade_plane_distances[i]) {
+            layer = i;
+            break;
+        }
+    }
+    if (layer == -1) {
+        layer = light.cascade_count;
+    }
+
+    vec4 light_space_frag_pos = light.light_space_matrix[layer] * vec4(FragPos, 1.0);
+
+    vec3 proj_coords = light_space_frag_pos.xyz / light_space_frag_pos.w;
+
+    // transform to [0,1] range
+    proj_coords = proj_coords * 0.5 + 0.5;
+
+    // float closest_depth = texture(light.shadow_map, vec3(proj_coords.xy, layer)).x;
+    float current_depth = proj_coords.z;
+
+    // Random offset
+    ivec3 offset_coord;
+    vec2 f = mod(gl_FragCoord.xy, vec2(tex_random_offset.window_size));
+    offset_coord.yz = ivec2(f);
+    
+    float sum = 0.0;
+    vec2 texel_size = 1.0 / textureSize(light.shadow_map, 0).xy;
+
+    for (int i = 0; i < 4; i++) {
+        offset_coord.x = i;
+        vec4 offsets = texelFetch(tex_random_offset.texture, offset_coord, 0) * tex_random_offset.radius;
+
+        float depth = texture(light.shadow_map, vec3(proj_coords.xy + offsets.rg * texel_size, layer)).x;
+        sum += current_depth - bias > depth ? 1.0 : 0.0;
+
+        depth = texture(light.shadow_map, vec3(proj_coords.xy + offsets.ba * texel_size, layer)).x;
+        sum += current_depth - bias > depth ? 1.0 : 0.0;
+    }
+
+    float shadow = sum / 8.0;
+    int samples_div_2 = int(tex_random_offset.filter_size * tex_random_offset.filter_size / 2.0);
+
+    if (shadow != 0.0 && shadow != 1.0) {
+        for (int i = 4; i < samples_div_2; i++) {
+            offset_coord.x = i;
+            vec4 offsets = texelFetch(tex_random_offset.texture, offset_coord, 0) * tex_random_offset.radius;
+
+            float depth = texture(light.shadow_map, vec3(proj_coords.xy + offsets.rg * texel_size, layer)).x;
+            sum += current_depth - bias > depth ? 1.0 : 0.0;
+
+            depth = texture(light.shadow_map, vec3(proj_coords.xy + offsets.ba * texel_size, layer)).x;
+            sum += current_depth - bias > depth ? 1.0 : 0.0;
+        }
+
+        shadow = sum / float(samples_div_2 * 2.0);
+    }
+
+    if (current_depth > 1.0) {
+        shadow = 0.0;
+    }
+
+    return shadow;
+}
+#endif
+
+float shadow_calculation_directional(DirectionalLightShadow light, float bias)
+{
+#ifdef RandomSampling
+    return shadow_calculation_directional_rs(light, bias);
+#else
+    return shadow_calculation_directional_pcf(light, bias);
+#endif
+}
+
+const vec3 sample_offset_directions[20] = vec3[]
 (
     vec3( 1,  1,  1), vec3( 1, -1,  1), vec3(-1, -1,  1), vec3(-1,  1,  1), 
     vec3( 1,  1, -1), vec3( 1, -1, -1), vec3(-1, -1, -1), vec3(-1,  1, -1),
@@ -324,10 +417,16 @@ vec3 sample_offset_directions[20] = vec3[]
     vec3( 0,  1,  1), vec3( 0, -1,  1), vec3( 0, -1, -1), vec3( 0,  1, -1)
 );
 
-float shadow_calculation_point(PointLight light, PointLightShadow light_shadow, float bias)
+float shadow_calculation_point_pcf(PointLight light, PointLightShadow light_shadow, float bias)
 {
     vec3 frag_to_light = FragPos - light.position;
     float current_depth = length(frag_to_light);
+    // float shadow = 0.0;
+    // float closest_depth = texture(light_shadow.shadow_map, frag_to_light).x; 
+    // closest_depth *= light_shadow.far_plane;
+    // if (current_depth - bias > closest_depth) {
+    //     shadow += 1.0;
+    // }
 
     // pcf 2
     float shadow = 0.0;
@@ -347,16 +446,85 @@ float shadow_calculation_point(PointLight light, PointLightShadow light_shadow, 
     return shadow;
 }
 
-float shadow_calculation_spot(SpotLightShadow light, float bias)
+float shadow_calculation_point_rs(PointLight light, PointLightShadow light_shadow, float bias)
+{
+    vec3 frag_to_light = FragPos - light.position;
+    float current_depth = length(frag_to_light);
+
+    // float shadow = 0.0;
+    // float closest_depth = texture(light_shadow.shadow_map, frag_to_light).x; 
+    // closest_depth *= light_shadow.far_plane;
+    // if (current_depth - bias > closest_depth) {
+    //     shadow += 1.0;
+    // }
+
+    // Random offset
+    ivec3 offset_coord;
+    vec2 f = mod(gl_FragCoord.xy, vec2(tex_random_offset.window_size));
+    offset_coord.yz = ivec2(f);
+
+    float sum = 0.0;
+    // random offset does not appear to show up until I
+    // multiply texel_size by at least 2 orders of magnitude
+    // likely because of how cube maps are "indexed"
+    float texel_size = 1.0 / textureSize(light_shadow.shadow_map, 0).x * 100.0;
+
+    for (int i = 0; i < 4; i++) {
+        offset_coord.x = i;
+        vec4 offsets = texelFetch(tex_random_offset.texture, offset_coord, 0) * tex_random_offset.radius;
+
+        float depth = texture(light_shadow.shadow_map, frag_to_light + offsets.rgb * texel_size).x;
+        depth *= light_shadow.far_plane;
+        sum += current_depth - bias > depth ? 1.0 : 0.0;
+
+        depth = texture(light_shadow.shadow_map, frag_to_light + offsets.gba * texel_size).x;
+        depth *= light_shadow.far_plane;
+        sum += current_depth - bias > depth ? 1.0 : 0.0;
+    }
+
+    float shadow = sum / 8.0;
+    int samples_div_2 = int(tex_random_offset.filter_size * tex_random_offset.filter_size / 2.0);
+
+    if (shadow != 0.0 && shadow != 1.0) {
+        for (int i = 4; i < samples_div_2; i++) {
+            offset_coord.x = i;
+            vec4 offsets = texelFetch(tex_random_offset.texture, offset_coord, 0) * tex_random_offset.radius;
+
+            float depth = texture(light_shadow.shadow_map, frag_to_light + offsets.rgb * texel_size).x;
+            depth *= light_shadow.far_plane;
+            sum += current_depth - bias > depth ? 1.0 : 0.0;
+
+            depth = texture(light_shadow.shadow_map, frag_to_light + offsets.gba * texel_size).x;
+            depth *= light_shadow.far_plane;
+            sum += current_depth - bias > depth ? 1.0 : 0.0;
+        }
+
+        shadow = sum / float(samples_div_2 * 2.0);
+    }
+    
+    return shadow;
+}
+
+float shadow_calculation_point(PointLight light, PointLightShadow light_shadow, float bias)
+{
+#ifdef RandomSampling
+    return shadow_calculation_point_rs(light, light_shadow, bias);
+#else
+    return shadow_calculation_point_pcf(light, light_shadow, bias);
+#endif
+}
+
+float shadow_calculation_spot_pcf(SpotLightShadow light, float bias)
 {
     vec4 light_space_frag_pos = light.light_space_matrix * vec4(FragPos, 1.0);
-
     vec3 proj_coords = light_space_frag_pos.xyz / light_space_frag_pos.w;
 
     // transform to [0,1] range
     proj_coords = proj_coords * 0.5 + 0.5;
 
-    float closest_depth = texture(light.shadow_map, proj_coords.xy).x;
+    // float closest_depth = texture(light.shadow_map, proj_coords.xy).x;
+    // float current_depth = proj_coords.z;
+    // float shadow = current_depth - bias > closest_depth ? 1.0 : 0.0;
 
     float current_depth = proj_coords.z;
 
@@ -370,13 +538,80 @@ float shadow_calculation_spot(SpotLightShadow light, float bias)
     }
     shadow /= 9.0;
 
-    // float shadow = current_depth - bias > closest_depth ? 1.0 : 0.0;
-
     if (proj_coords.z > 1.0) {
         shadow = 0.0;
     }
 
     return shadow;
+}
+
+#ifdef RandomSampling
+float shadow_calculation_spot_rs(SpotLightShadow light, float bias)
+{
+    vec4 light_space_frag_pos = light.light_space_matrix * vec4(FragPos, 1.0);
+    vec3 proj_coords = light_space_frag_pos.xyz / light_space_frag_pos.w;
+
+    // transform to [0,1] range
+    proj_coords = proj_coords * 0.5 + 0.5;
+
+    // float closest_depth = texture(light.shadow_map, proj_coords.xy).x;
+    // float current_depth = proj_coords.z;
+    // float shadow = current_depth - bias > closest_depth ? 1.0 : 0.0;
+
+    float current_depth = proj_coords.z;
+
+    // Random offset
+    ivec3 offset_coord;
+    vec2 f = mod(gl_FragCoord.xy, vec2(tex_random_offset.window_size));
+    offset_coord.yz = ivec2(f);
+
+    float sum = 0.0;
+    vec2 texel_size = 1.0 / textureSize(light.shadow_map, 0).xy;
+
+    for (int i = 0; i < 4; i++) {
+        offset_coord.x = i;
+        vec4 offsets = texelFetch(tex_random_offset.texture, offset_coord, 0) * tex_random_offset.radius;
+
+        float depth = texture(light.shadow_map, proj_coords.xy + offsets.rg * texel_size).x;
+        sum += current_depth - bias > depth ? 1.0 : 0.0;
+
+        depth = texture(light.shadow_map, proj_coords.xy + offsets.ba * texel_size).x;
+        sum += current_depth - bias > depth ? 1.0 : 0.0;
+    }
+
+    float shadow = sum / 8.0;
+    int samples_div_2 = int(tex_random_offset.filter_size * tex_random_offset.filter_size / 2.0);
+
+    if (shadow != 0.0 && shadow != 1.0) {
+        for (int i = 4; i < samples_div_2; i++) {
+            offset_coord.x = i;
+            vec4 offsets = texelFetch(tex_random_offset.texture, offset_coord, 0) * tex_random_offset.radius;
+
+            float depth = texture(light.shadow_map, proj_coords.xy + offsets.rg * texel_size).x;
+            sum += current_depth - bias > depth ? 1.0 : 0.0;
+
+            depth = texture(light.shadow_map, proj_coords.xy + offsets.ba * texel_size).x;
+            sum += current_depth - bias > depth ? 1.0 : 0.0;
+        }
+
+        shadow = sum / float(samples_div_2 * 2.0);
+    }
+
+    if (current_depth > 1.0) {
+        shadow = 0.0;
+    }
+
+    return shadow;
+}
+#endif
+
+float shadow_calculation_spot(SpotLightShadow light, float bias)
+{
+#ifdef RandomSampling
+    return shadow_calculation_spot_rs(light, bias);
+#else
+    return shadow_calculation_spot_pcf(light, bias);
+#endif
 }
 
 // Light Uniforms Begin
