@@ -118,4 +118,10 @@ void String::set_size(usize size)
     m_size = size;
 }
 
+void String::clear()
+{
+    memset(m_data, 0, capacity() + 1);
+    m_size = 0;
+}
+
 } // namespace Utils

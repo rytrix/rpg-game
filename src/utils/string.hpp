@@ -26,12 +26,26 @@ public:
     bool operator==(const char* other) const;
 
     void set_size(usize size);
+    void clear();
+
+    template <typename... Args>
+    String& format(std::format_string<Args...> fmt, Args&&... args);
 
 private:
     static constexpr usize SIZE = 255;
     char m_data[SIZE + 1] {};
     usize m_size = 0;
 };
+
+template <typename... Args>
+String& String::format(std::format_string<Args...> fmt, Args&&... args)
+{
+    clear();
+    auto [out, size] = std::format_to_n(m_data, capacity(), fmt, std::forward<Args>(args)...);
+    m_size = std::min((usize)size, SIZE);
+    util_assert(m_size != 0, "String::format returned size = 0");
+    return *this;
+}
 
 } // namespace Utils
 
