@@ -13,7 +13,6 @@ App::App()
     m_data.m_model_cache.init(100);
     m_data.m_texture_cache.init(500);
 
-    // m_data.m_resources.init();
     m_data.m_default_textures.init(&m_data.m_texture_cache);
 
     m_scene = new Scene(&m_data);
@@ -147,16 +146,16 @@ App::App()
     });
     m_scene->add_entity(e6);
 
-    // EntityBuilder e7;
-    // Renderer::Light::Pbr::Spot spot {};
-    // spot.position = glm::vec3(-6.0F, 8.0F, 10.0F);
-    // spot.direction = glm::vec3(0.2, 0.0, -0.3);
-    // spot.color = glm::vec3(50.0, 25.0, 25.0);
-    // spot.inner_cutoff = glm::cos(glm::radians(12.5F));
-    // spot.outer_cutoff = glm::cos(glm::radians(20.5F));
-    // e7.add_pbr_spot_light(spot);
-    // // e7.add_pbr_spot_light_shadow();
-    // m_scene->add_entity(e7);
+    EntityBuilder e7;
+    Renderer::Light::Pbr::Spot spot {};
+    spot.position = glm::vec3(-6.0F, 8.0F, 10.0F);
+    spot.direction = glm::vec3(0.2, 0.0, -1.0);
+    spot.color = glm::vec3(50.0, 25.0, 25.0);
+    spot.inner_cutoff = glm::cos(glm::radians(12.5F));
+    spot.outer_cutoff = glm::cos(glm::radians(20.5F));
+    e7.add_pbr_spot_light(spot);
+    e7.add_pbr_spot_light_shadow();
+    m_scene->add_entity(e7);
 
     EntityBuilder e8;
     e8.add_model_path("res/models/Defeated.fbx");

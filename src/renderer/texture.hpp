@@ -28,12 +28,12 @@ struct TextureInfo {
 };
 
 struct TextureSubimageInfo {
-    GLint level {};
+    GLint level = 0;
     TextureSize offsets {};
     TextureSize size {};
-    GLenum format {};
-    GLenum type {};
-    void* pixels {};
+    GLenum format = GL_RGBA;
+    GLenum type = GL_UNSIGNED_BYTE;
+    void* pixels = nullptr;
 };
 
 class Texture : public NoCopyNoMove {

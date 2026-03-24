@@ -4,11 +4,17 @@
 #include "glm/gtc/quaternion.hpp"
 #include "scene_shaders.hpp"
 
+#include "../renderer/random_sampling_texture.hpp"
+
 Scene::Scene(GlobalAppData* app_data)
     : m_app_data(app_data)
     , m_camera_speed(app_data->m_camera.get_speed())
 {
     m_physics_system = std::make_unique<Physics::System>();
+
+    random_sampling_texture = Renderer::create_random_sampling_texture(
+        16, 8,
+        &app_data->m_texture_cache);
 
     update();
 }
@@ -251,7 +257,17 @@ void Scene::draw()
             i++;
         }
 
+        Renderer::Texture* texture = m_app_data->m_texture_cache.get(random_sampling_texture);
+        GLuint texture_unit = Renderer::Texture::get_texture_unit();
+        texture->bind(texture_unit);
+        shader.set_int("tex_random_offset.texture", static_cast<int>(texture_unit));
+        shader.set_int("tex_random_offset.window_size", 16);
+        shader.set_int("tex_random_offset.filter_size", 8);
+        shader.set_int("tex_random_offset.radius", 2);
+
         model.m_model->draw(shader);
+
+        Renderer::Texture::drop_texture_units(1);
     }
 
     Renderer::Texture::reset_texture_units();
@@ -458,28 +474,28 @@ void Scene::compile_shaders()
     std::string no_defines;
     std::string bone_defines = Renderer::get_bone_defines();
 
-    compile_pbr_shaders(bone_defines);
+    compile_pbr_shaders(no_defines, bone_defines);
 
     if (!m_shadowmap_shader.is_initialized()) {
         ShaderInfoData<2> shadowmap_shaders;
-        get_shadow_pass_basic_shaders(shadowmap_shaders, no_defines);
+        get_shadow_pass_basic_shaders(shadowmap_shaders, no_defines, no_defines);
         m_shadowmap_shader.init(shadowmap_shaders.info.data(), shadowmap_shaders.info.size());
     }
 
     if (!m_shadowmap_shader_bones.is_initialized()) {
         ShaderInfoData<2> shadowmap_shaders;
-        get_shadow_pass_basic_shaders(shadowmap_shaders, bone_defines);
+        get_shadow_pass_basic_shaders(shadowmap_shaders, bone_defines, no_defines);
         m_shadowmap_shader_bones.init(shadowmap_shaders.info.data(), shadowmap_shaders.info.size());
     }
 
     if (!m_shadowmap_cubemap_shader.is_initialized()) {
         if constexpr (!Renderer::Light::Pbr::PointShadow::USE_GEOMETRY_SHADER) {
             ShaderInfoData<2> cubemap_shaders;
-            get_shadow_pass_point_shaders(cubemap_shaders, no_defines);
+            get_shadow_pass_point_shaders(cubemap_shaders, no_defines, no_defines);
             m_shadowmap_cubemap_shader.init(cubemap_shaders.info.data(), cubemap_shaders.info.size());
         } else {
             ShaderInfoData<3> cubemap_shaders;
-            get_shadow_pass_point_geometry_shaders(cubemap_shaders, no_defines);
+            get_shadow_pass_point_geometry_shaders(cubemap_shaders, no_defines, no_defines);
             m_shadowmap_cubemap_shader.init(cubemap_shaders.info.data(), cubemap_shaders.info.size());
         }
     }
@@ -487,11 +503,11 @@ void Scene::compile_shaders()
     if (!m_shadowmap_cubemap_shader_bones.is_initialized()) {
         if constexpr (!Renderer::Light::Pbr::PointShadow::USE_GEOMETRY_SHADER) {
             ShaderInfoData<2> cubemap_shaders;
-            get_shadow_pass_point_shaders(cubemap_shaders, bone_defines);
+            get_shadow_pass_point_shaders(cubemap_shaders, bone_defines, no_defines);
             m_shadowmap_cubemap_shader_bones.init(cubemap_shaders.info.data(), cubemap_shaders.info.size());
         } else {
             ShaderInfoData<3> cubemap_shaders;
-            get_shadow_pass_point_geometry_shaders(cubemap_shaders, bone_defines);
+            get_shadow_pass_point_geometry_shaders(cubemap_shaders, bone_defines, no_defines);
             m_shadowmap_cubemap_shader_bones.init(cubemap_shaders.info.data(), cubemap_shaders.info.size());
         }
     }
@@ -499,7 +515,7 @@ void Scene::compile_shaders()
     m_shaders_need_update = false;
 }
 
-void Scene::compile_pbr_shaders(const std::string& bone_defines)
+void Scene::compile_pbr_shaders(const std::string& empty_defines, const std::string& bone_defines)
 {
     std::string light_uniforms;
     std::string light_functions;
@@ -549,14 +565,13 @@ void Scene::compile_pbr_shaders(const std::string& bone_defines)
     ShaderInfoData<2> shader_source;
     ShaderInfoData<2> shader_source_bones;
 
-    std::string empty_defines;
-
+    std::string fragment_defines = "#define RandomSampling\n";
     if (Renderer::Extensions::is_extension_supported("GL_ARB_bindless_texture")) {
-        get_pbr_forward_pass_indirect(shader_source, light_uniforms, light_functions, empty_defines);
-        get_pbr_forward_pass_indirect(shader_source_bones, light_uniforms, light_functions, bone_defines);
+        get_pbr_forward_pass_indirect(shader_source, light_uniforms, light_functions, empty_defines, fragment_defines);
+        get_pbr_forward_pass_indirect(shader_source_bones, light_uniforms, light_functions, bone_defines, fragment_defines);
     } else {
-        get_pbr_forward_pass_normal(shader_source, light_uniforms, light_functions, empty_defines);
-        get_pbr_forward_pass_normal(shader_source_bones, light_uniforms, light_functions, bone_defines);
+        get_pbr_forward_pass_normal(shader_source, light_uniforms, light_functions, empty_defines, fragment_defines);
+        get_pbr_forward_pass_normal(shader_source_bones, light_uniforms, light_functions, bone_defines, fragment_defines);
     }
 
     if (m_shader.is_initialized()) {

@@ -30,7 +30,7 @@ public:
 
 private:
     void compile_shaders();
-    void compile_pbr_shaders(const std::string& bone_defines);
+    void compile_pbr_shaders(const std::string& empty_defines, const std::string& bone_defines);
 
     Utils::DeltaTime m_clock;
 
@@ -59,6 +59,8 @@ private:
         {
         }
     };
+    Handle random_sampling_texture;
+
     std::vector<ModelMatrix> m_models_instance_draw_cache;
     bool m_models_instance_draw_cache_needs_update = false;
 
