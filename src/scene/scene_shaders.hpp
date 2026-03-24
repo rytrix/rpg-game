@@ -54,7 +54,7 @@ constexpr void get_pbr_forward_pass_indirect(ShaderInfoData<2>& out, const std::
     out.data.at(0) += get_lines_between_delims(pbr_file_view, "// Vertex Begin", "// Vertex End");
 
     // Fragment Shader
-    out.data.at(1) += "#version 460 core\n#define BindlessTextures\n";
+    out.data.at(1) += "#version 460 core\n#define BINDLESS_TEXTURES\n";
     out.data.at(1) += frag_defines;
     out.data.at(1) += get_lines_between_delims(pbr_file_view, "// Fragment Begin", "// Light Uniforms Begin");
     out.data.at(1) += light_uniforms;
@@ -76,7 +76,7 @@ constexpr void get_pbr_forward_pass_normal(ShaderInfoData<2>& out, const std::st
     out.data.at(0) += get_lines_between_delims(pbr_file_view, "// Vertex Begin", "// Vertex End");
 
     // Fragment Shader
-    out.data.at(1) += "#version 460 core\n#define UniformTextures\n";
+    out.data.at(1) += "#version 460 core\n#define UNIFORM_TEXTURES\n";
     out.data.at(1) += frag_defines;
     out.data.at(1) += get_lines_between_delims(pbr_file_view, "// Fragment Begin", "// Light Uniforms Begin");
     out.data.at(1) += light_uniforms;

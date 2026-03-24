@@ -19,7 +19,7 @@ out vec2 TexCoords;
 out vec3 Tangent;
 out flat int DrawID;
 
-#ifdef ModelUniform
+#ifdef MODEL_UNIFORM
 uniform mat4 model;
 #endif
 uniform mat4 view;
@@ -69,7 +69,7 @@ void main()
 
 #version 460 core
 // Fragment Begin
-#ifdef BindlessTextures
+#ifdef BINDLESS_TEXTURES
 #extension GL_ARB_bindless_texture : require
 #endif
 
@@ -123,13 +123,13 @@ struct ShadowOffsetTexture {
     int radius;
 };
 
-#ifdef UniformTextures
+#ifdef UNIFORM_TEXTURES
 uniform sampler2D tex_diffuse;
 uniform sampler2D tex_metallic_roughness;
 uniform sampler2D tex_normals;
 #endif
 
-#ifdef BindlessTextures
+#ifdef BINDLESS_TEXTURES
 layout(binding = 3, std430) readonly buffer ssbo2 {
     sampler2D ssbo_textures[];
 };
@@ -138,7 +138,7 @@ layout(binding = 3, std430) readonly buffer ssbo2 {
 uniform vec3 view_position;
 uniform mat4 view;
 
-#ifdef RandomSampling
+#ifdef RANDOM_SAMPLING
 uniform ShadowOffsetTexture tex_random_offset;
 #endif
 
@@ -326,7 +326,7 @@ float shadow_calculation_directional_pcf(DirectionalLightShadow light, float bia
     return shadow;
 }
 
-#ifdef RandomSampling
+#ifdef RANDOM_SAMPLING
 float shadow_calculation_directional_rs(DirectionalLightShadow light, float bias)
 {
     vec4 frag_pos_view_space = view * vec4(FragPos, 1.0);
@@ -401,7 +401,7 @@ float shadow_calculation_directional_rs(DirectionalLightShadow light, float bias
 
 float shadow_calculation_directional(DirectionalLightShadow light, float bias)
 {
-#ifdef RandomSampling
+#ifdef RANDOM_SAMPLING
     return shadow_calculation_directional_rs(light, bias);
 #else
     return shadow_calculation_directional_pcf(light, bias);
@@ -446,6 +446,7 @@ float shadow_calculation_point_pcf(PointLight light, PointLightShadow light_shad
     return shadow;
 }
 
+#ifdef RANDOM_SAMPLING
 float shadow_calculation_point_rs(PointLight light, PointLightShadow light_shadow, float bias)
 {
     vec3 frag_to_light = FragPos - light.position;
@@ -504,10 +505,11 @@ float shadow_calculation_point_rs(PointLight light, PointLightShadow light_shado
     
     return shadow;
 }
+#endif
 
 float shadow_calculation_point(PointLight light, PointLightShadow light_shadow, float bias)
 {
-#ifdef RandomSampling
+#ifdef RANDOM_SAMPLING
     return shadow_calculation_point_rs(light, light_shadow, bias);
 #else
     return shadow_calculation_point_pcf(light, light_shadow, bias);
@@ -545,7 +547,7 @@ float shadow_calculation_spot_pcf(SpotLightShadow light, float bias)
     return shadow;
 }
 
-#ifdef RandomSampling
+#ifdef RANDOM_SAMPLING
 float shadow_calculation_spot_rs(SpotLightShadow light, float bias)
 {
     vec4 light_space_frag_pos = light.light_space_matrix * vec4(FragPos, 1.0);
@@ -607,7 +609,7 @@ float shadow_calculation_spot_rs(SpotLightShadow light, float bias)
 
 float shadow_calculation_spot(SpotLightShadow light, float bias)
 {
-#ifdef RandomSampling
+#ifdef RANDOM_SAMPLING
     return shadow_calculation_spot_rs(light, bias);
 #else
     return shadow_calculation_spot_pcf(light, bias);
@@ -618,13 +620,13 @@ float shadow_calculation_spot(SpotLightShadow light, float bias)
 // Light Uniforms End
 
 void main() {
-#ifdef UniformTextures
+#ifdef UNIFORM_TEXTURES
     vec3 bump_map_normal = texture(tex_normals, TexCoords).xyz;
     vec4 diffuse = texture(tex_diffuse, TexCoords);
     vec4 metallic_roughness = texture(tex_metallic_roughness, TexCoords);
 #endif
 
-#ifdef BindlessTextures
+#ifdef BINDLESS_TEXTURES
     vec4 diffuse = texture(ssbo_textures[(DrawID * 3) + 0], TexCoords);
     vec4 metallic_roughness = texture(ssbo_textures[(DrawID * 3) + 1], TexCoords);
     vec3 bump_map_normal = texture(ssbo_textures[(DrawID * 3) + 2], TexCoords).xyz;

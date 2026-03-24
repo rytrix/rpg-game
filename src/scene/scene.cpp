@@ -565,7 +565,7 @@ void Scene::compile_pbr_shaders(const std::string& empty_defines, const std::str
     ShaderInfoData<2> shader_source;
     ShaderInfoData<2> shader_source_bones;
 
-    std::string fragment_defines = "#define RandomSampling\n";
+    std::string fragment_defines = "#define RANDOM_SAMPLING\n";
     if (Renderer::Extensions::is_extension_supported("GL_ARB_bindless_texture")) {
         get_pbr_forward_pass_indirect(shader_source, light_uniforms, light_functions, empty_defines, fragment_defines);
         get_pbr_forward_pass_indirect(shader_source_bones, light_uniforms, light_functions, bone_defines, fragment_defines);
