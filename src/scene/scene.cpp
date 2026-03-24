@@ -9,12 +9,9 @@
 Scene::Scene(GlobalAppData* app_data)
     : m_app_data(app_data)
     , m_camera_speed(app_data->m_camera.get_speed())
+    , m_random_sampling_texture(Renderer::RandomSamplingTexture::create(16, 8, 2, &app_data->m_texture_cache))
 {
     m_physics_system = std::make_unique<Physics::System>();
-
-    random_sampling_texture = Renderer::create_random_sampling_texture(
-        16, 8,
-        &app_data->m_texture_cache);
 
     update();
 }
@@ -257,13 +254,7 @@ void Scene::draw()
             i++;
         }
 
-        Renderer::Texture* texture = m_app_data->m_texture_cache.get(random_sampling_texture);
-        GLuint texture_unit = Renderer::Texture::get_texture_unit();
-        texture->bind(texture_unit);
-        shader.set_int("tex_random_offset.texture", static_cast<int>(texture_unit));
-        shader.set_int("tex_random_offset.window_size", 16);
-        shader.set_int("tex_random_offset.filter_size", 8);
-        shader.set_int("tex_random_offset.radius", 2);
+        m_random_sampling_texture.bind_uniforms(shader, "tex_random_offset", &m_app_data->m_texture_cache);
 
         model.m_model->draw(shader);
 

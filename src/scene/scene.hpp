@@ -59,7 +59,7 @@ private:
         {
         }
     };
-    Handle random_sampling_texture;
+    Renderer::RandomSamplingTexture m_random_sampling_texture;
 
     std::vector<ModelMatrix> m_models_instance_draw_cache;
     bool m_models_instance_draw_cache_needs_update = false;

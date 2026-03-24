@@ -11,6 +11,7 @@
 #include "../vertex.hpp"
 #include "../window.hpp"
 #include "../default_textures.hpp"
+#include "../random_sampling_texture.hpp"
 
 #include "../gbuffer.hpp"
 #include "../model.hpp"
