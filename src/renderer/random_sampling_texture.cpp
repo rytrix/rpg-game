@@ -36,10 +36,10 @@ RandomSamplingTexture RandomSamplingTexture::create(i32 window_size, i32 filter_
 }
 
 RandomSamplingTexture::RandomSamplingTexture(Handle handle, i32 window_size, i32 filter_size, i32 radius)
-    : radius(radius)
-    , handle(handle)
-    , window_size(window_size)
-    , filter_size(filter_size)
+    : m_radius(radius)
+    , m_handle(handle)
+    , m_window_size(window_size)
+    , m_filter_size(filter_size)
 {
 }
 
@@ -47,14 +47,14 @@ void RandomSamplingTexture::bind_uniforms(ShaderProgram& shader, const char* uni
 {
     Utils::String buffer;
 
-    Renderer::Texture* texture = cache->get(handle);
+    Renderer::Texture* texture = cache->get(m_handle);
     GLuint texture_unit = Renderer::Texture::get_texture_unit();
     texture->bind(texture_unit);
 
     shader.set_int(buffer.format("{}.texture", uniform_name).cstr(), static_cast<int>(texture_unit));
-    shader.set_int(buffer.format("{}.window_size", uniform_name).cstr(), window_size);
-    shader.set_int(buffer.format("{}.filter_size", uniform_name).cstr(), filter_size);
-    shader.set_int(buffer.format("{}.radius", uniform_name).cstr(), radius);
+    shader.set_int(buffer.format("{}.window_size", uniform_name).cstr(), m_window_size);
+    shader.set_int(buffer.format("{}.filter_size", uniform_name).cstr(), m_filter_size);
+    shader.set_int(buffer.format("{}.radius", uniform_name).cstr(), m_radius);
 }
 
 Handle RandomSamplingTexture::create_random_sampling_texture(i32 window_size, int filter_size, TextureCache* cache)
