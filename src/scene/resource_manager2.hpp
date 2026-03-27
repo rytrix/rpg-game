@@ -71,21 +71,9 @@ Handle ResourceManager2<DataType>::create_handle()
 
     u32 index;
     if (m_next_free_index != INVALID_NEXT_FREE) {
-        u32 prev_free_index = m_next_free_index;
-        u32 free_index = m_data[prev_free_index].next_free;
-        util_assert(m_data[prev_free_index].generation.valid == 0, "invalid generation while searching for free node");
-        if (free_index == INVALID_NEXT_FREE) {
-            m_next_free_index = INVALID_NEXT_FREE;
-            index = prev_free_index;
-        } else {
-            while (m_data[free_index].next_free != INVALID_NEXT_FREE) {
-                prev_free_index = free_index;
-                free_index = m_data[free_index].next_free;
-                util_assert(m_data[prev_free_index].generation.valid == 0, "invalid generation while searching for free node");
-            }
-            m_data[prev_free_index].next_free = INVALID_NEXT_FREE;
-            index = free_index;
-        }
+        u32 next_index = m_data[m_next_free_index].next_free;
+        index = m_next_free_index;
+        m_next_free_index = next_index;
     } else {
         index = m_data_size++;
     }
@@ -121,16 +109,9 @@ void ResourceManager2<DataType>::destroy_handle(Handle handle)
         return;
     }
 
-    u32 prev_free_index = m_next_free_index;
-    u32 free_index = m_data[prev_free_index].next_free;
-    util_assert(m_data[prev_free_index].generation.valid == 0, "invalid generation while searching for free node");
-    while (free_index != INVALID_NEXT_FREE) {
-        prev_free_index = free_index;
-        free_index = m_data[prev_free_index].next_free;
-        util_assert(m_data[prev_free_index].generation.valid == 0, "invalid generation while searching for free node");
-    }
-
-    m_data[prev_free_index].next_free = handle.index;
+    u32 next_free = m_next_free_index;
+    m_next_free_index = handle.index;
+    m_data[m_next_free_index].next_free = next_free;
 }
 
 template <typename DataType>
@@ -171,7 +152,7 @@ DataType* ResourceManager2<DataType>::create(Handle handle, Args&&... args)
     }
 }
 
-void run_resoure_manager_fuzzer(size_t iterations, size_t pool_size);
+void run_resource_manager_fuzzer(size_t iterations, size_t pool_size);
 
 namespace Renderer {
 class Texture;
