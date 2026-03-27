@@ -92,13 +92,6 @@ void Scene::update()
 {
     m_clock.update();
 
-    // if (m_deferred != nullptr) {
-    //     if (m_window.get_width() != m_deferred->m_gpass_width || m_window.get_height() != m_deferred->m_gpass_height) {
-    //         m_deferred->m_gpass_width = m_window.get_width();
-    //         m_deferred->m_gpass_height = m_window.get_height();
-    //         m_deferred->m_gpass.reinit(m_deferred->m_gpass_width, m_deferred->m_gpass_height);
-    //     }
-    // }
     compile_shaders();
 }
 
@@ -160,9 +153,9 @@ void Scene::draw()
         }
     }
 
+    static float animation_time = 0.0;
+    animation_time += m_clock.delta_time<float>();
     for (auto& model : m_models_instance_draw_cache) {
-        static float animation_time = 0.0;
-        animation_time += m_clock.delta_time<float>();
         model.m_model->update(model.m_model_matrices, animation_time);
     }
 
