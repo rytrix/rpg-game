@@ -93,11 +93,12 @@ void Model::draw(ShaderProgram& shader)
     m_mesh.draw(shader);
 }
 
-void Model::update(std::span<glm::mat4> models, float animation_time)
+void Model::update(std::span<glm::mat4> models, PerAnimationData* animation_data)
 {
+    util_assert(initialized == true, "Model has not been initialized");
     m_mesh.update_model_ssbos(models);
     if (m_mesh.m_has_bones) {
-        m_mesh.update_bone_matrices(animation_time);
+        m_mesh.update_bone_matrices(animation_data);
     }
 }
 
@@ -273,14 +274,14 @@ Handle Model::load_material_texture(const aiMaterial* mat, const aiTextureType t
             // std::string texture_path = (m_directory + "/" + str.C_Str());
             usize size = std::snprintf(texture_path.data(), texture_path.capacity(), "%s/%s", m_directory.c_str(), str.C_Str());
             texture_path.set_size(size);
-            
+
             texture_info.from_file = GL_TRUE;
-            texture_info.file_path = texture_path.cstr();
+            texture_info.file_path = texture_path.c_str();
 
             LOG_INFO(std::format("Loading {} type {}", texture_path.view(), aiTextureTypeToString(type)));
             // Texture* texture = nullptr;
 
-            Handle handle;//= texture_cache->get_or_create(texture_path, texture_info);
+            Handle handle; //= texture_cache->get_or_create(texture_path, texture_info);
             if (texture_cache->contains(texture_path)) {
                 handle = texture_cache->get(texture_path);
                 // texture = texture_cache->get(handle);

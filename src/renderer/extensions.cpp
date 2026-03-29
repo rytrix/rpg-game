@@ -1,14 +1,16 @@
 #include "extensions.hpp"
 
+#include "../utils/string.hpp"
+
 namespace Renderer::Extensions {
 
 namespace {
-    std::unique_ptr<std::unordered_set<std::string>> gl_extensions = nullptr;
+    std::unique_ptr<std::unordered_set<Utils::String>> gl_extensions = nullptr;
 
-    const std::unique_ptr<std::unordered_set<std::string>>& get_opengl_extensions()
+    const std::unique_ptr<std::unordered_set<Utils::String>>& get_opengl_extensions()
     {
         if (gl_extensions == nullptr) {
-            gl_extensions = std::make_unique<std::unordered_set<std::string>>();
+            gl_extensions = std::make_unique<std::unordered_set<Utils::String>>();
             GLint no_of_extensions = 0;
             glGetIntegerv(GL_NUM_EXTENSIONS, &no_of_extensions);
 

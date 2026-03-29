@@ -1,4 +1,5 @@
 #include "scene.hpp"
+
 #include "../physics/helpers.hpp"
 
 #include "glm/gtc/quaternion.hpp"
@@ -36,6 +37,14 @@ void Scene::add_entity(const EntityBuilder& entity_builder)
         auto* model_cache = &m_app_data->m_model_cache;
         auto handle = model_cache->get_or_create(entity_builder.m_model_path, entity_builder.m_model_path, m_app_data);
         auto* model = model_cache->get(handle);
+
+        if (model->has_bones()) {
+            m_registry.emplace<Renderer::AnimationData>(entity);
+            auto& data = m_registry.get<Renderer::AnimationData>(entity);
+            for (auto& animation : model->get_animations()) {
+                data.data.emplace_back(animation.create_per_animation_data());
+            }
+        }
 
         m_registry.emplace<Renderer::Model*>(entity, model);
         // TODO: Decide if I want physics objects without models someday
@@ -150,6 +159,16 @@ void Scene::draw()
         }
     }
 
+    // TODO:
+    // This is suddenly very problematic...
+    // due to animations
+
+    // Each mesh needs to know how many instances it has; well this is sort of already known
+    // Then the ssbo needs to be resized to be MAX_BONES * instance count
+    // Then the ssbo needs to be indexed via the glsl instance variable
+    // I think the update function also needs to take an array of PerAnimationData
+
+    // Also have to take into account updating instance cache when the selected animation changes
     static float animation_time = 0.0;
     animation_time += m_clock.delta_time<float>();
     for (auto& model : m_models_instance_draw_cache) {

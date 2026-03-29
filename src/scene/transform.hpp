@@ -8,13 +8,14 @@ struct Transform {
     void set_rotation(const glm::quat& rotation);
     void rotate(float angle_degrees, const glm::vec3& axis);
     void set_euler_angles(const glm::vec3& degrees);
-    glm::vec3 get_euler_angles();
     void set_scale(const glm::vec3& scale);
 
     [[nodiscard]] glm::vec3 get_position() const;
     [[nodiscard]] glm::quat get_rotation() const;
+    [[nodiscard]] glm::vec3 get_euler_angles();
     [[nodiscard]] glm::vec3 get_scale() const;
 
+    // Updates the model matrix
     [[nodiscard]] const glm::mat4& get_model();
     [[nodiscard]] glm::mat4& get_model_ref();
     void set_model(const glm::mat4& model);

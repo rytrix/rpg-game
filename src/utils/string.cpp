@@ -53,7 +53,7 @@ String& String::operator=(const std::string_view string)
     return *this;
 }
 
-const char* String::cstr() const
+const char* String::c_str() const
 {
     return m_data;
 }

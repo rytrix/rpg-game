@@ -22,7 +22,6 @@ public:
     EntityBuilder& add_pbr_spot_light_shadow();
 
     EntityBuilder& add_transform(const Transform& transform);
-    // EntityBuilder& add_model_matrix(const glm::mat4& model);
 
 private:
     const char* m_model_path = nullptr;
@@ -34,6 +33,5 @@ private:
     Renderer::Light::Pbr::Spot* m_pbr_spot = nullptr;
     bool m_pbr_spot_shadow = false;
     Transform m_transform;
-    // glm::mat4 m_model_matrix { 1.0 };
     const char* m_name = nullptr;
 };

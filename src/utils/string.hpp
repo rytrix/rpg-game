@@ -14,7 +14,7 @@ public:
     String& operator=(const std::string& string);
     String& operator=(const std::string_view string);
 
-    [[nodiscard]] const char* cstr() const;
+    [[nodiscard]] const char* c_str() const;
     [[nodiscard]] std::string_view view() const;
     [[nodiscard]] char* data();
     [[nodiscard]] const char* data() const;

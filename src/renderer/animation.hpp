@@ -11,6 +11,12 @@ struct KeyFrame {
     T m_value;
 };
 
+struct FrameCache {
+    u32 m_prev_position_frame;
+    u32 m_prev_rotation_frame;
+    u32 m_prev_scaling_frame;
+};
+
 struct NodeAnim {
     u32 m_index;
     u32 m_parent_index;
@@ -25,15 +31,11 @@ struct NodeAnim {
     KeyFrame<aiVector3D>* m_position_keys;
     usize m_position_size;
 
-    u32 m_prev_position_frame;
-    u32 m_prev_rotation_frame;
-    u32 m_prev_scaling_frame;
-
     glm::mat4 m_global_transform;
     glm::mat4 m_node_transform;
     glm::mat4 m_offset;
 
-    glm::mat4 keyframe_to_mat4(float animation_time);
+    glm::mat4 keyframe_to_mat4(float animation_time, FrameCache cache);
 
 private:
     template <typename T>
@@ -44,18 +46,18 @@ private:
     static aiQuaternion slerp_interpolate(KeyFrame<aiQuaternion>* p_start, KeyFrame<aiQuaternion>* p_end, float animation_time);
 };
 
-struct Animation {
-    std::string m_name;
-
-    // Needs to be sorted in a way such that
-    // all parents get calculated before each child
-    NodeAnim* m_nodes;
-    usize m_nodes_size;
+struct PerAnimationData {
+    FrameCache* m_cache;
+    usize m_cache_size;
 
     glm::mat4* m_final_transforms;
     usize m_final_transforms_size;
 
-    glm::mat4 m_global_inverse_transform;
+    float m_animation_time;
+};
+
+struct Animation {
+    std::string m_name;
 
     void init(const aiScene* scene, const aiAnimation* animation,
         const std::unordered_map<std::string, u32>& bone_indices,
@@ -63,7 +65,9 @@ struct Animation {
         float total_animation_time,
         float ticks_per_second);
 
-    void update_transforms(float animation_time);
+    PerAnimationData* create_per_animation_data();
+
+    void update_transforms(PerAnimationData* data);
 
     [[nodiscard]] float get_ticks_per_second() const { return m_ticks_per_second; };
     void set_ticks_per_second(float ticks_per_second) { m_ticks_per_second = ticks_per_second; };
@@ -74,11 +78,22 @@ private:
     // Allocate with an arena
     std::pmr::monotonic_buffer_resource m_allocator;
 
+    // Needs to be sorted in a way such that
+    // all parents get calculated before each child
+    NodeAnim* m_nodes;
+    usize m_nodes_size;
+
+    glm::mat4 m_global_inverse_transform;
+
     float m_total_animation_time = 0.0;
     float m_ticks_per_second = 0.0;
 
     void evaluate_scene(const aiScene* scene, const aiNode* node, const std::unordered_map<std::string, u32>& bone_indices);
     void evaluate_parents(const aiNode* node, const std::unordered_map<std::string, u32>& bone_indices, u32 parent_index);
+};
+
+struct AnimationData {
+    std::vector<PerAnimationData*> data;
 };
 
 } // namespace Renderer

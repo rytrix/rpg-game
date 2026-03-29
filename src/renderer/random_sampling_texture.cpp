@@ -51,10 +51,10 @@ void RandomSamplingTexture::bind_uniforms(ShaderProgram& shader, const char* uni
     GLuint texture_unit = Renderer::Texture::get_texture_unit();
     texture->bind(texture_unit);
 
-    shader.set_int(buffer.format("{}.texture", uniform_name).cstr(), static_cast<int>(texture_unit));
-    shader.set_int(buffer.format("{}.window_size", uniform_name).cstr(), m_window_size);
-    shader.set_int(buffer.format("{}.filter_size", uniform_name).cstr(), m_filter_size);
-    shader.set_int(buffer.format("{}.radius", uniform_name).cstr(), m_radius);
+    shader.set_int(buffer.format("{}.texture", uniform_name).c_str(), static_cast<int>(texture_unit));
+    shader.set_int(buffer.format("{}.window_size", uniform_name).c_str(), m_window_size);
+    shader.set_int(buffer.format("{}.filter_size", uniform_name).c_str(), m_filter_size);
+    shader.set_int(buffer.format("{}.radius", uniform_name).c_str(), m_radius);
 }
 
 Handle RandomSamplingTexture::create_random_sampling_texture(i32 window_size, int filter_size, TextureCache* cache)

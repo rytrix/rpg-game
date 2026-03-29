@@ -6,13 +6,13 @@
 
 namespace Renderer {
 
-glm::mat4 NodeAnim::keyframe_to_mat4(float animation_time)
+glm::mat4 NodeAnim::keyframe_to_mat4(float animation_time, FrameCache cache)
 {
     aiVector3D pos;
     if (m_position_size == 1) {
         pos = m_position_keys[0].m_value;
     } else {
-        auto pos_keyframe = find_keyframe(m_prev_position_frame, m_position_keys, m_position_size, animation_time);
+        auto pos_keyframe = find_keyframe(cache.m_prev_position_frame, m_position_keys, m_position_size, animation_time);
         pos = lerp_interpolate<KeyFrame<aiVector3D>, aiVector3D>(&m_position_keys[pos_keyframe], &m_position_keys[pos_keyframe + 1], animation_time);
         // pos = m_anim->mPositionKeys[pos_keyframes[0]].mValue;
     }
@@ -21,7 +21,7 @@ glm::mat4 NodeAnim::keyframe_to_mat4(float animation_time)
     if (m_rotation_size == 1) {
         rot = m_rotation_keys[0].m_value;
     } else {
-        auto rot_keyframe = find_keyframe(m_prev_rotation_frame, m_rotation_keys, m_rotation_size, animation_time);
+        auto rot_keyframe = find_keyframe(cache.m_prev_rotation_frame, m_rotation_keys, m_rotation_size, animation_time);
         rot = slerp_interpolate(&m_rotation_keys[rot_keyframe], &m_rotation_keys[rot_keyframe + 1], animation_time);
         // rot = m_anim->mRotationKeys[rot_keyframes[0]].mValue;
     }
@@ -30,7 +30,7 @@ glm::mat4 NodeAnim::keyframe_to_mat4(float animation_time)
     if (m_scaling_size == 1) {
         scale = m_scaling_keys[0].m_value;
     } else {
-        auto scale_keyframe = find_keyframe(m_prev_scaling_frame, m_scaling_keys, m_scaling_size, animation_time);
+        auto scale_keyframe = find_keyframe(cache.m_prev_scaling_frame, m_scaling_keys, m_scaling_size, animation_time);
         scale = lerp_interpolate<KeyFrame<aiVector3D>, aiVector3D>(&m_scaling_keys[scale_keyframe], &m_scaling_keys[scale_keyframe + 1], animation_time);
         // scale = m_anim->mScalingKeys[scale_keyframes[0]].mValue;
     }
@@ -112,9 +112,6 @@ void Animation::init(const aiScene* scene, const aiAnimation* animation, const s
             MAX_BONES,
             m_nodes_size));
 
-    m_final_transforms = (glm::mat4*)m_allocator.allocate(sizeof(glm::mat4) * m_nodes_size);
-    m_final_transforms_size = m_nodes_size;
-
     m_global_inverse_transform = global_inverse_transform;
 
     evaluate_scene(scene, scene->mRootNode, bone_indices);
@@ -159,9 +156,25 @@ void Animation::init(const aiScene* scene, const aiAnimation* animation, const s
     }
 }
 
-void Animation::update_transforms(float animation_time)
+PerAnimationData* Animation::create_per_animation_data()
 {
-    animation_time = std::fmod(animation_time * m_ticks_per_second, m_total_animation_time);
+    PerAnimationData* data = (PerAnimationData*)m_allocator.allocate(sizeof(PerAnimationData));
+
+    data->m_cache = (FrameCache*)m_allocator.allocate(m_nodes_size * sizeof(FrameCache));
+    std::memset(data->m_cache, 0, data->m_cache_size * sizeof(FrameCache));
+    data->m_cache_size = m_nodes_size;
+
+    data->m_animation_time = 0.0F;
+
+    data->m_final_transforms = (glm::mat4*)m_allocator.allocate(sizeof(glm::mat4) * m_nodes_size);
+    data->m_final_transforms_size = m_nodes_size;
+
+    return data;
+}
+
+void Animation::update_transforms(PerAnimationData* data)
+{
+    data->m_animation_time = std::fmod(data->m_animation_time * m_ticks_per_second, m_total_animation_time);
 
     for (u32 i = 0; i < m_nodes_size; i++) {
         NodeAnim* node = &m_nodes[i];
@@ -175,14 +188,14 @@ void Animation::update_transforms(float animation_time)
 
         glm::mat4 node_transform;
         if (node->m_has_animation) {
-            node_transform = node->keyframe_to_mat4(animation_time);
+            node_transform = node->keyframe_to_mat4(data->m_animation_time, data->m_cache[i]);
         } else {
             node_transform = node->m_node_transform;
         }
 
         node->m_global_transform = parent_transform * node_transform;
 
-        m_final_transforms[node->m_index] = m_global_inverse_transform * node->m_global_transform * node->m_offset;
+        data->m_final_transforms[node->m_index] = m_global_inverse_transform * node->m_global_transform * node->m_offset;
     }
 }
 
@@ -197,9 +210,6 @@ void Animation::evaluate_scene(const aiScene* scene, const aiNode* node, const s
                 m_nodes[index].m_index = index;
                 m_nodes[index].m_has_animation = false;
                 m_nodes[index].m_offset = mat4_to_mat4(bone->mOffsetMatrix);
-                m_nodes[index].m_prev_position_frame = 0;
-                m_nodes[index].m_prev_rotation_frame = 0;
-                m_nodes[index].m_prev_scaling_frame = 0;
             }
         }
     }

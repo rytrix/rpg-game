@@ -55,6 +55,7 @@ void Mesh::update_model_ssbos(const std::span<glm::mat4> model_matrices)
         }
     }
 
+    // TODO: refactor
     if (m_instance_count != model_matrices.size()) {
         m_instance_count = model_matrices.size();
 
@@ -65,19 +66,24 @@ void Mesh::update_model_ssbos(const std::span<glm::mat4> model_matrices)
         if (Renderer::Extensions::is_extension_supported("GL_ARB_bindless_texture")) {
             m_cmd_buff.buffer_sub_data(0, m_commands.size() * sizeof(m_commands[0]), m_commands.data());
         }
+
+        m_bone_ssbo.~Buffer();
+        m_bone_ssbo.init();
+        m_bone_ssbo.buffer_storage(m_instance_count * sizeof(glm::mat4) * MAX_BONES, nullptr, GL_DYNAMIC_STORAGE_BIT);
     }
 }
 
-void Mesh::update_bone_matrices(float animation_time)
+// TODO: take in m_instance_count array of PerAnimationData
+void Mesh::update_bone_matrices(PerAnimationData* animation_data)
 {
     util_assert(initialized == true, "Mesh has not been initialized");
     util_assert(m_has_bones == true, "Attempting to update bone matrices with no bones");
 
     if (m_animation != nullptr) {
-        m_animation->update_transforms(animation_time);
+        m_animation->update_transforms(animation_data);
         m_bone_ssbo.buffer_sub_data(0,
-            static_cast<GLsizeiptr>(sizeof(glm::mat4) * m_animation->m_final_transforms_size),
-            m_animation->m_final_transforms);
+            static_cast<GLsizeiptr>(sizeof(glm::mat4) * animation_data->m_final_transforms_size),
+            animation_data->m_final_transforms);
     }
 }
 
@@ -243,7 +249,7 @@ void Mesh::setup_mesh()
 
     if (m_has_bones) {
         m_bone_ssbo.init();
-        m_bone_ssbo.buffer_storage(sizeof(glm::mat4) * MAX_BONES, nullptr, GL_DYNAMIC_STORAGE_BIT);
+        m_bone_ssbo.buffer_storage(m_instance_count * sizeof(glm::mat4) * MAX_BONES, nullptr, GL_DYNAMIC_STORAGE_BIT);
     }
 
     initialized = true;
