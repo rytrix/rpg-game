@@ -1,9 +1,6 @@
 *.db
 
-res/models/backpack
-res/models/Sponza
-res/models/cube
-res/models/cube_texture_mapping
+res/models/*
 
 imgui.ini
 
