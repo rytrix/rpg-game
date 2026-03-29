@@ -37,9 +37,6 @@ void Scene::add_entity(const EntityBuilder& entity_builder)
         auto handle = model_cache->get_or_create(entity_builder.m_model_path, entity_builder.m_model_path, m_app_data);
         auto* model = model_cache->get(handle);
 
-        // auto* model_cache = &m_app_data->m_resources.m_model_cache;
-        // auto handle = model_cache->add(entity_builder.m_model_path, entity_builder.m_model_path, m_app_data);
-        // auto* model = model_cache->get(handle);
         m_registry.emplace<Renderer::Model*>(entity, model);
         // TODO: Decide if I want physics objects without models someday
         if (entity_builder.m_create_body != nullptr) {
@@ -342,12 +339,7 @@ void Scene::draw_debug_imgui()
             if (motion_type != JPH::EMotionType::Static) {
                 ImGui::PushID(i);
                 const char** name_check = m_registry.try_get<const char*>(entity);
-                const char* name;
-                if (name_check == nullptr) {
-                    name = "no_name";
-                } else {
-                    name = *name_check;
-                }
+                const char* name = name_check == nullptr ? "no_name" : *name_check;
 
                 if (ImGui::CollapsingHeader(std::format("{}_e{}", name, i).c_str())) {
                     glm::vec3 cube_pos = vec3_to_vec3(m_physics_system->m_body_interface->GetPosition(body));
@@ -381,12 +373,7 @@ void Scene::draw_debug_imgui()
         for (auto [entity, light] : point_view.each()) {
             ImGui::PushID(i);
             const char** name_check = m_registry.try_get<const char*>(entity);
-            const char* name;
-            if (name_check == nullptr) {
-                name = "no_name";
-            } else {
-                name = *name_check;
-            }
+            const char* name = name_check == nullptr ? "no_name" : *name_check;
 
             if (ImGui::CollapsingHeader(std::format("{}_PL{}", name, i).c_str())) {
                 ImGui::DragFloat3("XYZ", &light.position.x, 1.0F, MIN_TRANSFORM, MAX_TRANSFORM);
@@ -400,12 +387,7 @@ void Scene::draw_debug_imgui()
         for (auto [entity, light] : directional_view.each()) {
             ImGui::PushID(i);
             const char** name_check = m_registry.try_get<const char*>(entity);
-            const char* name;
-            if (name_check == nullptr) {
-                name = "no_name";
-            } else {
-                name = *name_check;
-            }
+            const char* name = name_check == nullptr ? "no_name" : *name_check;
 
             if (ImGui::CollapsingHeader(std::format("{}_DL{}", name, i).c_str())) {
                 ImGui::DragFloat3("XYZ", &light.direction.x, 1.0F, -1.0F, 1.0F);
@@ -418,12 +400,7 @@ void Scene::draw_debug_imgui()
         for (auto [entity, light] : spot_view.each()) {
             ImGui::PushID(i);
             const char** name_check = m_registry.try_get<const char*>(entity);
-            const char* name;
-            if (name_check == nullptr) {
-                name = "no_name";
-            } else {
-                name = *name_check;
-            }
+            const char* name = name_check == nullptr ? "no_name" : *name_check;
 
             if (ImGui::CollapsingHeader(std::format("{}_SL{}", name, i).c_str())) {
                 ImGui::DragFloat3("Position XYZ", &light.position.x, 1.0F, MIN_TRANSFORM, MAX_TRANSFORM);
