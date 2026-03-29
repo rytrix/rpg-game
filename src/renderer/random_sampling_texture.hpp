@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../scene/resource_manager2.hpp"
+#include "../scene/resource_manager.hpp"
 
 namespace Renderer {
 

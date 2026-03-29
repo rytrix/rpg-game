@@ -1,13 +1,8 @@
-#include "resource_manager2.hpp"
-
-bool Handle::operator==(const Handle& other)
-{
-    return memcmp(this, &other, sizeof(Handle)) == 0;
-}
+#include "resource_manager.hpp"
 
 void run_resource_manager_fuzzer(size_t iterations, size_t pool_size)
 {
-    ResourceManager2<u32> manager;
+    ResourceManager<u32> manager;
     manager.init(pool_size);
 
     std::unordered_map<size_t, Handle> active_handles;

@@ -11,14 +11,17 @@ struct Handle {
     Generation generation;
     u32 index;
 
-    bool operator==(const Handle& other);
+    bool operator==(const Handle& other)
+    {
+        return memcmp(this, &other, sizeof(Handle)) == 0;
+    }
 };
 
 template <typename DataType>
-class ResourceManager2 : public NoCopyNoMove {
+class ResourceManager : public NoCopyNoMove {
 public:
     void init(usize size);
-    ~ResourceManager2();
+    ~ResourceManager();
 
     Handle create_handle();
     void destroy_handle(Handle handle);
@@ -43,7 +46,7 @@ private:
 };
 
 template <typename DataType>
-void ResourceManager2<DataType>::init(usize size)
+void ResourceManager<DataType>::init(usize size)
 {
     util_assert(size < INVALID_NEXT_FREE, std::format("ResourceManager2 size {} greater than UINT32_MAX", size));
     m_data = (InternalData*)malloc(sizeof(InternalData) * size);
@@ -52,7 +55,7 @@ void ResourceManager2<DataType>::init(usize size)
 }
 
 template <typename DataType>
-ResourceManager2<DataType>::~ResourceManager2()
+ResourceManager<DataType>::~ResourceManager()
 {
     for (u32 i = 0; i < m_data_size; i++) {
         if (m_data[i].generation.valid == 1) {
@@ -64,7 +67,7 @@ ResourceManager2<DataType>::~ResourceManager2()
 }
 
 template <typename DataType>
-Handle ResourceManager2<DataType>::create_handle()
+Handle ResourceManager<DataType>::create_handle()
 {
     util_assert(m_data_size < m_data_capacity,
         std::format("ResourceManager2 data_size {} >= data_capacity {}", m_data_size, m_data_capacity));
@@ -88,7 +91,7 @@ Handle ResourceManager2<DataType>::create_handle()
 }
 
 template <typename DataType>
-void ResourceManager2<DataType>::destroy_handle(Handle handle)
+void ResourceManager<DataType>::destroy_handle(Handle handle)
 {
     util_assert(handle.generation.valid == 1, "ResourceManager2 attempting to remove invalid handle");
     util_assert(handle.index < m_data_size, std::format("ResourceManager2 handle index {} >= data_size {}", handle.index, m_data_size));
@@ -115,7 +118,7 @@ void ResourceManager2<DataType>::destroy_handle(Handle handle)
 }
 
 template <typename DataType>
-DataType* ResourceManager2<DataType>::get(Handle handle)
+DataType* ResourceManager<DataType>::get(Handle handle)
 {
     util_assert(handle.index < m_data_capacity, std::format("ResourceManager2 handle index {} >= data_capacity {}", handle.index, m_data_size));
     util_assert(handle.generation.valid == 1, "ResourceManager2 attempting to get invalid handle");
@@ -141,7 +144,7 @@ DataType* ResourceManager2<DataType>::get(Handle handle)
 
 template <typename DataType>
 template <typename... Args>
-DataType* ResourceManager2<DataType>::create(Handle handle, Args&&... args)
+DataType* ResourceManager<DataType>::create(Handle handle, Args&&... args)
 {
     DataType* data = get(handle);
     if (data == nullptr) {
@@ -177,7 +180,7 @@ public:
 
 private:
     std::unordered_map<Utils::String, Handle> m_map;
-    ResourceManager2<T> m_cache;
+    ResourceManager<T> m_cache;
 };
 
 template <typename T>

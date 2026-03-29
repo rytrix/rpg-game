@@ -4,7 +4,7 @@
 #include "shader.hpp"
 #include "texture.hpp"
 
-#include "../scene/resource_manager2.hpp"
+#include "../scene/resource_manager.hpp"
 #include "../utils/deltatime.hpp"
 
 #include "../app_data.hpp"

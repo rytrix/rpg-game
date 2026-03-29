@@ -3,7 +3,7 @@
 #include "renderer/window.hpp"
 #include "renderer/camera.hpp"
 #include "renderer/default_textures.hpp"
-#include "scene/resource_manager2.hpp"
+#include "scene/resource_manager.hpp"
 
 struct GlobalAppData {
     Renderer::Window m_window;
