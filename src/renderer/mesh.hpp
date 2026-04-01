@@ -82,7 +82,7 @@ public:
     std::vector<Handle> m_normal_textures;
 
     bool m_has_bones = false;
-    std::unordered_map<std::string, u32> m_bone_id_map;
+    std::unordered_map<Utils::String, u32> m_bone_id_map;
 
     Animation* m_animation = nullptr;
     GlobalAppData* m_app_data = nullptr;

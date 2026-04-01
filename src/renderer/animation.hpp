@@ -3,6 +3,8 @@
 #include <assimp/scene.h>
 #include <memory_resource>
 
+#include "../utils/string.hpp"
+
 namespace Renderer {
 
 template <typename T>
@@ -60,7 +62,7 @@ struct Animation {
     std::string m_name;
 
     void init(const aiScene* scene, const aiAnimation* animation,
-        const std::unordered_map<std::string, u32>& bone_indices,
+        const std::unordered_map<Utils::String, u32>& bone_indices,
         const glm::mat4& global_inverse_transform,
         float total_animation_time,
         float ticks_per_second);
@@ -88,8 +90,8 @@ private:
     float m_total_animation_time = 0.0;
     float m_ticks_per_second = 0.0;
 
-    void evaluate_scene(const aiScene* scene, const aiNode* node, const std::unordered_map<std::string, u32>& bone_indices);
-    void evaluate_parents(const aiNode* node, const std::unordered_map<std::string, u32>& bone_indices, u32 parent_index);
+    void evaluate_scene(const aiScene* scene, const aiNode* node, const std::unordered_map<Utils::String, u32>& bone_indices);
+    void evaluate_parents(const aiNode* node, const std::unordered_map<Utils::String, u32>& bone_indices, u32 parent_index);
 };
 
 struct AnimationData {
