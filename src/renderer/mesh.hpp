@@ -37,8 +37,8 @@ static constexpr u32 MAX_BONES_PER_VERTEX = 4;
 static constexpr std::string get_bone_defines()
 {
     return std::format(
-        "#define ENABLE_BONES\n#define BONES_PER_VERTEX {}\n",
-        MAX_BONES_PER_VERTEX);
+        "#define ENABLE_BONES\n#define BONES_PER_VERTEX {}\n#define MAX_BONES {}\n",
+        MAX_BONES_PER_VERTEX, MAX_BONES);
 }
 
 struct VertexBone {

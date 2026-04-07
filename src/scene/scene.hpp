@@ -58,9 +58,9 @@ private:
             : m_model(model)
             , m_model_matrices({ matrix })
         {
-            if (m_model->has_bones()) {
-                m_animation_data.emplace_back(m_model->get_animations()[m_model->get_current_animation()].create_per_animation_data());
-            }
+            // if (m_model->has_bones()) {
+            //     m_animation_data.emplace_back(m_model->get_animations()[m_model->get_current_animation()].create_per_animation_data());
+            // }
         }
     };
     Renderer::RandomSamplingTexture m_random_sampling_texture;

@@ -83,11 +83,10 @@ void Mesh::update_bone_matrices(std::span<PerAnimationData*> animation_data)
         GLsizeiptr offset = 0;
         for (auto* animation : animation_data) {
             m_animation->update_transforms(animation);
-            auto size = static_cast<GLsizeiptr>(sizeof(glm::mat4) * animation->m_final_transforms_size);
             m_bone_ssbo.buffer_sub_data(offset,
-                    size,
+                    static_cast<GLsizeiptr>(sizeof(glm::mat4) * animation->m_final_transforms_size),
                     animation->m_final_transforms);
-            offset += size;
+            offset += MAX_BONES * sizeof(glm::mat4);
         }
     }
 }

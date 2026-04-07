@@ -132,14 +132,32 @@ void Scene::draw()
 
         m_models_instance_draw_cache.clear();
         for (auto [entity, transform, model] : model_view.each()) {
+
+            bool contained = false;
+            for (auto& model_cached : m_models_instance_draw_cache) {
+                if (model == model_cached.m_model) {
+                    contained = true;
+                }
+            }
+
+            if (!contained) {
+                m_models_instance_draw_cache.emplace_back(model, transform.get_model());
+            }
+
             for (auto& model_cached : m_models_instance_draw_cache) {
                 if (model == model_cached.m_model) {
                     model_cached.m_model_matrices.emplace_back(transform.get_model());
-                    goto end_model_matrix_label;
+
+                    if (model_cached.m_model->has_bones()) {
+                        auto& data = m_registry.get<Renderer::AnimationData>(entity);
+                        auto* animation_data = data.data.at(model_cached.m_model->get_current_animation());
+                        model_cached.m_animation_data.emplace_back(animation_data);
+                        std::println("Added animation data for {}", (usize)model);
+                    } else {
+                        std::println("Doesn't have animations {}", (usize)model);
+                    }
                 }
             }
-            m_models_instance_draw_cache.emplace_back(model, transform.get_model());
-        end_model_matrix_label:
         }
 
         LOG_INFO("Updated scene instanced draw cache");
@@ -160,17 +178,7 @@ void Scene::draw()
     }
 
     // TODO:
-    // This is suddenly very problematic...
-    // due to animations
-
-    // Each mesh needs to know how many instances it has; well this is sort of already known
-    // Then the ssbo needs to be resized to be MAX_BONES * instance count
-    // Then the ssbo needs to be indexed via the glsl instance variable
-    // I think the update function also needs to take an array of PerAnimationData
-
-    // Also have to take into account updating instance cache when the selected animation changes
-    // static float animation_time = 0.0;
-    // animation_time += m_clock.delta_time<float>();
+    // When a animation is changed it needs to set m_models_instance_draw_cache_needs_update to true
     for (auto& model : m_models_instance_draw_cache) {
         for (auto* animation_data : model.m_animation_data) {
             animation_data->m_animation_time += m_clock.delta_time<float>();
