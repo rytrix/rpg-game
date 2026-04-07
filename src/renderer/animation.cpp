@@ -94,7 +94,7 @@ aiQuaternion NodeAnim::slerp_interpolate(KeyFrame<aiQuaternion>* p_start, KeyFra
     return result;
 }
 
-void Animation::init(const aiScene* scene, const aiAnimation* animation, const std::unordered_map<std::string, u32>& bone_indices, const glm::mat4& global_inverse_transform, float total_animation_time, float ticks_per_second)
+void Animation::init(const aiScene* scene, const aiAnimation* animation, const std::unordered_map<Utils::String, u32>& bone_indices, const glm::mat4& global_inverse_transform, float total_animation_time, float ticks_per_second)
 {
     m_name = animation->mName.C_Str();
 
@@ -161,8 +161,8 @@ PerAnimationData* Animation::create_per_animation_data()
     PerAnimationData* data = (PerAnimationData*)m_allocator.allocate(sizeof(PerAnimationData));
 
     data->m_cache = (FrameCache*)m_allocator.allocate(m_nodes_size * sizeof(FrameCache));
-    std::memset(data->m_cache, 0, data->m_cache_size * sizeof(FrameCache));
     data->m_cache_size = m_nodes_size;
+    std::memset(data->m_cache, 0, data->m_cache_size * sizeof(FrameCache));
 
     data->m_animation_time = 0.0F;
 
@@ -174,7 +174,7 @@ PerAnimationData* Animation::create_per_animation_data()
 
 void Animation::update_transforms(PerAnimationData* data)
 {
-    data->m_animation_time = std::fmod(data->m_animation_time * m_ticks_per_second, m_total_animation_time);
+    float animation_time = std::fmod(data->m_animation_time * m_ticks_per_second, m_total_animation_time);
 
     for (u32 i = 0; i < m_nodes_size; i++) {
         NodeAnim* node = &m_nodes[i];
@@ -188,7 +188,7 @@ void Animation::update_transforms(PerAnimationData* data)
 
         glm::mat4 node_transform;
         if (node->m_has_animation) {
-            node_transform = node->keyframe_to_mat4(data->m_animation_time, data->m_cache[i]);
+            node_transform = node->keyframe_to_mat4(animation_time, data->m_cache[i]);
         } else {
             node_transform = node->m_node_transform;
         }
@@ -199,7 +199,7 @@ void Animation::update_transforms(PerAnimationData* data)
     }
 }
 
-void Animation::evaluate_scene(const aiScene* scene, const aiNode* node, const std::unordered_map<std::string, u32>& bone_indices)
+void Animation::evaluate_scene(const aiScene* scene, const aiNode* node, const std::unordered_map<Utils::String, u32>& bone_indices)
 {
     for (u32 i = 0; i < node->mNumMeshes; i++) {
         auto* mesh = scene->mMeshes[node->mMeshes[i]];
@@ -219,7 +219,7 @@ void Animation::evaluate_scene(const aiScene* scene, const aiNode* node, const s
     }
 }
 
-void Animation::evaluate_parents(const aiNode* node, const std::unordered_map<std::string, u32>& bone_indices, u32 parent_index)
+void Animation::evaluate_parents(const aiNode* node, const std::unordered_map<Utils::String, u32>& bone_indices, u32 parent_index)
 {
     u32 index = parent_index;
     if (bone_indices.contains(node->mName.C_Str())) {

@@ -70,7 +70,7 @@ public:
     ~Mesh();
 
     void update_model_ssbos(const std::span<glm::mat4> model_matrices);
-    void update_bone_matrices(PerAnimationData* animation_data);
+    void update_bone_matrices(const std::span<PerAnimationData*> animation_data);
 
     void draw_untextured(Renderer::ShaderProgram& shader);
     void draw(ShaderProgram& shader);

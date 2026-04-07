@@ -93,7 +93,7 @@ void Model::draw(ShaderProgram& shader)
     m_mesh.draw(shader);
 }
 
-void Model::update(std::span<glm::mat4> models, PerAnimationData* animation_data)
+void Model::update(std::span<glm::mat4> models, std::span<PerAnimationData*> animation_data)
 {
     util_assert(initialized == true, "Model has not been initialized");
     m_mesh.update_model_ssbos(models);

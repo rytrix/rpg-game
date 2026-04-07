@@ -169,10 +169,14 @@ void Scene::draw()
     // I think the update function also needs to take an array of PerAnimationData
 
     // Also have to take into account updating instance cache when the selected animation changes
-    static float animation_time = 0.0;
-    animation_time += m_clock.delta_time<float>();
+    // static float animation_time = 0.0;
+    // animation_time += m_clock.delta_time<float>();
     for (auto& model : m_models_instance_draw_cache) {
-        model.m_model->update(model.m_model_matrices, animation_time);
+        for (auto* animation_data : model.m_animation_data) {
+            animation_data->m_animation_time += m_clock.delta_time<float>();
+            // animation_data->m_animation_time += animation_time;
+        }
+        model.m_model->update(model.m_model_matrices, model.m_animation_data);
     }
 
     glEnable(GL_DEPTH_TEST);
