@@ -36,9 +36,9 @@ private:
 
     GlobalAppData* m_app_data = nullptr;
 
-    Mesh m_mesh;
     std::string m_directory;
 
+    Mesh m_mesh;
     std::deque<Animation> m_animations;
 
     void setup_mesh(const aiScene* scene);

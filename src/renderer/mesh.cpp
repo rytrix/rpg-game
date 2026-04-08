@@ -47,7 +47,7 @@ void Mesh::update_model_ssbos(const std::span<glm::mat4> model_matrices)
         m_model_ssbo.buffer_storage(model_matrices.size() * sizeof(model_matrices[0]), model_matrices.data(), GL_DYNAMIC_STORAGE_BIT);
     } else {
         if (model_matrices.size() > m_instance_count) {
-            m_model_ssbo.~Buffer();
+            m_model_ssbo.deinit();
             m_model_ssbo.init();
             m_model_ssbo.buffer_storage(model_matrices.size() * sizeof(model_matrices[0]), model_matrices.data(), GL_DYNAMIC_STORAGE_BIT);
         } else {
@@ -67,7 +67,7 @@ void Mesh::update_model_ssbos(const std::span<glm::mat4> model_matrices)
             m_cmd_buff.buffer_sub_data(0, m_commands.size() * sizeof(m_commands[0]), m_commands.data());
         }
 
-        m_bone_ssbo.~Buffer();
+        m_bone_ssbo.deinit();
         m_bone_ssbo.init();
         m_bone_ssbo.buffer_storage(m_instance_count * sizeof(glm::mat4) * MAX_BONES, nullptr, GL_DYNAMIC_STORAGE_BIT);
     }

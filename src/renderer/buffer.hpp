@@ -7,6 +7,7 @@ struct Buffer : public NoCopyNoMove {
     ~Buffer();
 
     void init();
+    void deinit();
 
     void buffer_data(GLsizeiptr size, const void* data, GLenum usage);
     void buffer_storage(GLsizeiptr size, const void* data, GLbitfield flags);

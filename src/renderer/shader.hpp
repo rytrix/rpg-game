@@ -15,6 +15,7 @@ public:
     ~ShaderProgram();
 
     void init(ShaderInfo* shader_info, std::size_t shader_count);
+    void deinit();
 
     [[nodiscard]] bool has_errors() const;
     [[nodiscard]] bool is_initialized() const;

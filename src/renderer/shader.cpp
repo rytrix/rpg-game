@@ -85,12 +85,17 @@ ShaderProgram::ShaderProgram(ShaderInfo* shader_info, std::size_t shader_count)
 
 ShaderProgram::~ShaderProgram()
 {
+    deinit();
+}
+
+void ShaderProgram::deinit()
+{
     if (initialized) {
         if (!m_errors) {
             glDeleteProgram(m_id);
         }
-        initialized = false;
     }
+    initialized = false;
 }
 
 void ShaderProgram::init(ShaderInfo* shader_info, std::size_t shader_count)

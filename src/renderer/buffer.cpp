@@ -12,6 +12,11 @@ void Buffer::init()
 
 Buffer::~Buffer()
 {
+    deinit();
+}
+
+void Buffer::deinit()
+{
     if (initialized) {
         glDeleteBuffers(1, &m_id);
         initialized = false;

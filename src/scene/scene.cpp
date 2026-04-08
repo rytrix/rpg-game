@@ -569,12 +569,12 @@ void Scene::compile_pbr_shaders(const std::string& empty_defines, const std::str
     }
 
     if (m_shader.is_initialized()) {
-        m_shader.~ShaderProgram();
+        m_shader.deinit();
     }
     m_shader.init(shader_source.info.data(), shader_source.info.size());
 
     if (m_shader_bones.is_initialized()) {
-        m_shader_bones.~ShaderProgram();
+        m_shader_bones.deinit();
     }
     m_shader_bones.init(shader_source_bones.info.data(), shader_source_bones.info.size());
 }
