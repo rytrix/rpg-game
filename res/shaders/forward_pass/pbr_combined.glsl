@@ -38,10 +38,6 @@ void main()
     for (int i = 1; i < BONES_PER_VERTEX; i++) {
         bone_transform += final_bone_matrices[gl_InstanceID * MAX_BONES + inBoneIDs[i]] * inBoneWeights[i];
     }
-    // mat4 bone_transform = final_bone_matrices[inBoneIDs[0]] * inBoneWeights[0];
-    // for (int i = 1; i < BONES_PER_VERTEX; i++) {
-    //     bone_transform += final_bone_matrices[inBoneIDs[i]] * inBoneWeights[i];
-    // }
 #endif
 
 #ifdef SSBO0

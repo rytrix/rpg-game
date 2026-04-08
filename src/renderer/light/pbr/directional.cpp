@@ -25,7 +25,7 @@ void DirectionalShadow::init()
         m_shader.init(shader.info.data(), shader.info.size());
 
         ShaderInfoData<2> shader_bones;
-        get_directional_cascade_shader(shader_bones, no_defines, bone_defines);
+        get_directional_cascade_shader(shader_bones, bone_defines, no_defines);
         m_shader_bones.init(shader_bones.info.data(), shader_bones.info.size());
     } else {
         ShaderInfoData<3> shader;
@@ -33,7 +33,7 @@ void DirectionalShadow::init()
         m_shader.init(shader.info.data(), shader.info.size());
 
         ShaderInfoData<3> shader_bones;
-        get_directional_cascade_shader_geometry(shader_bones, no_defines, bone_defines, m_cascades);
+        get_directional_cascade_shader_geometry(shader_bones, bone_defines, no_defines, m_cascades);
         m_shader_bones.init(shader_bones.info.data(), shader_bones.info.size());
     }
 
