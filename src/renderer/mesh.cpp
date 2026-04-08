@@ -73,21 +73,18 @@ void Mesh::update_model_ssbos(const std::span<glm::mat4> model_matrices)
     }
 }
 
-// TODO: take in m_instance_count array of PerAnimationData
 void Mesh::update_bone_matrices(std::span<PerAnimationData*> animation_data)
 {
     util_assert(initialized == true, "Mesh has not been initialized");
     util_assert(m_has_bones == true, "Attempting to update bone matrices with no bones");
 
-    if (m_animation != nullptr) {
-        GLsizeiptr offset = 0;
-        for (auto* animation : animation_data) {
-            m_animation->update_transforms(animation);
-            m_bone_ssbo.buffer_sub_data(offset,
-                    static_cast<GLsizeiptr>(sizeof(glm::mat4) * animation->m_final_transforms_size),
-                    animation->m_final_transforms);
-            offset += MAX_BONES * sizeof(glm::mat4);
-        }
+    GLsizeiptr offset = 0;
+    for (auto* anim_cache : animation_data) {
+        anim_cache->update_transforms();
+        m_bone_ssbo.buffer_sub_data(offset,
+                static_cast<GLsizeiptr>(sizeof(glm::mat4) * anim_cache->m_final_transforms_size),
+                anim_cache->m_final_transforms);
+        offset += MAX_BONES * sizeof(glm::mat4);
     }
 }
 

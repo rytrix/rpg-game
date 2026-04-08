@@ -150,11 +150,8 @@ void Scene::draw()
 
                     if (model_cached.m_model->has_bones()) {
                         auto& data = m_registry.get<Renderer::AnimationData>(entity);
-                        auto* animation_data = data.data.at(model_cached.m_model->get_current_animation());
+                        auto* animation_data = data.data.at(data.selected_animation);
                         model_cached.m_animation_data.emplace_back(animation_data);
-                        std::println("Added animation data for {}", (usize)model);
-                    } else {
-                        std::println("Doesn't have animations {}", (usize)model);
                     }
                 }
             }
@@ -178,10 +175,13 @@ void Scene::draw()
     }
 
     // TODO:
-    // When a animation is changed it needs to set m_models_instance_draw_cache_needs_update to true
+    // Currently selected animation needs to be no longer included in model/mesh class
+    // likely will need to pass the Animation* itself through the update function
     for (auto& model : m_models_instance_draw_cache) {
         for (auto* animation_data : model.m_animation_data) {
-            animation_data->m_animation_time += m_clock.delta_time<float>();
+            if (!animation_data->m_paused) {
+                animation_data->m_animation_time += m_clock.delta_time<float>();
+            }
             // animation_data->m_animation_time += animation_time;
         }
         model.m_model->update(model.m_model_matrices, model.m_animation_data);
@@ -308,35 +308,37 @@ void Scene::draw_debug_imgui()
 
     i32 i = 0;
     if (ImGui::CollapsingHeader("Models")) {
-        auto view = m_registry.view<Transform, Renderer::Model*>();
-        for (auto [entity, transform, model] : view.each()) {
+        auto view = m_registry.view<Transform, Renderer::Model*, Renderer::AnimationData>();
+        for (auto [entity, transform, model, animation_data] : view.each()) {
             ImGui::PushID(i);
 
             if (ImGui::CollapsingHeader(std::format("model_{}", i).c_str())) {
-                if (model->has_bones()) {
-                    auto& animations = model->get_animations();
-                    i32 current_animation = static_cast<int>(model->get_current_animation());
+                auto& animations = model->get_animations();
+                i32 current_animation = static_cast<int>(animation_data.selected_animation);
 
-                    for (u32 j = 0; j < animations.size(); j++) {
-                        float total_animation_time = animations[j].get_total_animation_time();
-                        if ((int)j == current_animation) {
-                            ImGui::Text("(Selected) Animation: %s, %f ticks", animations[j].m_name.c_str(), total_animation_time);
+                for (u32 j = 0; j < animations.size(); j++) {
+                    float total_animation_time = animations[j].get_total_animation_time();
+                    if ((int)j == current_animation) {
+                        ImGui::Text("(Selected) Animation: %s, %f ticks", animations[j].m_name.c_str(), total_animation_time);
 
-                        } else {
-                            ImGui::Text("Animation: %s, %f ticks", animations[j].m_name.c_str(), total_animation_time);
-                        }
+                    } else {
+                        ImGui::Text("Animation: %s, %f ticks", animations[j].m_name.c_str(), total_animation_time);
                     }
+                }
 
-                    if (ImGui::DragInt("Current Animation", &current_animation, 1.0F, 0, static_cast<int>(animations.size() - 1))) {
-                        if (current_animation >= static_cast<i32>(animations.size())) {
-                            current_animation = static_cast<i32>(animations.size() - 1);
-                        }
-                        model->set_animation(current_animation);
+                if (ImGui::DragInt("Current Animation", &current_animation, 1.0F, 0, static_cast<int>(animations.size() - 1))) {
+                    if (current_animation >= static_cast<i32>(animations.size())) {
+                        current_animation = static_cast<i32>(animations.size() - 1);
                     }
-                    float ticks_per_second = animations[current_animation].get_ticks_per_second();
-                    if (ImGui::DragFloat("Set ticks per second", &ticks_per_second)) {
-                        animations[current_animation].set_ticks_per_second(ticks_per_second);
-                    }
+                    animation_data.selected_animation = current_animation;
+                    m_models_instance_draw_cache_needs_update = true;
+                }
+
+                ImGui::Checkbox("Toggle pause", &animation_data.data[animation_data.selected_animation]->m_paused);
+
+                float ticks_per_second = animations[current_animation].get_ticks_per_second();
+                if (ImGui::DragFloat("Set ticks per second", &ticks_per_second)) {
+                    animations[current_animation].set_ticks_per_second(ticks_per_second);
                 }
 
                 glm::vec3 transform_pos = transform.get_position();

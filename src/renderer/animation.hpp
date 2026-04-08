@@ -48,6 +48,8 @@ private:
     static aiQuaternion slerp_interpolate(KeyFrame<aiQuaternion>* p_start, KeyFrame<aiQuaternion>* p_end, float animation_time);
 };
 
+struct Animation;
+
 struct PerAnimationData {
     FrameCache* m_cache;
     usize m_cache_size;
@@ -56,6 +58,11 @@ struct PerAnimationData {
     usize m_final_transforms_size;
 
     float m_animation_time;
+    bool m_paused;
+
+    Animation* m_animation;
+
+    void update_transforms();
 };
 
 struct Animation {
@@ -96,6 +103,7 @@ private:
 
 struct AnimationData {
     std::vector<PerAnimationData*> data;
+    u32 selected_animation = 0;
 };
 
 } // namespace Renderer

@@ -23,9 +23,9 @@ void Model::init(const char* file_path, GlobalAppData* app_data)
     m_app_data = app_data;
 
     util_assert(std::filesystem::exists(file_path), std::format("Model \"{}\" is an invalid path", file_path));
+    m_directory = m_directory.substr(0, m_directory.find_last_of('/'));
 
     Assimp::Importer importer;
-    // importer.SetPropertyFloat(AI_CONFIG_GLOBAL_SCALE_FACTOR_KEY, 10.0F);
     importer.SetPropertyBool(AI_CONFIG_IMPORT_FBX_PRESERVE_PIVOTS, false);
 
     const aiScene* scene = importer.ReadFile(file_path,
@@ -33,12 +33,15 @@ void Model::init(const char* file_path, GlobalAppData* app_data)
             | aiProcess_FlipUVs
             | aiProcess_CalcTangentSpace
             | aiProcess_JoinIdenticalVertices);
-    m_directory = m_directory.substr(0, m_directory.find_last_of('/'));
 
-    util_assert(scene->mRootNode != nullptr, "Model::Model: Root node is nullptr");
+    setup_mesh(scene);
+    setup_animations(scene);
 
-    glm::mat4 global_inverse_transform = glm::inverse(mat4_to_mat4(scene->mRootNode->mTransformation));
+    initialized = true;
+}
 
+void Model::setup_mesh(const aiScene* scene)
+{
     m_mesh.m_app_data = m_app_data;
 
     process_node(scene->mRootNode, scene);
@@ -48,6 +51,13 @@ void Model::init(const char* file_path, GlobalAppData* app_data)
         m_mesh.m_base_vertices.at(i).m_offset = offset;
         offset += m_mesh.m_base_vertices.at(i).m_count;
     }
+
+    m_mesh.setup_mesh();
+}
+
+void Model::setup_animations(const aiScene* scene)
+{
+    glm::mat4 global_inverse_transform = glm::inverse(mat4_to_mat4(scene->mRootNode->mTransformation));
 
     m_animations.resize(scene->mNumAnimations);
 
@@ -62,14 +72,6 @@ void Model::init(const char* file_path, GlobalAppData* app_data)
             static_cast<float>(animation->mDuration),
             static_cast<float>(animation->mTicksPerSecond));
     }
-
-    initialized = true;
-
-    if (m_animations.size() >= 1) {
-        set_animation(0);
-    }
-
-    m_mesh.setup_mesh();
 }
 
 Model::~Model()
@@ -120,20 +122,19 @@ std::deque<Animation>& Model::get_animations()
     return m_animations;
 }
 
-u32 Model::get_current_animation() const
-{
-    util_assert(initialized == true, "Model has not been initialized");
-    return m_current_animation;
-}
-
-void Model::set_animation(u32 value)
-{
-    util_assert(initialized == true, "Model has not been initialized");
-    if (value < m_animations.size()) {
-        m_mesh.m_animation = &m_animations[value];
-        m_current_animation = value;
-    }
-}
+// u32 Model::get_current_animation() const
+// {
+//     util_assert(initialized == true, "Model has not been initialized");
+//     return m_current_animation;
+// }
+//
+// void Model::set_animation(u32 value)
+// {
+//     util_assert(initialized == true, "Model has not been initialized");
+//     if (value < m_animations.size()) {
+//         m_current_animation = value;
+//     }
+// }
 
 void Model::process_node(aiNode* node, const aiScene* scene)
 {
