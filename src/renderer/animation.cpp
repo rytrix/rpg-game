@@ -96,7 +96,9 @@ aiQuaternion NodeAnim::slerp_interpolate(KeyFrame<aiQuaternion>* p_start, KeyFra
 
 void PerAnimationData::update_transforms()
 {
-    m_animation->update_transforms(this);
+    if (!m_paused) {
+        m_animation->update_transforms(this);
+    }
 }
 
 void Animation::init(const aiScene* scene, const aiAnimation* animation, const std::unordered_map<Utils::String, u32>& bone_indices, const glm::mat4& global_inverse_transform, float total_animation_time, float ticks_per_second)
