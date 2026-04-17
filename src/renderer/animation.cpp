@@ -6,7 +6,7 @@
 
 namespace Renderer {
 
-glm::mat4 NodeAnim::keyframe_to_mat4(float animation_time, FrameCache cache)
+glm::mat4 NodeAnim::keyframe_to_mat4(float animation_time, FrameCache& cache)
 {
     aiVector3D pos;
     if (m_position_size == 1) {

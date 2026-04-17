@@ -37,7 +37,7 @@ struct NodeAnim {
     glm::mat4 m_node_transform;
     glm::mat4 m_offset;
 
-    glm::mat4 keyframe_to_mat4(float animation_time, FrameCache cache);
+    glm::mat4 keyframe_to_mat4(float animation_time, FrameCache& cache);
 
 private:
     template <typename T>
