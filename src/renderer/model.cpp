@@ -122,24 +122,11 @@ std::deque<Animation>& Model::get_animations()
     return m_animations;
 }
 
-// u32 Model::get_current_animation() const
-// {
-//     util_assert(initialized == true, "Model has not been initialized");
-//     return m_current_animation;
-// }
-//
-// void Model::set_animation(u32 value)
-// {
-//     util_assert(initialized == true, "Model has not been initialized");
-//     if (value < m_animations.size()) {
-//         m_current_animation = value;
-//     }
-// }
-
 void Model::process_node(aiNode* node, const aiScene* scene)
 {
     for (u32 i = 0; i < node->mNumMeshes; i++) {
         aiMesh* mesh = scene->mMeshes[node->mMeshes[i]];
+        LOG_DEBUG(std::format("Loading mesh: {} from scene", node->mMeshes[i]));
         process_mesh(mesh, scene);
     }
 

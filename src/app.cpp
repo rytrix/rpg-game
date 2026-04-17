@@ -75,44 +75,44 @@ App::App()
     });
     m_scene->add_entity(e2);
 
-    EntityBuilder e3;
-    e3.add_name("cube");
-    e3.add_model_path("res/models/physics_cube/cube.obj");
-    // This will do nothing since it's going to be based off of the physics mat4 anyways
-    // glm::mat4 e3_model_matrix = glm::scale(glm::mat4(1.0), glm::vec3(1.1));
-    // e3.add_model_matrix(e3_model_matrix);
-    e3.add_physics_command([](Physics::System* system, [[maybe_unused]] Renderer::Model* _model) -> std::pair<JPH::BodyID, JPH::EMotionType> {
-        JPH::BodyCreationSettings cube_settings(
-            new JPH::BoxShape(JPH::Vec3(0.5, 0.5, 0.5)),
-            JPH::RVec3(-7.05, 20.0, -5.5),
-            JPH::Quat::sIdentity(),
-            JPH::EMotionType::Dynamic,
-            Physics::Layers::MOVING);
-        auto body = system->m_body_interface->CreateAndAddBody(
-            cube_settings,
-            JPH::EActivation::Activate);
-        return { body, JPH::EMotionType::Dynamic };
-    });
-    m_scene->add_entity(e3);
-
-    for (int i = 0; i <= 50; i++) {
-        e3.add_physics_command([](Physics::System* system, [[maybe_unused]] Renderer::Model* _model) -> std::pair<JPH::BodyID, JPH::EMotionType> {
-            float y = rand() % 300;
-            float x = rand() % 10 - 5;
-            float z = rand() % 10 - 5;
-            JPH::BodyCreationSettings cube_settings(
-                new JPH::BoxShape(JPH::Vec3(0.5, 0.5, 0.5)),
-                JPH::RVec3(x, y, z),
-                JPH::Quat::sIdentity(),
-                JPH::EMotionType::Dynamic,
-                Physics::Layers::MOVING);
-            auto body = system->m_body_interface->CreateAndAddBody(
-                cube_settings,
-                JPH::EActivation::Activate);
-            return { body, JPH::EMotionType::Dynamic };
-        });
-        m_scene->add_entity(e3);
-    }
+    // EntityBuilder e3;
+    // e3.add_name("cube");
+    // e3.add_model_path("res/models/physics_cube/cube.obj");
+    // // This will do nothing since it's going to be based off of the physics mat4 anyways
+    // // glm::mat4 e3_model_matrix = glm::scale(glm::mat4(1.0), glm::vec3(1.1));
+    // // e3.add_model_matrix(e3_model_matrix);
+    // e3.add_physics_command([](Physics::System* system, [[maybe_unused]] Renderer::Model* _model) -> std::pair<JPH::BodyID, JPH::EMotionType> {
+    //     JPH::BodyCreationSettings cube_settings(
+    //         new JPH::BoxShape(JPH::Vec3(0.5, 0.5, 0.5)),
+    //         JPH::RVec3(-7.05, 20.0, -5.5),
+    //         JPH::Quat::sIdentity(),
+    //         JPH::EMotionType::Dynamic,
+    //         Physics::Layers::MOVING);
+    //     auto body = system->m_body_interface->CreateAndAddBody(
+    //         cube_settings,
+    //         JPH::EActivation::Activate);
+    //     return { body, JPH::EMotionType::Dynamic };
+    // });
+    // m_scene->add_entity(e3);
+    //
+    // for (int i = 0; i <= 50; i++) {
+    //     e3.add_physics_command([](Physics::System* system, [[maybe_unused]] Renderer::Model* _model) -> std::pair<JPH::BodyID, JPH::EMotionType> {
+    //         float y = rand() % 300;
+    //         float x = rand() % 10 - 5;
+    //         float z = rand() % 10 - 5;
+    //         JPH::BodyCreationSettings cube_settings(
+    //             new JPH::BoxShape(JPH::Vec3(0.5, 0.5, 0.5)),
+    //             JPH::RVec3(x, y, z),
+    //             JPH::Quat::sIdentity(),
+    //             JPH::EMotionType::Dynamic,
+    //             Physics::Layers::MOVING);
+    //         auto body = system->m_body_interface->CreateAndAddBody(
+    //             cube_settings,
+    //             JPH::EActivation::Activate);
+    //         return { body, JPH::EMotionType::Dynamic };
+    //     });
+    //     m_scene->add_entity(e3);
+    // }
 
     EntityBuilder e4;
     Renderer::Light::Pbr::Point point {};
@@ -129,22 +129,22 @@ App::App()
     e5.add_pbr_point_light_shadow();
     m_scene->add_entity(e5);
 
-    EntityBuilder e6;
-    e6.add_name("sphere");
-    e6.add_model_path("res/models/icosphere/icosphere.obj");
-    e6.add_physics_command([](Physics::System* system, [[maybe_unused]] Renderer::Model* _model) -> std::pair<JPH::BodyID, JPH::EMotionType> {
-        JPH::BodyCreationSettings cube_settings(
-            new JPH::SphereShape(1.0),
-            JPH::RVec3(-7.05, 20.0, -5.5),
-            JPH::Quat::sIdentity(),
-            JPH::EMotionType::Dynamic,
-            Physics::Layers::MOVING);
-        auto body = system->m_body_interface->CreateAndAddBody(
-            cube_settings,
-            JPH::EActivation::Activate);
-        return { body, JPH::EMotionType::Dynamic };
-    });
-    m_scene->add_entity(e6);
+    // EntityBuilder e6;
+    // e6.add_name("sphere");
+    // e6.add_model_path("res/models/icosphere/icosphere.obj");
+    // e6.add_physics_command([](Physics::System* system, [[maybe_unused]] Renderer::Model* _model) -> std::pair<JPH::BodyID, JPH::EMotionType> {
+    //     JPH::BodyCreationSettings cube_settings(
+    //         new JPH::SphereShape(1.0),
+    //         JPH::RVec3(-7.05, 20.0, -5.5),
+    //         JPH::Quat::sIdentity(),
+    //         JPH::EMotionType::Dynamic,
+    //         Physics::Layers::MOVING);
+    //     auto body = system->m_body_interface->CreateAndAddBody(
+    //         cube_settings,
+    //         JPH::EActivation::Activate);
+    //     return { body, JPH::EMotionType::Dynamic };
+    // });
+    // m_scene->add_entity(e6);
 
     EntityBuilder e7;
     Renderer::Light::Pbr::Spot spot {};
@@ -167,8 +167,14 @@ App::App()
     e8.add_model_path("res/models/dog/scene.gltf");
     e8_transform.set_scale(glm::vec3(10.0F));
     e8_transform.rotate(-90.0F, glm::vec3(1.0, 0.0, 0.0));
-    e8.add_transform(e8_transform);
-    m_scene->add_entity(e8);
+    for (int i = 0; i < 100; i++) {
+        float y = rand() % 20;
+        float x = rand() % 20 - 5;
+        float z = rand() % 20 - 5;
+        e8_transform.set_position(glm::vec3(x, y, z));
+        e8.add_transform(e8_transform);
+        m_scene->add_entity(e8);
+    }
 
     m_scene->optimize();
     m_scene->update();

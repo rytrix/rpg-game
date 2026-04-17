@@ -1,9 +1,17 @@
 #pragma once
 
+namespace Renderer {
+    class Model;
+    class Mesh;
+    class Texture;
+};
+
+#include "scene/resource_manager.hpp"
+
 #include "renderer/window.hpp"
 #include "renderer/camera.hpp"
+
 #include "renderer/default_textures.hpp"
-#include "scene/resource_manager.hpp"
 
 struct GlobalAppData {
     Renderer::Window m_window;

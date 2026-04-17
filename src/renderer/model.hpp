@@ -1,13 +1,15 @@
 #pragma once
 
+struct AppData;
+
+#include "../app_data.hpp"
+
 #include "mesh.hpp"
 #include "shader.hpp"
 #include "texture.hpp"
 
 #include "../scene/resource_manager.hpp"
 #include "../utils/deltatime.hpp"
-
-#include "../app_data.hpp"
 
 #include <assimp/scene.h>
 

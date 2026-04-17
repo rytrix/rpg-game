@@ -39,6 +39,7 @@ private:
         };
     };
 
+    std::allocator<InternalData> m_allocator;
     InternalData* m_data = nullptr;
     usize m_data_size = 0;
     usize m_data_capacity = 0;
@@ -48,8 +49,8 @@ private:
 template <typename DataType>
 void ResourceManager<DataType>::init(usize size)
 {
-    util_assert(size < INVALID_NEXT_FREE, std::format("ResourceManager2 size {} greater than UINT32_MAX", size));
-    m_data = (InternalData*)malloc(sizeof(InternalData) * size);
+    util_assert(size < INVALID_NEXT_FREE, std::format("ResourceManager2 size {} >= UINT32_MAX", size));
+    m_data = m_allocator.allocate(size);
     memset((void*)m_data, 0, sizeof(InternalData) * size);
     m_data_capacity = size;
 }
@@ -63,7 +64,7 @@ ResourceManager<DataType>::~ResourceManager()
         }
     }
 
-    free(m_data);
+    m_allocator.deallocate(m_data, m_data_capacity);
 }
 
 template <typename DataType>
@@ -157,11 +158,6 @@ DataType* ResourceManager<DataType>::create(Handle handle, Args&&... args)
 
 void run_resource_manager_fuzzer(size_t iterations, size_t pool_size);
 
-namespace Renderer {
-class Texture;
-class Model;
-}
-
 template <typename T>
 class SceneResourceManager {
 public:
@@ -250,6 +246,12 @@ void SceneResourceManager<T>::destroy(Handle handle)
         }
     }
 }
+
+namespace Renderer {
+    class Model;
+    class Mesh;
+    class Texture;
+};
 
 #define TextureCache SceneResourceManager<Renderer::Texture>
 #define ModelCache SceneResourceManager<Renderer::Model>
