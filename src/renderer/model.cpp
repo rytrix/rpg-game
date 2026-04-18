@@ -98,6 +98,7 @@ void Model::draw(ShaderProgram& shader)
 void Model::update(std::span<glm::mat4> models, std::span<PerAnimationData*> animation_data)
 {
     util_assert(initialized == true, "Model has not been initialized");
+    m_mesh.next_ssbo_frame();
     m_mesh.update_model_ssbos(models);
     if (m_mesh.m_has_bones) {
         m_mesh.update_bone_matrices(animation_data);

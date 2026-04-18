@@ -65,4 +65,56 @@ void Buffer::unbind_buffer(GLenum target) const
     return m_id;
 }
 
+void MappedBuffer::init(u32 buffer_count, u32 buffer_size)
+{
+    m_current_frame = 0;
+    m_frame_count = buffer_count;
+    glCreateBuffers(buffer_count, m_ids.data());
+
+    for (u32 i = 0; i < buffer_count; i++) {
+        GLuint id = m_ids[i];
+        glNamedBufferStorage(id, buffer_size, nullptr, FLAGS);
+        m_ptrs[i] = glMapNamedBufferRange(id, 0, buffer_size, FLAGS);
+    }
+
+    initialized = true;
+}
+
+void MappedBuffer::deinit()
+{
+    glDeleteBuffers(m_frame_count, m_ids.data());
+    m_frame_count = 0;
+    m_current_frame = 0;
+
+    initialized = false;
+}
+
+MappedBuffer::~MappedBuffer()
+{
+    deinit();
+}
+
+[[nodiscard]] bool MappedBuffer::is_initialized() const
+{
+    return initialized;
+}
+
+[[nodiscard]] GLuint MappedBuffer::get_id() const
+{
+    util_assert(initialized == true, "MappedBuffer has not been initialized");
+    return m_ids[m_current_frame];
+}
+
+[[nodiscard]] void* MappedBuffer::get_ptr()
+{
+    util_assert(initialized == true, "MappedBuffer has not been initialized");
+    return m_ptrs[m_current_frame];
+}
+
+void MappedBuffer::increment_frame()
+{
+    util_assert(initialized == true, "MappedBuffer has not been initialized");
+    m_current_frame = (m_current_frame + 1) % m_frame_count;
+}
+
 } // namespace Renderer

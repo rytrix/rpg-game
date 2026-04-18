@@ -43,15 +43,19 @@ void Mesh::update_model_ssbos(const std::span<glm::mat4> model_matrices)
     util_assert(initialized == true, "Mesh has not been initialized");
 
     if (!m_model_ssbo.is_initialized()) {
-        m_model_ssbo.init();
-        m_model_ssbo.buffer_storage(model_matrices.size() * sizeof(model_matrices[0]), model_matrices.data(), GL_DYNAMIC_STORAGE_BIT);
+        m_model_ssbo.init(3, model_matrices.size() * sizeof(glm::mat4));
+        // m_model_ssbo.init();
+        // m_model_ssbo.buffer_storage(model_matrices.size() * sizeof(model_matrices[0]), model_matrices.data(), GL_DYNAMIC_STORAGE_BIT);
     } else {
-        if (model_matrices.size() > m_instance_count) {
+        if (model_matrices.size() != m_instance_count) {
             m_model_ssbo.deinit();
-            m_model_ssbo.init();
-            m_model_ssbo.buffer_storage(model_matrices.size() * sizeof(model_matrices[0]), model_matrices.data(), GL_DYNAMIC_STORAGE_BIT);
+            m_model_ssbo.init(3, model_matrices.size() * sizeof(glm::mat4));
+            // m_model_ssbo.init();
+            // m_model_ssbo.buffer_storage(model_matrices.size() * sizeof(model_matrices[0]), model_matrices.data(), GL_DYNAMIC_STORAGE_BIT);
         } else {
-            m_model_ssbo.buffer_sub_data(0, model_matrices.size() * sizeof(model_matrices[0]), model_matrices.data());
+            void* ptr = m_model_ssbo.get_ptr();
+            std::memcpy(ptr, model_matrices.data(), model_matrices.size() * sizeof(glm::mat4));
+            // m_model_ssbo.buffer_sub_data(0, model_matrices.size() * sizeof(model_matrices[0]), model_matrices.data());
         }
     }
 
@@ -68,8 +72,9 @@ void Mesh::update_model_ssbos(const std::span<glm::mat4> model_matrices)
         }
 
         m_bone_ssbo.deinit();
-        m_bone_ssbo.init();
-        m_bone_ssbo.buffer_storage(m_instance_count * sizeof(glm::mat4) * MAX_BONES, nullptr, GL_DYNAMIC_STORAGE_BIT);
+        m_bone_ssbo.init(3, m_instance_count * sizeof(glm::mat4) * MAX_BONES);
+        // m_bone_ssbo.init();
+        // m_bone_ssbo.buffer_storage(m_instance_count * sizeof(glm::mat4) * MAX_BONES, nullptr, GL_DYNAMIC_STORAGE_BIT);
     }
 }
 
@@ -79,12 +84,25 @@ void Mesh::update_bone_matrices(std::span<PerAnimationData*> animation_data)
     util_assert(m_has_bones == true, "Attempting to update bone matrices with no bones");
 
     GLsizeiptr offset = 0;
+
+    void* ptr = m_bone_ssbo.get_ptr();
     for (auto* anim_cache : animation_data) {
         anim_cache->update_transforms();
-        m_bone_ssbo.buffer_sub_data(offset,
-                static_cast<GLsizeiptr>(sizeof(glm::mat4) * anim_cache->m_final_transforms_size),
-                anim_cache->m_final_transforms);
+        std::memcpy((void*)((char*)ptr + offset), anim_cache->m_final_transforms, anim_cache->m_final_transforms_size * sizeof(glm::mat4));
+        // m_bone_ssbo.buffer_sub_data(offset,
+        //     static_cast<GLsizeiptr>(sizeof(glm::mat4) * anim_cache->m_final_transforms_size),
+        //     anim_cache->m_final_transforms);
         offset += MAX_BONES * sizeof(glm::mat4);
+    }
+}
+
+void Mesh::next_ssbo_frame()
+{
+    if (m_model_ssbo.is_initialized()) {
+        m_model_ssbo.increment_frame();
+    }
+    if (m_bone_ssbo.is_initialized()) {
+        m_bone_ssbo.increment_frame();
     }
 }
 
@@ -249,8 +267,9 @@ void Mesh::setup_mesh()
     }
 
     if (m_has_bones) {
-        m_bone_ssbo.init();
-        m_bone_ssbo.buffer_storage(m_instance_count * sizeof(glm::mat4) * MAX_BONES, nullptr, GL_DYNAMIC_STORAGE_BIT);
+        m_bone_ssbo.init(3, m_instance_count * sizeof(glm::mat4) * MAX_BONES);
+        // m_bone_ssbo.init();
+        // m_bone_ssbo.buffer_storage(m_instance_count * sizeof(glm::mat4) * MAX_BONES, nullptr, GL_DYNAMIC_STORAGE_BIT);
     }
 
     initialized = true;

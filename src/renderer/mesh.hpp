@@ -71,6 +71,7 @@ public:
 
     void update_model_ssbos(const std::span<glm::mat4> model_matrices);
     void update_bone_matrices(const std::span<PerAnimationData*> animation_data);
+    void next_ssbo_frame();
 
     void draw_untextured(Renderer::ShaderProgram& shader);
     void draw(ShaderProgram& shader);
@@ -96,19 +97,17 @@ private:
     VertexArray m_vao;
     Buffer m_vbo;
     Buffer m_ebo;
-
     Buffer m_bones_vbo;
-
-    Buffer m_cmd_buff;
-    std::vector<IndirectCommands> m_commands;
-
-    Buffer m_model_ssbo;
-    GLuint m_instance_count = 1;
 
     Buffer m_texture_ssbo;
     std::vector<GLuint64> m_texture_bindless_ids;
 
-    Buffer m_bone_ssbo;
+    Buffer m_cmd_buff;
+    std::vector<IndirectCommands> m_commands;
+
+    GLuint m_instance_count = 1;
+    MappedBuffer m_model_ssbo;
+    MappedBuffer m_bone_ssbo;
 };
 
 } // namespace Renderer
