@@ -62,19 +62,19 @@ void DefaultTextures::init(TextureCache* cache)
 
 Handle DefaultTextures::get_albedo() const
 {
-    util_assert(initialized == true, "DefaultTextures not initialized");
+    util_assert(initialized == true, "not initialized");
     return m_albedo;
 }
 
 Handle DefaultTextures::get_metallic() const
 {
-    util_assert(initialized == true, "DefaultTextures not initialized");
+    util_assert(initialized == true, "not initialized");
     return m_metallic;
 }
 
 Handle DefaultTextures::get_normal() const
 {
-    util_assert(initialized == true, "DefaultTextures not initialized");
+    util_assert(initialized == true, "not initialized");
     return m_normal;
 }
 

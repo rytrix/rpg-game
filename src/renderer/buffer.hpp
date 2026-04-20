@@ -39,10 +39,11 @@ struct MappedBuffer : public NoCopyNoMove {
 
 private:
     static constexpr int FLAGS = GL_MAP_WRITE_BIT | GL_MAP_PERSISTENT_BIT | GL_MAP_COHERENT_BIT;
+    static constexpr u32 MAX_FRAME_COUNT = 3;
 
     bool initialized = false;
-    std::array<GLuint, 3> m_ids {};
-    std::array<void*, 3> m_ptrs {};
+    std::array<GLuint, MAX_FRAME_COUNT> m_ids {};
+    std::array<void*, MAX_FRAME_COUNT> m_ptrs {};
 
     u32 m_current_frame = 0;
     u32 m_frame_count = 0;

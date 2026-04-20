@@ -17,7 +17,7 @@ Model::Model(const char* file_path, GlobalAppData* app_data)
 
 void Model::init(const char* file_path, GlobalAppData* app_data)
 {
-    util_assert(initialized == false, "Model::init() has already been initialized");
+    util_assert(initialized == false, "already initialized");
 
     m_directory = file_path;
     m_app_data = app_data;
@@ -68,9 +68,7 @@ void Model::setup_animations(const aiScene* scene)
         m_animations[i].init(scene,
             animation,
             m_mesh.m_bone_id_map,
-            global_inverse_transform,
-            static_cast<float>(animation->mDuration),
-            static_cast<float>(animation->mTicksPerSecond));
+            global_inverse_transform);
     }
 }
 
@@ -81,24 +79,23 @@ Model::~Model()
 
 void Model::draw_untextured(ShaderProgram& shader)
 {
-    util_assert(initialized == true, "Model has not been initialized");
+    util_assert(initialized == true, "not initialized");
 
-    // shader.set_mat4("model", model[0]);
     m_mesh.draw_untextured(shader);
 }
 
 void Model::draw(ShaderProgram& shader)
 {
-    util_assert(initialized == true, "Model has not been initialized");
+    util_assert(initialized == true, "not initialized");
 
-    // shader.set_mat4("model", model[0]);
     m_mesh.draw(shader);
 }
 
 void Model::update(std::span<glm::mat4> models, std::span<PerAnimationData*> animation_data)
 {
-    util_assert(initialized == true, "Model has not been initialized");
+    util_assert(initialized == true, "not initialized");
     m_mesh.next_ssbo_frame();
+    m_mesh.update_instance_count(models.size());
     m_mesh.update_model_ssbos(models);
     if (m_mesh.m_has_bones) {
         m_mesh.update_bone_matrices(animation_data);
@@ -107,19 +104,19 @@ void Model::update(std::span<glm::mat4> models, std::span<PerAnimationData*> ani
 
 const Mesh* Model::get_mesh()
 {
-    util_assert(initialized == true, "Model has not been initialized");
+    util_assert(initialized == true, "not initialized");
     return &m_mesh;
 }
 
 bool Model::has_bones() const
 {
-    util_assert(initialized == true, "Model has not been initialized");
+    util_assert(initialized == true, "not initialized");
     return m_mesh.m_has_bones;
 }
 
 std::deque<Animation>& Model::get_animations()
 {
-    util_assert(initialized == true, "Model has not been initialized");
+    util_assert(initialized == true, "not initialized");
     return m_animations;
 }
 
@@ -260,7 +257,6 @@ Handle Model::load_material_texture(const aiMaterial* mat, const aiTextureType t
         auto* texture_cache = &m_app_data->m_texture_cache;
         if (embedded_texture == nullptr) {
             Utils::String texture_path;
-            // std::string texture_path = (m_directory + "/" + str.C_Str());
             usize size = std::snprintf(texture_path.data(), texture_path.capacity(), "%s/%s", m_directory.c_str(), str.C_Str());
             texture_path.set_size(size);
 
@@ -268,12 +264,10 @@ Handle Model::load_material_texture(const aiMaterial* mat, const aiTextureType t
             texture_info.file_path = texture_path.c_str();
 
             LOG_INFO(std::format("Loading {} type {}", texture_path.view(), aiTextureTypeToString(type)));
-            // Texture* texture = nullptr;
 
-            Handle handle; //= texture_cache->get_or_create(texture_path, texture_info);
+            Handle handle;
             if (texture_cache->contains(texture_path)) {
                 handle = texture_cache->get(texture_path);
-                // texture = texture_cache->get(handle);
             } else {
                 handle = texture_cache->get_or_create(texture_path, texture_info);
                 auto* texture = texture_cache->get(handle);

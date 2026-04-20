@@ -4,7 +4,7 @@ namespace Renderer {
 
 void GBuffer::init(int screen_width, int screen_height)
 {
-    util_assert(initialized == false, "GBuffer::init() has already been initialized");
+    util_assert(initialized == false, "already initialized");
 
     m_buffer_width = screen_width;
     m_buffer_height = screen_height;
@@ -43,19 +43,20 @@ GBuffer::~GBuffer()
 
 void GBuffer::reinit(int screen_width, int screen_height)
 {
+    // TODO this is UB...
     this->~GBuffer();
     init(screen_width, screen_height);
 }
 
 void GBuffer::bind()
 {
-    util_assert(initialized == true, "GBuffer has not been initialized");
+    util_assert(initialized == true, "not initialized");
     m_buffer.bind();
 }
 
 void GBuffer::set_uniforms(Renderer::ShaderProgram& shader)
 {
-    util_assert(initialized == true, "GBuffer has not been initialized");
+    util_assert(initialized == true, "not initialized");
 
     GLuint texture_unit = Texture::get_texture_unit();
     m_position.bind(texture_unit);
@@ -72,13 +73,13 @@ void GBuffer::set_uniforms(Renderer::ShaderProgram& shader)
 
 void GBuffer::unbind()
 {
-    util_assert(initialized == true, "GBuffer has not been initialized");
+    util_assert(initialized == true, "not initialized");
     m_buffer.unbind();
 }
 
 void GBuffer::blit_depth_buffer()
 {
-    util_assert(initialized == true, "GBuffer has not been initialized");
+    util_assert(initialized == true, "not initialized");
     glBlitNamedFramebuffer(m_buffer.get_id(), 0, 0, 0, m_buffer_width, m_buffer_height, 0, 0, m_buffer_width, m_buffer_height, GL_DEPTH_BUFFER_BIT, GL_NEAREST);
 }
 

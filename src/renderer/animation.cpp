@@ -101,12 +101,12 @@ void PerAnimationData::update_transforms()
     }
 }
 
-void Animation::init(const aiScene* scene, const aiAnimation* animation, const std::unordered_map<Utils::String, u32>& bone_indices, const glm::mat4& global_inverse_transform, float total_animation_time, float ticks_per_second)
+void Animation::init(const aiScene* scene, const aiAnimation* animation, const std::unordered_map<Utils::String, u32>& bone_indices, const glm::mat4& global_inverse_transform)
 {
     m_name = animation->mName.C_Str();
 
-    m_total_animation_time = total_animation_time;
-    m_ticks_per_second = ticks_per_second;
+    m_total_animation_time = (float)animation->mDuration;
+    m_ticks_per_second = (float)animation->mTicksPerSecond;
     if (m_ticks_per_second == 0.0F) {
         m_ticks_per_second = 25.0F;
     }

@@ -25,13 +25,13 @@ TextureAllocator::TextureAllocator(u32 max_textures)
 u32 TextureAllocator::next()
 {
     util_assert(m_front < m_max_textures,
-        "TextureAllocator: attempting to call next when front is greater than max_textures");
+        "attempting to call next when front is greater than max_textures");
 
     if (m_front >= m_max_textures) {
         reset();
     }
 
-    LOG_TRACE(std::format("TextureAllocator::next() returning {}", m_front));
+    LOG_TRACE(std::format("returning {}", m_front));
 
     return m_front++;
 }
@@ -77,10 +77,10 @@ Texture::~Texture()
 
 void Texture::init(TextureInfo& info)
 {
-    util_assert(initialized == false, "Texture::Init() has already been initialized");
+    util_assert(initialized == false, "already initialized");
 
     if (info.mipmaps && info.mipmap_levels != 0) {
-        LOG_WARN(std::format("Texture mipmaps set to {}, when they should be set to 0 for automatic generation", info.mipmap_levels));
+        LOG_WARN(std::format("mipmaps set to {}, when they should be set to 0 for automatic generation", info.mipmap_levels));
     }
     if (info.mipmaps
         && info.min_filter != GL_LINEAR_MIPMAP_LINEAR
@@ -138,13 +138,13 @@ void Texture::reset_texture_units()
 
 void Texture::generate_mipmap()
 {
-    util_assert(initialized == true, "Texture has not been initialized");
+    util_assert(initialized == true, "not initialized");
     glGenerateTextureMipmap(m_id);
 }
 
 void Texture::sub_image(TextureSubimageInfo& info)
 {
-    util_assert(initialized == true, "Texture has not been initialized");
+    util_assert(initialized == true, "not initialized");
     switch (m_dimensions) {
         case GL_TEXTURE_1D:
             glTextureSubImage1D(m_id,
@@ -180,7 +180,7 @@ void Texture::sub_image(TextureSubimageInfo& info)
                 info.pixels);
             break;
         default:
-            util_error(std::format("Texture::sub_image: invalid texture dimensions {}\n", m_dimensions));
+            util_error(std::format("invalid texture dimensions {}\n", m_dimensions));
     }
     if (mipmaps) {
         generate_mipmap();
@@ -189,27 +189,27 @@ void Texture::sub_image(TextureSubimageInfo& info)
 
 void Texture::bind(GLuint texture_unit)
 {
-    util_assert(initialized == true, "Texture has not been initialized");
+    util_assert(initialized == true, "not initialized");
     glBindTextureUnit(texture_unit, m_id);
 }
 
 [[nodiscard]] GLuint64 Texture::get_bindless_texture_id()
 {
-    util_assert(initialized == true, "Texture has not been initialized");
+    util_assert(initialized == true, "not initialized");
     util_assert(Renderer::Extensions::is_extension_supported("GL_ARB_bindless_texture") == true, "GL_ARB_bindless_texture not supported");
     return glGetTextureHandleARB(m_id);
 }
 
 [[nodiscard]] bool Texture::is_bindless_texture_mapped()
 {
-    util_assert(initialized == true, "Texture has not been initialized");
+    util_assert(initialized == true, "not initialized");
     util_assert(Renderer::Extensions::is_extension_supported("GL_ARB_bindless_texture") == true, "GL_ARB_bindless_texture not supported");
     return m_bindless_texture_mapped;
 }
 
 void Texture::map_bindless_texture()
 {
-    util_assert(initialized == true, "Texture has not been initialized");
+    util_assert(initialized == true, "not initialized");
     util_assert(Renderer::Extensions::is_extension_supported("GL_ARB_bindless_texture") == true, "GL_ARB_bindless_texture not supported");
     util_assert(m_bindless_texture_mapped == false, "Attempting to map bindless texture that is already mapped");
     glMakeTextureHandleResidentARB(get_bindless_texture_id());
@@ -218,7 +218,7 @@ void Texture::map_bindless_texture()
 
 void Texture::unmap_bindless_texture()
 {
-    util_assert(initialized == true, "Texture has not been initialized");
+    util_assert(initialized == true, "not initialized");
     util_assert(m_bindless_texture_mapped == true, "Attempting to unmap bindless texture that is not mapped");
     util_assert(Renderer::Extensions::is_extension_supported("GL_ARB_bindless_texture") == true, "GL_ARB_bindless_texture not supported");
     glMakeTextureHandleNonResidentARB(get_bindless_texture_id());
@@ -227,14 +227,14 @@ void Texture::unmap_bindless_texture()
 
 void Texture::set_max_anisotropy(float max_anisotropy)
 {
-    util_assert(initialized == true, "Texture has not been initialized");
+    util_assert(initialized == true, "not initialized");
     auto get_hardware_max_anisotropy = []() {
         float hardware_max_anisotropy = 0.0F;
         glGetFloatv(GL_MAX_TEXTURE_MAX_ANISOTROPY, &hardware_max_anisotropy);
         return hardware_max_anisotropy;
     };
     util_assert(max_anisotropy <= get_hardware_max_anisotropy(),
-        std::format("Texture max_anisotropy \"{}\" is higher than hardware limit \"{}\"",
+        std::format("max_anisotropy \"{}\" is higher than hardware limit \"{}\"",
             max_anisotropy,
             get_hardware_max_anisotropy()));
 
@@ -245,13 +245,13 @@ void Texture::set_max_anisotropy(float max_anisotropy)
 
 [[nodiscard]] GLuint Texture::get_id() const noexcept
 {
-    util_assert(initialized == true, "Texture has not been initialized");
+    util_assert(initialized == true, "not initialized");
     return m_id;
 }
 
 void Texture::texture_storage(TextureSize& size, GLenum internal_format, GLint levels)
 {
-    util_assert(initialized == true, "Texture has not been initialized");
+    util_assert(initialized == true, "not initialized");
     if (levels == 0) {
         levels = 1 + std::floor(std::log2(std::max({ size.width, size.height, size.depth })));
     }
@@ -272,13 +272,13 @@ void Texture::texture_storage(TextureSize& size, GLenum internal_format, GLint l
             glTextureStorage2D(m_id, levels, internal_format, size.width, size.height);
             break;
         default:
-            util_error(std::format("Texture::texture_storage: invalid texture dimensions {}\n", m_dimensions));
+            util_error(std::format("invalid texture dimensions {}\n", m_dimensions));
     }
 }
 
 void Texture::from_file(const char* file, bool flip, GLint mipmap_levels)
 {
-    util_assert(initialized == true, "Texture::from_file has not been initialized");
+    util_assert(initialized == true, "not initialized");
 
     if (m_dimensions != GL_TEXTURE_2D) {
         util_error("currently only 2D textures are supported from files");
@@ -305,7 +305,7 @@ void Texture::from_file(const char* file, bool flip, GLint mipmap_levels)
         texture_storage(size, GL_RGBA8, mipmap_levels);
         info.format = GL_RGBA;
     } else {
-        util_error(std::format("Texture: invalid number of channels \"{}\"", nr_channels));
+        util_error(std::format("invalid number of channels \"{}\"", nr_channels));
     }
 
     sub_image(info);

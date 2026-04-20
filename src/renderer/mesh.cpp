@@ -38,30 +38,12 @@ Mesh::~Mesh()
     initialized = false;
 }
 
-void Mesh::update_model_ssbos(const std::span<glm::mat4> model_matrices)
+void Mesh::update_instance_count(u32 instance_count)
 {
-    util_assert(initialized == true, "Mesh has not been initialized");
+    util_assert(initialized == true, "not initialized");
 
-    if (!m_model_ssbo.is_initialized()) {
-        m_model_ssbo.init(3, model_matrices.size() * sizeof(glm::mat4));
-        // m_model_ssbo.init();
-        // m_model_ssbo.buffer_storage(model_matrices.size() * sizeof(model_matrices[0]), model_matrices.data(), GL_DYNAMIC_STORAGE_BIT);
-    } else {
-        if (model_matrices.size() != m_instance_count) {
-            m_model_ssbo.deinit();
-            m_model_ssbo.init(3, model_matrices.size() * sizeof(glm::mat4));
-            // m_model_ssbo.init();
-            // m_model_ssbo.buffer_storage(model_matrices.size() * sizeof(model_matrices[0]), model_matrices.data(), GL_DYNAMIC_STORAGE_BIT);
-        } else {
-            void* ptr = m_model_ssbo.get_ptr();
-            std::memcpy(ptr, model_matrices.data(), model_matrices.size() * sizeof(glm::mat4));
-            // m_model_ssbo.buffer_sub_data(0, model_matrices.size() * sizeof(model_matrices[0]), model_matrices.data());
-        }
-    }
-
-    // TODO: refactor
-    if (m_instance_count != model_matrices.size()) {
-        m_instance_count = model_matrices.size();
+    if (m_instance_count != instance_count) {
+        m_instance_count = instance_count;
 
         for (usize i = 0; i < m_commands.size(); i++) {
             m_commands.at(i).instance_count = m_instance_count;
@@ -71,16 +53,25 @@ void Mesh::update_model_ssbos(const std::span<glm::mat4> model_matrices)
             m_cmd_buff.buffer_sub_data(0, m_commands.size() * sizeof(m_commands[0]), m_commands.data());
         }
 
+        m_model_ssbo.deinit();
+        m_model_ssbo.init(3, m_instance_count * sizeof(glm::mat4));
+
         m_bone_ssbo.deinit();
         m_bone_ssbo.init(3, m_instance_count * sizeof(glm::mat4) * MAX_BONES);
-        // m_bone_ssbo.init();
-        // m_bone_ssbo.buffer_storage(m_instance_count * sizeof(glm::mat4) * MAX_BONES, nullptr, GL_DYNAMIC_STORAGE_BIT);
     }
+}
+
+void Mesh::update_model_ssbos(const std::span<glm::mat4> model_matrices)
+{
+    util_assert(initialized == true, "not initialized");
+
+    void* ptr = m_model_ssbo.get_ptr();
+    std::memcpy(ptr, model_matrices.data(), model_matrices.size() * sizeof(glm::mat4));
 }
 
 void Mesh::update_bone_matrices(std::span<PerAnimationData*> animation_data)
 {
-    util_assert(initialized == true, "Mesh has not been initialized");
+    util_assert(initialized == true, "not initialized");
     util_assert(m_has_bones == true, "Attempting to update bone matrices with no bones");
 
     GLsizeiptr offset = 0;
@@ -89,9 +80,6 @@ void Mesh::update_bone_matrices(std::span<PerAnimationData*> animation_data)
     for (auto* anim_cache : animation_data) {
         anim_cache->update_transforms();
         std::memcpy((void*)((char*)ptr + offset), anim_cache->m_final_transforms, anim_cache->m_final_transforms_size * sizeof(glm::mat4));
-        // m_bone_ssbo.buffer_sub_data(offset,
-        //     static_cast<GLsizeiptr>(sizeof(glm::mat4) * anim_cache->m_final_transforms_size),
-        //     anim_cache->m_final_transforms);
         offset += MAX_BONES * sizeof(glm::mat4);
     }
 }
@@ -108,7 +96,7 @@ void Mesh::next_ssbo_frame()
 
 void Mesh::draw_untextured(Renderer::ShaderProgram& shader)
 {
-    util_assert(initialized == true, "Mesh has not been initialized");
+    util_assert(initialized == true, "not initialized");
 
     m_vao.bind();
 
@@ -143,7 +131,7 @@ void Mesh::draw_untextured(Renderer::ShaderProgram& shader)
 
 void Mesh::draw(ShaderProgram& shader)
 {
-    util_assert(initialized == true, "Mesh has not been initialized");
+    util_assert(initialized == true, "not initialized");
 
     m_vao.bind();
 
@@ -197,7 +185,7 @@ void Mesh::draw(ShaderProgram& shader)
 
 void Mesh::setup_mesh()
 {
-    util_assert(initialized == false, "Mesh::setup_mesh() has already been initialized");
+    util_assert(initialized == false, "already initialized");
 
     m_vao.init();
     m_vbo.init();
@@ -242,7 +230,7 @@ void Mesh::setup_mesh()
         m_texture_ssbo.init();
         m_texture_bindless_ids.resize(m_commands.size() * 3);
         for (usize i = 0; i < m_commands.size(); i++) {
-            // 1 diffuse 1 metallic_roughness 1 normal (at most.. or its broken)
+            // 1 diffuse 1 metallic_roughness 1 normal
             auto* diffuse_texture = m_app_data->m_texture_cache.get(m_diffuse_textures[i]);
             m_texture_bindless_ids.at((i * 3) + 0) = diffuse_texture->get_bindless_texture_id();
             if (!diffuse_texture->is_bindless_texture_mapped()) {
@@ -268,9 +256,9 @@ void Mesh::setup_mesh()
 
     if (m_has_bones) {
         m_bone_ssbo.init(3, m_instance_count * sizeof(glm::mat4) * MAX_BONES);
-        // m_bone_ssbo.init();
-        // m_bone_ssbo.buffer_storage(m_instance_count * sizeof(glm::mat4) * MAX_BONES, nullptr, GL_DYNAMIC_STORAGE_BIT);
     }
+
+    m_model_ssbo.init(3, m_instance_count * sizeof(glm::mat4));
 
     initialized = true;
 }

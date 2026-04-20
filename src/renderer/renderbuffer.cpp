@@ -12,26 +12,26 @@ Renderbuffer::~Renderbuffer()
 
 void Renderbuffer::init()
 {
-    util_assert(initialized == false, "Renderbuffer::init() has already been initialized");
+    util_assert(initialized == false, "already initialized");
     glCreateRenderbuffers(1, &m_id);
     initialized = true;
 }
 
 [[nodiscard]] u32 Renderbuffer::get_id() const
 {
-    util_assert(initialized == true, "Renderbuffer has not been initialized");
+    util_assert(initialized == true, "not initialized");
     return m_id;
 }
 
 void Renderbuffer::buffer_storage(GLenum internal_format, GLsizei width, GLsizei height)
 {
-    util_assert(initialized == true, "Renderbuffer has not been initialized");
+    util_assert(initialized == true, "not initialized");
     glNamedRenderbufferStorage(m_id, internal_format, width, height);
 }
 
 void Renderbuffer::buffer_storage_multisample(GLsizei samples, GLenum internal_format, GLsizei width, GLsizei height)
 {
-    util_assert(initialized == true, "Renderbuffer has not been initialized");
+    util_assert(initialized == true, "not initialized");
     glNamedRenderbufferStorageMultisample(m_id, samples, internal_format, width, height);
 }
 

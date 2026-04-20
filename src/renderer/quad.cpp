@@ -9,7 +9,7 @@ Quad::~Quad()
 
 void Quad::init()
 {
-    util_assert(initialized == false, "Quad::init() has already been initialized");
+    util_assert(initialized == false, "already initialized");
 
     m_vao.init();
     m_vao.vertex_attrib(0, 0, 3, GL_FLOAT, 0);
@@ -32,7 +32,7 @@ void Quad::init()
 
 void Quad::draw()
 {
-    util_assert(initialized == true, "Quad has not been initialized");
+    util_assert(initialized == true, "not initialized");
     m_vao.bind();
     glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
 }

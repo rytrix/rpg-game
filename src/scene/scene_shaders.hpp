@@ -185,7 +185,4 @@ constexpr void get_shadow_pass_point_geometry_shaders(ShaderInfoData<3>& out, co
     out.populate_info();
 }
 
-// #include "scene_shaders_pbr.hpp"
-// #include "scene_shaders_phong.hpp"
-
 } // anonymous namespace

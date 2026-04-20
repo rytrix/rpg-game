@@ -4,7 +4,7 @@ namespace Renderer {
 
 void Framebuffer::init()
 {
-    util_assert(initialized == false, "Framebuffer::init() has already been initialized");
+    util_assert(initialized == false, "already initialized");
     glCreateFramebuffers(1, &m_id);
     initialized = true;
 }
@@ -19,19 +19,19 @@ Framebuffer::~Framebuffer()
 
 [[nodiscard]] GLenum Framebuffer::check_status(GLenum target) const
 {
-    util_assert(initialized == true, "Framebuffer has not been initialized");
+    util_assert(initialized == true, "not initialized");
     return glCheckNamedFramebufferStatus(m_id, target);
 }
 
 void Framebuffer::bind_renderbuffer(GLenum attachment, GLenum renderbuffer_target, GLuint renderbuffer) const
 {
-    util_assert(initialized == true, "Framebuffer has not been initialized");
+    util_assert(initialized == true, "not initialized");
     glNamedFramebufferRenderbuffer(m_id, attachment, renderbuffer_target, renderbuffer);
 }
 
 void Framebuffer::bind_texture(GLenum attachment, GLuint texture, GLint level) const
 {
-    util_assert(initialized == true, "Framebuffer has not been initialized");
+    util_assert(initialized == true, "not initialized");
     glNamedFramebufferTexture(m_id, attachment, texture, level);
     auto error = glCheckNamedFramebufferStatus(m_id, GL_FRAMEBUFFER);
     if (error != GL_FRAMEBUFFER_COMPLETE) {
@@ -41,7 +41,7 @@ void Framebuffer::bind_texture(GLenum attachment, GLuint texture, GLint level) c
 
 void Framebuffer::bind_texture(GLenum attachment, GLuint texture, GLint level, GLint layer) const
 {
-    util_assert(initialized == true, "Framebuffer has not been initialized");
+    util_assert(initialized == true, "not initialized");
     glNamedFramebufferTextureLayer(m_id, attachment, texture, level, layer);
     auto error = glCheckNamedFramebufferStatus(m_id, GL_FRAMEBUFFER);
     if (error != GL_FRAMEBUFFER_COMPLETE) {
@@ -51,25 +51,25 @@ void Framebuffer::bind_texture(GLenum attachment, GLuint texture, GLint level, G
 
 void Framebuffer::bind_draw_buffer(const GLenum buff) const
 {
-    util_assert(initialized == true, "Framebuffer has not been initialized");
+    util_assert(initialized == true, "not initialized");
     glNamedFramebufferDrawBuffer(m_id, buff);
 }
 
 void Framebuffer::bind_draw_buffers(GLsizei count, const GLenum* buffs) const
 {
-    util_assert(initialized == true, "Framebuffer has not been initialized");
+    util_assert(initialized == true, "not initialized");
     glNamedFramebufferDrawBuffers(m_id, count, buffs);
 }
 
 void Framebuffer::bind_read_buffer(const GLenum buff) const
 {
-    util_assert(initialized == true, "Framebuffer has not been initialized");
+    util_assert(initialized == true, "not initialized");
     glNamedFramebufferReadBuffer(m_id, buff);
 }
 
 void Framebuffer::bind() const
 {
-    util_assert(initialized == true, "Framebuffer has not been initialized");
+    util_assert(initialized == true, "not initialized");
     glBindFramebuffer(GL_FRAMEBUFFER, m_id);
 }
 
@@ -80,7 +80,7 @@ void Framebuffer::unbind()
 
 [[nodiscard]] GLuint Framebuffer::get_id() const
 {
-    util_assert(initialized == true, "Framebuffer has not been initialized");
+    util_assert(initialized == true, "not initialized");
     return m_id;
 }
 

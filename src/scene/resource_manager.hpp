@@ -49,7 +49,7 @@ private:
 template <typename DataType>
 void ResourceManager<DataType>::init(usize size)
 {
-    util_assert(size < INVALID_NEXT_FREE, std::format("ResourceManager2 size {} >= UINT32_MAX", size));
+    util_assert(size < INVALID_NEXT_FREE, std::format("size {} >= UINT32_MAX", size));
     m_data = m_allocator.allocate(size);
     memset((void*)m_data, 0, sizeof(InternalData) * size);
     m_data_capacity = size;
@@ -71,7 +71,7 @@ template <typename DataType>
 Handle ResourceManager<DataType>::create_handle()
 {
     util_assert(m_data_size < m_data_capacity,
-        std::format("ResourceManager2 data_size {} >= data_capacity {}", m_data_size, m_data_capacity));
+        std::format("data_size {} >= data_capacity {}", m_data_size, m_data_capacity));
 
     u32 index;
     if (m_next_free_index != INVALID_NEXT_FREE) {
@@ -94,8 +94,8 @@ Handle ResourceManager<DataType>::create_handle()
 template <typename DataType>
 void ResourceManager<DataType>::destroy_handle(Handle handle)
 {
-    util_assert(handle.generation.valid == 1, "ResourceManager2 attempting to remove invalid handle");
-    util_assert(handle.index < m_data_size, std::format("ResourceManager2 handle index {} >= data_size {}", handle.index, m_data_size));
+    util_assert(handle.generation.valid == 1, "attempting to remove invalid handle");
+    util_assert(handle.index < m_data_size, std::format("handle index {} >= data_size {}", handle.index, m_data_size));
 
     m_data[handle.index].generation.valid = 0;
     m_data[handle.index].generation.generation++;
@@ -121,22 +121,22 @@ void ResourceManager<DataType>::destroy_handle(Handle handle)
 template <typename DataType>
 DataType* ResourceManager<DataType>::get(Handle handle)
 {
-    util_assert(handle.index < m_data_capacity, std::format("ResourceManager2 handle index {} >= data_capacity {}", handle.index, m_data_size));
-    util_assert(handle.generation.valid == 1, "ResourceManager2 attempting to get invalid handle");
+    util_assert(handle.index < m_data_capacity, std::format("handle index {} >= data_capacity {}", handle.index, m_data_size));
+    util_assert(handle.generation.valid == 1, "attempting to get invalid handle");
 
     if (handle.index >= m_data_size) {
-        LOG_WARN(std::format("ResourceManager2 data at handle index {} has been invalidated", handle.index));
+        LOG_WARN(std::format("data at handle index {} has been invalidated", handle.index));
         return nullptr;
     }
 
     InternalData& data = m_data[handle.index];
     if (data.generation.valid != 1) {
-        LOG_WARN(std::format("ResourceManager2 data at handle index {} is invalid", handle.index));
+        LOG_WARN(std::format("data at handle index {} is invalid", handle.index));
         return nullptr;
     }
 
     if (data.generation.generation != handle.generation.generation) {
-        LOG_WARN(std::format("ResourceManager2 data at handle index {} has been invalidated", handle.index));
+        LOG_WARN(std::format("data at handle index {} has been invalidated", handle.index));
         return nullptr;
     }
 

@@ -70,9 +70,7 @@ struct Animation {
 
     void init(const aiScene* scene, const aiAnimation* animation,
         const std::unordered_map<Utils::String, u32>& bone_indices,
-        const glm::mat4& global_inverse_transform,
-        float total_animation_time,
-        float ticks_per_second);
+        const glm::mat4& global_inverse_transform);
 
     PerAnimationData* create_per_animation_data();
 

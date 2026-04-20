@@ -47,7 +47,7 @@ void ShadowMap::init_cubemap(i32 width, i32 height)
 
 void ShadowMap::init_internal(MapType map_type)
 {
-    util_assert(initialized == false, "ShadowMap::init_internal() has already been initialized");
+    util_assert(initialized == false, "already initialized");
 
     Renderer::TextureInfo shadowmap_info;
     if (map_type == MapType::CubeMap) {
@@ -76,38 +76,38 @@ void ShadowMap::init_internal(MapType map_type)
 
 void ShadowMap::bind()
 {
-    util_assert(initialized == true, "ShadowMap has not been initialized");
+    util_assert(initialized == true, "not initialized");
     m_framebuffer.bind();
 }
 
 void ShadowMap::bind_texture_layer(GLint layer)
 {
-    util_assert(initialized == true, "ShadowMap has not been initialized");
+    util_assert(initialized == true, "not initialized");
     m_framebuffer.bind_texture(GL_DEPTH_ATTACHMENT, m_texture.get_id(), 0, layer);
 }
 
 void ShadowMap::unbind()
 {
-    util_assert(initialized == true, "ShadowMap has not been initialized");
+    util_assert(initialized == true, "not initialized");
     m_framebuffer.bind_texture(GL_DEPTH_ATTACHMENT, m_texture.get_id(), 0);
     m_framebuffer.unbind();
 }
 
 [[nodiscard]] i32 ShadowMap::get_width() const
 {
-    util_assert(initialized == true, "ShadowMap has not been initialized");
+    util_assert(initialized == true, "not initialized");
     return m_shadow_width;
 }
 
 [[nodiscard]] i32 ShadowMap::get_height() const
 {
-    util_assert(initialized == true, "ShadowMap has not been initialized");
+    util_assert(initialized == true, "not initialized");
     return m_shadow_height;
 }
 
 [[nodiscard]] Texture& ShadowMap::get_texture()
 {
-    util_assert(initialized == true, "ShadowMap has not been initialized");
+    util_assert(initialized == true, "not initialized");
     return m_texture;
 }
 
