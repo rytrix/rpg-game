@@ -18,7 +18,6 @@ add_executable(${PROJECT_NAME}
     src/physics/engine.cpp
     
 	src/utils/deltatime.cpp
-	src/utils/string.cpp
 
     src/game_logic/gear.cpp 
     src/game_logic/character.cpp

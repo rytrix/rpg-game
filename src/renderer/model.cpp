@@ -257,8 +257,7 @@ Handle Model::load_material_texture(const aiMaterial* mat, const aiTextureType t
         auto* texture_cache = &m_app_data->m_texture_cache;
         if (embedded_texture == nullptr) {
             Utils::String texture_path;
-            usize size = std::snprintf(texture_path.data(), texture_path.capacity(), "%s/%s", m_directory.c_str(), str.C_Str());
-            texture_path.set_size(size);
+            texture_path.format("{}/{}", m_directory.c_str(), str.C_Str());
 
             texture_info.from_file = GL_TRUE;
             texture_info.file_path = texture_path.c_str();

@@ -248,9 +248,9 @@ void SceneResourceManager<T>::destroy(Handle handle)
 }
 
 namespace Renderer {
-    class Model;
-    class Mesh;
-    class Texture;
+class Model;
+class Mesh;
+class Texture;
 };
 
 #define TextureCache SceneResourceManager<Renderer::Texture>
