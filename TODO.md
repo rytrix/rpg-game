@@ -6,7 +6,6 @@ spell system
   - wait until there is gameplay
 
 lighting
-  - random sampling for soft shadows  
 
 rendering engine
   - particles
@@ -20,3 +19,7 @@ physics
   - player character
   - ray selection
 
+imgizmo
+scene saving
+adding/removing entities into the scene
+add/removing components from entities

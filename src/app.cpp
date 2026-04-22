@@ -46,6 +46,7 @@ App::App()
     });
 
     EntityBuilder e1;
+    e1.add_name("Directional Light");
     Renderer::Light::Pbr::Directional directional {};
     directional.direction = glm::vec3(-0.2F, -1.0F, 0.3F);
     directional.color = glm::vec3(0.8);
@@ -54,6 +55,7 @@ App::App()
     m_scene->add_entity(e1);
 
     EntityBuilder e2;
+    e2.add_name("Sponza Model");
     // e2.add_model_path("res/models/physics_plane/plane.obj");
     e2.add_model_path("res/models/Sponza/glTF/Sponza.gltf");
     Transform e2_transform;
@@ -115,6 +117,7 @@ App::App()
     // }
 
     EntityBuilder e4;
+    e4.add_name("Point light 1");
     Renderer::Light::Pbr::Point point {};
     point.position = glm::vec3(6.0F, 6.0F, 8.0F);
     point.color = glm::vec3(10.0, 10.0, 10.0);
@@ -123,6 +126,7 @@ App::App()
     m_scene->add_entity(e4);
 
     EntityBuilder e5;
+    e5.add_name("Point light 2");
     point.position = glm::vec3(6.0F, 6.0F, -8.0F);
     point.color = glm::vec3(50.0, 25.0, 25.0);
     e5.add_pbr_point_light(point);
@@ -147,6 +151,7 @@ App::App()
     // m_scene->add_entity(e6);
 
     EntityBuilder e7;
+    e7.add_name("Spot Light");
     Renderer::Light::Pbr::Spot spot {};
     spot.position = glm::vec3(-6.0F, 8.0F, 10.0F);
     spot.direction = glm::vec3(0.2, 0.0, -1.0);
@@ -158,6 +163,7 @@ App::App()
     m_scene->add_entity(e7);
 
     EntityBuilder e8;
+    e8.add_name("Defeated");
     e8.add_model_path("res/models/Defeated.fbx");
     Transform e8_transform;
     e8_transform.set_scale(glm::vec3(0.1));
@@ -165,16 +171,10 @@ App::App()
     m_scene->add_entity(e8);
 
     e8.add_model_path("res/models/dog/scene.gltf");
+    e8.add_name("Dog");
     e8_transform.set_scale(glm::vec3(10.0F));
     e8_transform.rotate(-90.0F, glm::vec3(1.0, 0.0, 0.0));
-    for (int i = 0; i < 100; i++) {
-        float y = rand() % 20;
-        float x = rand() % 20 - 5;
-        float z = rand() % 20 - 5;
-        e8_transform.set_position(glm::vec3(x, y, z));
-        e8.add_transform(e8_transform);
-        m_scene->add_entity(e8);
-    }
+    m_scene->add_entity(e8);
 
     m_scene->optimize();
     m_scene->update();
