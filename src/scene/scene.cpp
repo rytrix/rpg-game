@@ -314,7 +314,7 @@ void Scene::draw_debug_imgui()
 
             const char** name_check = m_registry.try_get<const char*>(entity);
             const char* entity_name = name_check == nullptr ? "no_name" : *name_check;
-            auto name = std::format("{}_{}", entity_name, i);
+            auto name = std::format("{} e{}", entity_name, i);
 
             if (ImGui::CollapsingHeader(name.c_str())) {
                 auto* try_model = m_registry.try_get<Renderer::Model*>(entity);
