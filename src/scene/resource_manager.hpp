@@ -4,7 +4,7 @@
 
 struct Generation {
     u32 valid : 1;
-    u32 generation : 31;
+    u32 id : 31;
 };
 
 struct Handle {
@@ -32,7 +32,7 @@ public:
 private:
     static constexpr u32 INVALID_NEXT_FREE = UINT32_MAX;
     struct InternalData {
-        Generation generation = { .valid = 0, .generation = 0 };
+        Generation generation = { .valid = 0, .id = 0 };
         union {
             DataType data {}; // Valid == 1
             u32 next_free; // Valid == 0
@@ -98,7 +98,7 @@ void ResourceManager<DataType>::destroy_handle(Handle handle)
     util_assert(handle.index < m_data_size, std::format("handle index {} >= data_size {}", handle.index, m_data_size));
 
     m_data[handle.index].generation.valid = 0;
-    m_data[handle.index].generation.generation++;
+    m_data[handle.index].generation.id++;
 
     m_data[handle.index].data.~DataType();
     m_data[handle.index].next_free = INVALID_NEXT_FREE;
@@ -135,7 +135,7 @@ DataType* ResourceManager<DataType>::get(Handle handle)
         return nullptr;
     }
 
-    if (data.generation.generation != handle.generation.generation) {
+    if (data.generation.id != handle.generation.id) {
         LOG_WARN(std::format("data at handle index {} has been invalidated", handle.index));
         return nullptr;
     }

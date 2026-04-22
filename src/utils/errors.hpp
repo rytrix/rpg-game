@@ -63,8 +63,8 @@ constexpr std::expected<void, OpenGLError> check_opengl_error(const char* opengl
     return {};
 }
 
-#define GL_CHECK(opengl_function_call)                   \
-    [&]() {                                              \
-        opengl_function_call;                            \
-        return check_opengl_error(#opengl_function_call) \
+#define GL_CHECK(opengl_function_call)                    \
+    [&]() {                                               \
+        opengl_function_call;                             \
+        return check_opengl_error(#opengl_function_call); \
     }();

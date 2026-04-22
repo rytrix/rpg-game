@@ -139,7 +139,8 @@ void Model::process_mesh(aiMesh* mesh, const aiScene* scene)
     auto count = static_cast<GLsizei>(m_mesh.m_vertex_data.m_indices.size());
 
     for (u32 i = 0; i < mesh->mNumVertices; i++) {
-        Mesh::Vertex vertex {};
+        Mesh::Vertex& vertex = m_mesh.m_vertex_data.m_vertices.emplace_back();
+
         vertex.m_pos.x = mesh->mVertices[i].x;
         vertex.m_pos.y = mesh->mVertices[i].y;
         vertex.m_pos.z = mesh->mVertices[i].z;
@@ -156,8 +157,6 @@ void Model::process_mesh(aiMesh* mesh, const aiScene* scene)
             vertex.m_tex.x = mesh->mTextureCoords[0][i].x;
             vertex.m_tex.y = mesh->mTextureCoords[0][i].y;
         }
-
-        m_mesh.m_vertex_data.m_vertices.push_back(vertex);
     }
 
     for (u32 i = 0; i < mesh->mNumFaces; i++) {
@@ -311,7 +310,7 @@ Handle Model::load_material_texture(const aiMaterial* mat, const aiTextureType t
             }
         }
     } else {
-        return { .generation = { .valid = 0, .generation = 0 }, .index = 0 };
+        return { .generation = { .valid = 0, .id = 0 }, .index = 0 };
     }
 }
 
