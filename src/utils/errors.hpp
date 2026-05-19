@@ -1,7 +1,6 @@
 #pragma once
 
 #include "string.hpp"
-#include <expected>
 
 constexpr const char* opengl_error_to_string(GLenum error)
 {
@@ -47,16 +46,14 @@ struct OpenGLError {
     }
 };
 
-constexpr std::expected<void, OpenGLError> check_opengl_error(const char* opengl_function_name, std::source_location location = std::source_location::current())
+constexpr OpenGLError check_opengl_error(const char* opengl_function_name, std::source_location location = std::source_location::current())
 {
     GLenum error = glGetError();
     if (error != 0) {
-        return std::unexpected<OpenGLError> {
-            {
-                .error = error,
-                .opengl_function_name = opengl_function_name,
-                .location = location,
-            }
+        return {
+            .error = error,
+            .opengl_function_name = opengl_function_name,
+            .location = location,
         };
     }
 
