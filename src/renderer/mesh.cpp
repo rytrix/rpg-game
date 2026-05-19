@@ -69,7 +69,7 @@ void Mesh::update_model_ssbos(const std::span<glm::mat4> model_matrices)
     std::memcpy(ptr, model_matrices.data(), model_matrices.size() * sizeof(glm::mat4));
 }
 
-void Mesh::update_bone_matrices(std::span<PerAnimationData*> animation_data)
+void Mesh::update_bone_matrices(std::span<AnimationData*> animation_data)
 {
     util_assert(initialized == true, "not initialized");
     util_assert(m_has_bones == true, "Attempting to update bone matrices with no bones");
@@ -77,9 +77,11 @@ void Mesh::update_bone_matrices(std::span<PerAnimationData*> animation_data)
     GLsizeiptr offset = 0;
 
     void* ptr = m_bone_ssbo.get_ptr();
-    for (auto* anim_cache : animation_data) {
-        anim_cache->update_transforms();
-        std::memcpy((void*)((char*)ptr + offset), anim_cache->m_final_transforms, anim_cache->m_final_transforms_size * sizeof(glm::mat4));
+    for (auto* anim : animation_data) {
+        auto* current_animation = anim->data[anim->selected_animation];
+        // TODO: make sure this is done somewhere else
+        // anim_cache->update_transforms();
+        std::memcpy((void*)((char*)ptr + offset), current_animation->m_final_transforms, current_animation->m_final_transforms_size * sizeof(glm::mat4));
         offset += MAX_BONES * sizeof(glm::mat4);
     }
 }

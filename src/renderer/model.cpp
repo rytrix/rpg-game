@@ -91,7 +91,7 @@ void Model::draw(ShaderProgram& shader)
     m_mesh.draw(shader);
 }
 
-void Model::update(std::span<glm::mat4> models, std::span<PerAnimationData*> animation_data)
+void Model::update(std::span<glm::mat4> models, std::span<AnimationData*> animation_data)
 {
     util_assert(initialized == true, "not initialized");
     m_mesh.next_ssbo_frame();
@@ -230,6 +230,15 @@ void Model::process_mesh(aiMesh* mesh, const aiScene* scene)
             }
         }
     }
+
+    AABB& aabb = m_mesh.m_aabbs.emplace_back();
+    aabb.min.x = mesh->mAABB.mMin.x;
+    aabb.min.y = mesh->mAABB.mMin.y;
+    aabb.min.z = mesh->mAABB.mMin.z;
+
+    aabb.max.x = mesh->mAABB.mMax.x;
+    aabb.max.y = mesh->mAABB.mMax.y;
+    aabb.max.z = mesh->mAABB.mMax.z;
 
     count = static_cast<GLsizei>(m_mesh.m_vertex_data.m_indices.size()) - count;
 

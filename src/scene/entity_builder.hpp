@@ -20,10 +20,10 @@ public:
     EntityBuilder& add_pbr_point_light_shadow();
     EntityBuilder& add_pbr_spot_light(Renderer::Light::Pbr::Spot& info);
     EntityBuilder& add_pbr_spot_light_shadow();
-
     EntityBuilder& add_transform(const Transform& transform);
 
 private:
+    const char* m_name = nullptr;
     const char* m_model_path = nullptr;
     PhysicsFn m_create_body = nullptr;
     Renderer::Light::Pbr::Directional* m_pbr_directional = nullptr;
@@ -33,5 +33,4 @@ private:
     Renderer::Light::Pbr::Spot* m_pbr_spot = nullptr;
     bool m_pbr_spot_shadow = false;
     Transform m_transform;
-    const char* m_name = nullptr;
 };

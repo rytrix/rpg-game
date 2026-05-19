@@ -19,6 +19,15 @@ struct FrameCache {
     u32 m_prev_scaling_frame;
 };
 
+struct KeyFrameResult {
+    aiVector3D m_scaling;
+    aiQuaternion m_rotation;
+    aiVector3D m_position;
+
+    [[nodiscard]] glm::mat4 blend_to_mat4(const KeyFrameResult& other, float factor) const;
+    [[nodiscard]] glm::mat4 to_mat4() const;
+};
+
 struct NodeAnim {
     u32 m_index;
     u32 m_parent_index;
@@ -37,6 +46,7 @@ struct NodeAnim {
     glm::mat4 m_node_transform;
     glm::mat4 m_offset;
 
+    KeyFrameResult keyframe_to_keyframe_result(float animation_time, FrameCache& cache);
     glm::mat4 keyframe_to_mat4(float animation_time, FrameCache& cache);
 
 private:
@@ -48,22 +58,7 @@ private:
     static aiQuaternion slerp_interpolate(KeyFrame<aiQuaternion>* p_start, KeyFrame<aiQuaternion>* p_end, float animation_time);
 };
 
-struct Animation;
-
-struct PerAnimationData {
-    FrameCache* m_cache;
-    usize m_cache_size;
-
-    glm::mat4* m_final_transforms;
-    usize m_final_transforms_size;
-
-    float m_animation_time;
-    bool m_paused;
-
-    Animation* m_animation;
-
-    void update_transforms();
-};
+struct PerAnimationData;
 
 struct Animation {
     std::string m_name;
@@ -73,8 +68,8 @@ struct Animation {
         const glm::mat4& global_inverse_transform);
 
     PerAnimationData* create_per_animation_data();
-
-    void update_transforms(PerAnimationData* data);
+    static void update_transforms(PerAnimationData* data);
+    static void update_transforms_blended(PerAnimationData* first, PerAnimationData* second, float factor);
 
     [[nodiscard]] float get_ticks_per_second() const { return m_ticks_per_second; };
     void set_ticks_per_second(float ticks_per_second) { m_ticks_per_second = ticks_per_second; };
@@ -99,9 +94,29 @@ private:
     void evaluate_parents(const aiNode* node, const std::unordered_map<Utils::String, u32>& bone_indices, u32 parent_index);
 };
 
+struct PerAnimationData {
+    FrameCache* m_cache;
+    usize m_cache_size;
+
+    glm::mat4* m_final_transforms;
+    usize m_final_transforms_size;
+
+    float m_animation_time;
+
+    Animation* m_animation;
+
+    void update_transforms();
+    void update_transforms_blended(PerAnimationData* other, float factor);
+};
+
 struct AnimationData {
     std::vector<PerAnimationData*> data;
     u32 selected_animation = 0;
+    // UINT32_MAX is invalid (so I don't have to have a boolean)
+    u32 second_animation = UINT32_MAX;
+    float blend_factor = 0.0F;
+
+    bool paused = false;
 };
 
 } // namespace Renderer

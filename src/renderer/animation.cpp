@@ -6,7 +6,27 @@
 
 namespace Renderer {
 
-glm::mat4 NodeAnim::keyframe_to_mat4(float animation_time, FrameCache& cache)
+[[nodiscard]] glm::mat4 KeyFrameResult::blend_to_mat4(const KeyFrameResult& other, float factor) const
+{
+    factor = std::min(1.0F, std::max(0.0F, factor));
+
+    aiVector3D position = m_position + factor * (other.m_position - m_position);
+
+    aiQuaternion rotation;
+    aiQuaternion::Interpolate(rotation, m_rotation, other.m_rotation, factor);
+    rotation.Normalize();
+
+    aiVector3D scaling = m_scaling + factor * (other.m_scaling - m_scaling);
+
+    return mat4_to_mat4(aiMatrix4x4(scaling, rotation, position));
+}
+
+[[nodiscard]] glm::mat4 KeyFrameResult::to_mat4() const
+{
+    return mat4_to_mat4(aiMatrix4x4(m_scaling, m_rotation, m_position));
+}
+
+KeyFrameResult NodeAnim::keyframe_to_keyframe_result(float animation_time, FrameCache& cache)
 {
     aiVector3D pos;
     if (m_position_size == 1) {
@@ -35,7 +55,14 @@ glm::mat4 NodeAnim::keyframe_to_mat4(float animation_time, FrameCache& cache)
         // scale = m_anim->mScalingKeys[scale_keyframes[0]].mValue;
     }
 
-    return mat4_to_mat4(aiMatrix4x4(scale, rot, pos));
+    return KeyFrameResult { .m_scaling = scale, .m_rotation = rot, .m_position = pos };
+}
+
+glm::mat4 NodeAnim::keyframe_to_mat4(float animation_time, FrameCache& cache)
+{
+    auto result = keyframe_to_keyframe_result(animation_time, cache);
+
+    return result.to_mat4();
 }
 
 template <typename T>
@@ -92,13 +119,6 @@ aiQuaternion NodeAnim::slerp_interpolate(KeyFrame<aiQuaternion>* p_start, KeyFra
     result.Normalize();
 
     return result;
-}
-
-void PerAnimationData::update_transforms()
-{
-    if (!m_paused) {
-        m_animation->update_transforms(this);
-    }
 }
 
 void Animation::init(const aiScene* scene, const aiAnimation* animation, const std::unordered_map<Utils::String, u32>& bone_indices, const glm::mat4& global_inverse_transform)
@@ -163,52 +183,6 @@ void Animation::init(const aiScene* scene, const aiAnimation* animation, const s
     }
 }
 
-PerAnimationData* Animation::create_per_animation_data()
-{
-    PerAnimationData* data = (PerAnimationData*)m_allocator.allocate(sizeof(PerAnimationData));
-
-    data->m_cache = (FrameCache*)m_allocator.allocate(m_nodes_size * sizeof(FrameCache));
-    data->m_cache_size = m_nodes_size;
-    std::memset(data->m_cache, 0, data->m_cache_size * sizeof(FrameCache));
-
-    data->m_animation_time = 0.0F;
-    data->m_paused = false;
-
-    data->m_final_transforms = (glm::mat4*)m_allocator.allocate(sizeof(glm::mat4) * m_nodes_size);
-    data->m_final_transforms_size = m_nodes_size;
-
-    data->m_animation = this;
-
-    return data;
-}
-
-void Animation::update_transforms(PerAnimationData* data)
-{
-    float animation_time = std::fmod(data->m_animation_time * m_ticks_per_second, m_total_animation_time);
-
-    for (u32 i = 0; i < m_nodes_size; i++) {
-        NodeAnim* node = &m_nodes[i];
-
-        glm::mat4 parent_transform;
-        if (node->m_parent_index != UINT32_MAX) {
-            parent_transform = m_nodes[node->m_parent_index].m_global_transform;
-        } else {
-            parent_transform = glm::mat4(1.0);
-        }
-
-        glm::mat4 node_transform;
-        if (node->m_has_animation) {
-            node_transform = node->keyframe_to_mat4(animation_time, data->m_cache[i]);
-        } else {
-            node_transform = node->m_node_transform;
-        }
-
-        node->m_global_transform = parent_transform * node_transform;
-
-        data->m_final_transforms[node->m_index] = m_global_inverse_transform * node->m_global_transform * node->m_offset;
-    }
-}
-
 void Animation::evaluate_scene(const aiScene* scene, const aiNode* node, const std::unordered_map<Utils::String, u32>& bone_indices)
 {
     for (u32 i = 0; i < node->mNumMeshes; i++) {
@@ -241,6 +215,110 @@ void Animation::evaluate_parents(const aiNode* node, const std::unordered_map<Ut
     for (u32 i = 0; i < node->mNumChildren; i++) {
         evaluate_parents(node->mChildren[i], bone_indices, index);
     }
+}
+
+PerAnimationData* Animation::create_per_animation_data()
+{
+    PerAnimationData* data = (PerAnimationData*)m_allocator.allocate(sizeof(PerAnimationData));
+
+    data->m_cache = (FrameCache*)m_allocator.allocate(m_nodes_size * sizeof(FrameCache));
+    data->m_cache_size = m_nodes_size;
+    std::memset(data->m_cache, 0, data->m_cache_size * sizeof(FrameCache));
+
+    data->m_animation_time = 0.0F;
+
+    data->m_final_transforms = (glm::mat4*)m_allocator.allocate(sizeof(glm::mat4) * m_nodes_size);
+    data->m_final_transforms_size = m_nodes_size;
+
+    data->m_animation = this;
+
+    return data;
+}
+
+void Animation::update_transforms(PerAnimationData* data)
+{
+    Animation* animation = data->m_animation;
+    float animation_time = std::fmod(data->m_animation_time * animation->m_ticks_per_second, animation->m_total_animation_time);
+
+    for (u32 i = 0; i < animation->m_nodes_size; i++) {
+        NodeAnim* node = &animation->m_nodes[i];
+
+        glm::mat4 parent_transform;
+        if (node->m_parent_index != UINT32_MAX) {
+            parent_transform = animation->m_nodes[node->m_parent_index].m_global_transform;
+        } else {
+            parent_transform = glm::mat4(1.0);
+        }
+
+        glm::mat4 node_transform;
+        if (node->m_has_animation) {
+            node_transform = node->keyframe_to_mat4(animation_time, data->m_cache[i]);
+        } else {
+            node_transform = node->m_node_transform;
+        }
+
+        node->m_global_transform = parent_transform * node_transform;
+
+        data->m_final_transforms[node->m_index] = animation->m_global_inverse_transform * node->m_global_transform * node->m_offset;
+    }
+}
+
+void Animation::update_transforms_blended(PerAnimationData* first, PerAnimationData* second, float factor)
+{
+    Animation* animation = first->m_animation;
+    Animation* animation_2 = second->m_animation;
+
+    float animation_time = std::fmod(first->m_animation_time * animation->m_ticks_per_second, animation->m_total_animation_time);
+    float animation_time_2 = std::fmod(second->m_animation_time * animation_2->m_ticks_per_second, animation_2->m_total_animation_time);
+
+    if (animation->m_nodes_size != animation_2->m_nodes_size) {
+        assert(0);
+    }
+    for (u32 i = 0; i < animation->m_nodes_size; i++) {
+        NodeAnim* node = &animation->m_nodes[i];
+        NodeAnim* node_2 = &animation_2->m_nodes[i];
+
+        glm::mat4 parent_transform;
+        if (node->m_parent_index != UINT32_MAX) {
+            // If the animation is using the same model this should be the same
+            parent_transform = animation->m_nodes[node->m_parent_index].m_global_transform;
+        } else {
+            parent_transform = glm::mat4(1.0);
+        }
+
+        glm::mat4 node_transform;
+        // if (node->m_has_animation) {
+        //     node_transform = node->keyframe_to_mat4(animation_time, first->m_cache[i]);
+        // } else {
+        //     node_transform = node->m_node_transform;
+        // }
+
+        if (node->m_has_animation && node_2->m_has_animation) {
+            auto node_transform_keyframe = node->keyframe_to_keyframe_result(animation_time, first->m_cache[i]);
+            auto node_transform_keyframe_2 = node_2->keyframe_to_keyframe_result(animation_time_2, second->m_cache[i]);
+            node_transform = node_transform_keyframe.blend_to_mat4(node_transform_keyframe_2, factor);
+        } else if (node->m_has_animation) {
+            node_transform = node->keyframe_to_mat4(animation_time, first->m_cache[i]);
+        } else if (node_2->m_has_animation) {
+            node_transform = node_2->keyframe_to_mat4(animation_time_2, second->m_cache[i]);
+        } else {
+            node_transform = node->m_node_transform;
+        }
+
+        node->m_global_transform = parent_transform * node_transform;
+
+        first->m_final_transforms[node->m_index] = animation->m_global_inverse_transform * node->m_global_transform * node->m_offset;
+    }
+}
+
+void PerAnimationData::update_transforms()
+{
+    Animation::update_transforms(this);
+}
+
+void PerAnimationData::update_transforms_blended(PerAnimationData* other, float factor)
+{
+    Animation::update_transforms_blended(this, other, factor);
 }
 
 } // namespace Renderer

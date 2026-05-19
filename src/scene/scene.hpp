@@ -52,7 +52,7 @@ private:
     struct ModelMatrix {
         Renderer::Model* m_model;
         std::vector<glm::mat4> m_model_matrices;
-        std::vector<Renderer::PerAnimationData*> m_animation_data;
+        std::vector<Renderer::AnimationData*> m_animation_data;
 
         ModelMatrix(Renderer::Model* model, glm::mat4 matrix)
             : m_model(model)

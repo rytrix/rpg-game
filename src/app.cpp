@@ -170,8 +170,8 @@ App::App()
     e8.add_transform(e8_transform);
     m_scene->add_entity(e8);
 
-    e8.add_model_path("res/models/dog/scene.gltf");
     e8.add_name("Dog");
+    e8.add_model_path("res/models/dog/scene.gltf");
     e8_transform.set_scale(glm::vec3(10.0F));
     e8_transform.rotate(-90.0F, glm::vec3(1.0, 0.0, 0.0));
     m_scene->add_entity(e8);

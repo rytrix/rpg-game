@@ -23,7 +23,7 @@ public:
 
     void init(const char* path, GlobalAppData* app_data);
 
-    void update(std::span<glm::mat4> models, std::span<PerAnimationData*> animation_data);
+    void update(std::span<glm::mat4> models, std::span<AnimationData*> animation_data);
 
     void draw_untextured(ShaderProgram& shader);
     void draw(ShaderProgram& shader);

@@ -1,5 +1,6 @@
 #pragma once
 
+#include "aabb.hpp"
 #include "animation.hpp"
 #include "buffer.hpp"
 #include "extensions.hpp"
@@ -71,7 +72,7 @@ public:
 
     void update_instance_count(u32 instance_count);
     void update_model_ssbos(const std::span<glm::mat4> model_matrices);
-    void update_bone_matrices(const std::span<PerAnimationData*> animation_data);
+    void update_bone_matrices(const std::span<AnimationData*> animation_data);
     void next_ssbo_frame();
 
     void draw_untextured(Renderer::ShaderProgram& shader);
@@ -82,6 +83,8 @@ public:
     std::vector<Handle> m_diffuse_textures;
     std::vector<Handle> m_metallic_roughness_textures;
     std::vector<Handle> m_normal_textures;
+
+    std::vector<AABB> m_aabbs;
 
     bool m_has_bones = false;
     std::unordered_map<Utils::String, u32> m_bone_id_map;

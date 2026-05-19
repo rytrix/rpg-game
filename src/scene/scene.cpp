@@ -150,8 +150,7 @@ void Scene::draw()
 
                     if (model_cached.m_model->has_bones()) {
                         auto& data = m_registry.get<Renderer::AnimationData>(entity);
-                        auto* animation_data = data.data.at(data.selected_animation);
-                        model_cached.m_animation_data.emplace_back(animation_data);
+                        model_cached.m_animation_data.emplace_back(&data);
                     }
                 }
             }
@@ -174,14 +173,31 @@ void Scene::draw()
         }
     }
 
-    // TODO:
-    // Currently selected animation needs to be no longer included in model/mesh class
-    // likely will need to pass the Animation* itself through the update function
     for (auto& model : m_models_instance_draw_cache) {
         for (auto* animation_data : model.m_animation_data) {
-            if (!animation_data->m_paused) {
-                animation_data->m_animation_time += m_clock.delta_time<float>();
+            auto* current_animation = animation_data->data[animation_data->selected_animation];
+            Renderer::PerAnimationData* second_animation = nullptr;
+            if (animation_data->second_animation != UINT32_MAX) {
+                second_animation = animation_data->data[animation_data->second_animation];
             }
+            if (animation_data->paused == false) {
+                current_animation->m_animation_time += m_clock.delta_time<float>();
+                if (second_animation != nullptr) {
+                    second_animation->m_animation_time += m_clock.delta_time<float>();
+
+                    const f32 BLEND_SPEED = 0.5F;
+                    animation_data->blend_factor += m_clock.delta_time<float>() * BLEND_SPEED;
+
+                    float factor = 1.0F - animation_data->blend_factor;
+                    current_animation->update_transforms_blended(second_animation, factor);
+                    if (animation_data->blend_factor >= 1.0F) {
+                        animation_data->second_animation = UINT32_MAX;
+                    }
+                } else {
+                    current_animation->update_transforms();
+                }
+            }
+
             // animation_data->m_animation_time += animation_time;
         }
         model.m_model->update(model.m_model_matrices, model.m_animation_data);
@@ -350,11 +366,13 @@ void Scene::draw_debug_imgui()
                         if (current_animation >= static_cast<i32>(animations.size())) {
                             current_animation = static_cast<i32>(animations.size() - 1);
                         }
+                        animation_data.second_animation = animation_data.selected_animation;
                         animation_data.selected_animation = current_animation;
+                        animation_data.blend_factor = 0.0F;
                         m_models_instance_draw_cache_needs_update = true;
                     }
 
-                    ImGui::Checkbox("Pause Animation", &animation_data.data[animation_data.selected_animation]->m_paused);
+                    ImGui::Checkbox("Pause Animation", &animation_data.paused);
 
                     float ticks_per_second = animations[current_animation].get_ticks_per_second();
                     if (ImGui::DragFloat("Ticks per second", &ticks_per_second)) {
@@ -366,8 +384,8 @@ void Scene::draw_debug_imgui()
                     auto& body_id = *try_body_id;
                     auto& motion_type = *try_motion_type;
 
-                    ImGui::Text("Physics");
                     if (motion_type != JPH::EMotionType::Static) {
+                        ImGui::Text("Physics");
                         glm::vec3 cube_pos = vec3_to_vec3(m_physics_system->m_body_interface->GetPosition(body_id));
                         if (ImGui::DragFloat3("XYZ", &cube_pos.x, 1.0F, MIN_TRANSFORM, MAX_TRANSFORM)) {
                             m_physics_system->m_body_interface->SetPosition(
@@ -384,6 +402,8 @@ void Scene::draw_debug_imgui()
                                 quat_to_quat(glm::quat(glm::radians(euler_angles))),
                                 JPH::EActivation::Activate);
                         }
+                    } else {
+                        ImGui::Text("Physics - Static Object");
                     }
                 }
 
