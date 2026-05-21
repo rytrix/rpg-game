@@ -17,7 +17,7 @@ struct AABB {
             && position.x <= max.x && position.y <= max.y && position.z <= max.z;
     }
 
-    [[nodiscard]] bool ray_intersection(const Ray& ray)
+    [[nodiscard]] bool ray_intersection(const Ray& ray) const
     {
         glm::vec3 inv_dir = 1.0f / ray.direction;
 

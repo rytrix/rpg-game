@@ -271,9 +271,8 @@ void Animation::update_transforms_blended(PerAnimationData* first, PerAnimationD
     float animation_time = std::fmod(first->m_animation_time * animation->m_ticks_per_second, animation->m_total_animation_time);
     float animation_time_2 = std::fmod(second->m_animation_time * animation_2->m_ticks_per_second, animation_2->m_total_animation_time);
 
-    if (animation->m_nodes_size != animation_2->m_nodes_size) {
-        assert(0);
-    }
+    util_assert(animation->m_nodes_size == animation_2->m_nodes_size, "Animations don't have the same number of nodes");
+
     for (u32 i = 0; i < animation->m_nodes_size; i++) {
         NodeAnim* node = &animation->m_nodes[i];
         NodeAnim* node_2 = &animation_2->m_nodes[i];
@@ -287,20 +286,15 @@ void Animation::update_transforms_blended(PerAnimationData* first, PerAnimationD
         }
 
         glm::mat4 node_transform;
-        // if (node->m_has_animation) {
-        //     node_transform = node->keyframe_to_mat4(animation_time, first->m_cache[i]);
-        // } else {
-        //     node_transform = node->m_node_transform;
-        // }
-
         if (node->m_has_animation && node_2->m_has_animation) {
             auto node_transform_keyframe = node->keyframe_to_keyframe_result(animation_time, first->m_cache[i]);
             auto node_transform_keyframe_2 = node_2->keyframe_to_keyframe_result(animation_time_2, second->m_cache[i]);
             node_transform = node_transform_keyframe.blend_to_mat4(node_transform_keyframe_2, factor);
-        } else if (node->m_has_animation) {
-            node_transform = node->keyframe_to_mat4(animation_time, first->m_cache[i]);
-        } else if (node_2->m_has_animation) {
-            node_transform = node_2->keyframe_to_mat4(animation_time_2, second->m_cache[i]);
+        // For some reason it looks better if I don't have this so I'm just gonna leave it off for now
+        // } else if (node->m_has_animation) {
+        //     node_transform = node->keyframe_to_mat4(animation_time, first->m_cache[i]);
+        // } else if (node_2->m_has_animation) {
+        //     node_transform = node_2->keyframe_to_mat4(animation_time_2, second->m_cache[i]);
         } else {
             node_transform = node->m_node_transform;
         }
