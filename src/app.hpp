@@ -18,6 +18,7 @@ private:
     bool m_capture_mouse = true;
     bool m_physics_on = false;
     bool m_vsync = true;
+    u32 m_fps = 0;
 
     const char* m_window_title = "test window";
 

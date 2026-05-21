@@ -1,47 +1,10 @@
 #pragma once
 
 #include "../renderer/shader.hpp"
+#include "../utils/file.hpp"
 #include "shader_preprocessor.hpp"
 
 namespace {
-
-template <usize S>
-struct ShaderInfoData {
-    std::array<std::string, S> data;
-    std::array<Renderer::ShaderInfo, S> info;
-
-    void populate_info()
-    {
-        if constexpr (S == 2) {
-            info.at(0) = {
-                .is_file = false,
-                .shader = data.at(0).c_str(),
-                .type = GL_VERTEX_SHADER,
-            };
-            info.at(1) = {
-                .is_file = false,
-                .shader = data.at(1).c_str(),
-                .type = GL_FRAGMENT_SHADER,
-            };
-        } else if constexpr (S == 3) {
-            info.at(0) = {
-                .is_file = false,
-                .shader = data.at(0).c_str(),
-                .type = GL_VERTEX_SHADER,
-            };
-            info.at(1) = {
-                .is_file = false,
-                .shader = data.at(1).c_str(),
-                .type = GL_GEOMETRY_SHADER,
-            };
-            info.at(2) = {
-                .is_file = false,
-                .shader = data.at(2).c_str(),
-                .type = GL_FRAGMENT_SHADER,
-            };
-        }
-    }
-};
 
 constexpr void get_pbr_forward_pass_indirect(ShaderInfoData<2>& out, const std::string& light_uniforms, const std::string& light_functions, const std::string& vert_defines, const std::string& frag_defines)
 {

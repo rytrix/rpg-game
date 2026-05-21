@@ -13,12 +13,16 @@ namespace Renderer {
 
 #include "renderer/default_textures.hpp"
 
+#include "renderer/text.hpp"
+
 struct GlobalAppData {
     Renderer::Window m_window;
     Renderer::Camera m_camera;
 
     TextureCache m_texture_cache;
     ModelCache m_model_cache;
-    
+
     Renderer::DefaultTextures m_default_textures;
+
+    Renderer::TextRenderer text_renderer;
 };

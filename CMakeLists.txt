@@ -1,13 +1,13 @@
 cmake_minimum_required(VERSION 3.22.0)
 
 if(CMAKE_BUILD_TYPE STREQUAL "Debug")
-    add_compile_definitions(_DEBUG)
+  add_compile_definitions(_DEBUG)
 endif()
 
 project(rpg)
-add_executable(${PROJECT_NAME} 
-    src/main.cpp 
-    src/app.cpp 
+add_executable(${PROJECT_NAME}
+    src/main.cpp
+    src/app.cpp
 
     src/scene/scene.cpp
     src/scene/entity_builder.cpp
@@ -16,30 +16,31 @@ add_executable(${PROJECT_NAME}
     src/scene/resource_manager.cpp
 
     src/physics/engine.cpp
-    
-	src/utils/deltatime.cpp
 
-    src/game_logic/gear.cpp 
+    src/utils/deltatime.cpp
+
+    src/game_logic/gear.cpp
     src/game_logic/character.cpp
 
-	src/renderer/animation.cpp
-	src/renderer/window.cpp
-	src/renderer/extensions.cpp
-	src/renderer/buffer.cpp
-	src/renderer/vertex.cpp
-	src/renderer/shader.cpp
-	src/renderer/texture.cpp
-	src/renderer/camera.cpp
+    src/renderer/animation.cpp
+    src/renderer/window.cpp
+    src/renderer/extensions.cpp
+    src/renderer/buffer.cpp
+    src/renderer/vertex.cpp
+    src/renderer/shader.cpp
+    src/renderer/texture.cpp
+    src/renderer/camera.cpp
     src/renderer/framebuffer.cpp
     src/renderer/renderbuffer.cpp
-	src/renderer/mesh.cpp
-	src/renderer/model.cpp
+    src/renderer/mesh.cpp
+    src/renderer/model.cpp
     src/renderer/gbuffer.cpp
     src/renderer/shadowmap.cpp
     src/renderer/quad.cpp
     src/renderer/frustum_culling.cpp
     src/renderer/default_textures.cpp
     src/renderer/random_sampling_texture.cpp
+    src/renderer/text.cpp
 
     src/renderer/light/phong/point.cpp
     src/renderer/light/phong/directional.cpp
@@ -70,7 +71,9 @@ set(BUILD_SHARED_LIBS OFF CACHE BOOL "Build static libs for JoltPhysics" FORCE)
 set(DOUBLE_PRECISION OFF CACHE BOOL "Double precision floats for JoltPhysics" FORCE)
 add_subdirectory(vendor/JoltPhysics/Build)
 
-add_library(imgui 
+add_subdirectory(vendor/freetype)
+
+add_library(imgui
     vendor/imgui/imgui.cpp
     vendor/imgui/imgui_demo.cpp
     vendor/imgui/imgui_draw.cpp
@@ -91,25 +94,27 @@ target_link_libraries(imgui
     SDL3::SDL3
 )
 
-target_link_libraries(${PROJECT_NAME} 
-    sqlite 
-	glad
-	stb_image
-	SDL3::SDL3
+target_link_libraries(${PROJECT_NAME}
+    sqlite
+    glad
+    stb_image
+    SDL3::SDL3
     assimp
-	Jolt::Jolt
+    Jolt::Jolt
     imgui
+    freetype
 )
 
-target_include_directories(${PROJECT_NAME} 
+target_include_directories(${PROJECT_NAME}
     PUBLIC src/renderer/include
     PUBLIC vendor
-	PUBLIC vendor/glad/include/
-	PUBLIC vendor/stb/include
-	PUBLIC vendor/sdl3/include
-	PUBLIC vendor/glm/
+    PUBLIC vendor/glad/include/
+    PUBLIC vendor/stb/include
+    PUBLIC vendor/sdl3/include
+    PUBLIC vendor/glm/
     PUBLIC vendor/assimp/include
     PUBLIC ${CMAKE_CURRENT_BINARY_DIR}/vendor/assimp/include
     PUBLIC vendor/JoltPhysics
     PUBLIC vendor/entt/single_include
+    PUBLIC vendor/freetype/include
 )

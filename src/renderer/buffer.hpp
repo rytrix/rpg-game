@@ -34,6 +34,7 @@ struct MappedBuffer : public NoCopyNoMove {
     [[nodiscard]] bool is_initialized() const;
     [[nodiscard]] GLuint get_id() const;
     [[nodiscard]] void* get_ptr();
+    [[nodiscard]] u32 get_buffer_size() const;
 
     void increment_frame();
 
@@ -47,6 +48,7 @@ private:
 
     u32 m_current_frame = 0;
     u32 m_frame_count = 0;
+    u32 m_buffer_size = 0;
 };
 
 } // namespace Renderer

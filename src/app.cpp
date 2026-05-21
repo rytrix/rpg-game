@@ -1,5 +1,7 @@
 #include "app.hpp"
 
+#include "renderer/text.hpp"
+
 App::App()
 {
     Physics::Engine::setup_singletons();
@@ -15,12 +17,15 @@ App::App()
 
     m_data.m_default_textures.init(&m_data.m_texture_cache);
 
+    m_data.text_renderer.init("res/fonts/AdwaitaSans-Regular.ttf", 24);
+    m_data.text_renderer.update_view(m_data.m_window.get_width(), m_data.m_window.get_height());
     m_scene = new Scene(&m_data);
 
     m_data.m_window.process_input_callback([&](SDL_Event& event) {
         if (event.type == SDL_EVENT_WINDOW_RESIZED) {
             m_data.m_camera.update_aspect(m_data.m_window.get_aspect_ratio());
             m_scene->update();
+            m_data.text_renderer.update_view(m_data.m_window.get_width(), m_data.m_window.get_height());
         }
         if (event.type == SDL_EVENT_MOUSE_MOTION) {
             if (m_capture_mouse) {
@@ -54,28 +59,28 @@ App::App()
     e1.add_pbr_directional_light_shadow();
     m_scene->add_entity(e1);
 
-    EntityBuilder e2;
-    e2.add_name("Sponza Model");
-    // e2.add_model_path("res/models/physics_plane/plane.obj");
-    e2.add_model_path("res/models/Sponza/glTF/Sponza.gltf");
-    Transform e2_transform;
-    e2_transform.set_scale(glm::vec3(0.1));
-    e2.add_transform(e2_transform);
-    e2.add_physics_command([&](Physics::System* system, Renderer::Model* model) -> std::pair<JPH::BodyID, JPH::EMotionType> {
-        JPH::TriangleList triangles;
-        const auto* mesh = model->get_mesh();
-        Physics::System::create_mesh_triangle_list_base_index(triangles, e2_transform.get_model(), mesh);
-        // Physics::System::create_mesh_triangle_list_base_index(triangles, mesh);
-        JPH::BodyID plane_id = system->m_body_interface->CreateAndAddBody(
-            JPH::BodyCreationSettings(
-                new JPH::MeshShapeSettings(triangles),
-                JPH::RVec3::sZero(), JPH::Quat::sIdentity(),
-                JPH::EMotionType::Static,
-                Physics::Layers::NON_MOVING),
-            JPH::EActivation::DontActivate);
-        return { plane_id, JPH::EMotionType::Static };
-    });
-    m_scene->add_entity(e2);
+    // EntityBuilder e2;
+    // e2.add_name("Sponza Model");
+    // // e2.add_model_path("res/models/physics_plane/plane.obj");
+    // e2.add_model_path("res/models/Sponza/glTF/Sponza.gltf");
+    // Transform e2_transform;
+    // e2_transform.set_scale(glm::vec3(0.1));
+    // e2.add_transform(e2_transform);
+    // e2.add_physics_command([&](Physics::System* system, Renderer::Model* model) -> std::pair<JPH::BodyID, JPH::EMotionType> {
+    //     JPH::TriangleList triangles;
+    //     const auto* mesh = model->get_mesh();
+    //     Physics::System::create_mesh_triangle_list_base_index(triangles, e2_transform.get_model(), mesh);
+    //     // Physics::System::create_mesh_triangle_list_base_index(triangles, mesh);
+    //     JPH::BodyID plane_id = system->m_body_interface->CreateAndAddBody(
+    //         JPH::BodyCreationSettings(
+    //             new JPH::MeshShapeSettings(triangles),
+    //             JPH::RVec3::sZero(), JPH::Quat::sIdentity(),
+    //             JPH::EMotionType::Static,
+    //             Physics::Layers::NON_MOVING),
+    //         JPH::EActivation::DontActivate);
+    //     return { plane_id, JPH::EMotionType::Static };
+    // });
+    // m_scene->add_entity(e2);
 
     // EntityBuilder e3;
     // e3.add_name("cube");
@@ -201,6 +206,7 @@ void App::fps_counter()
         frames += 1;
         if (time_passed >= 1.0F) {
             time_passed = 0;
+            m_fps = frames;
             auto title = std::format("{} {} fps", m_window_title, frames);
             m_data.m_window.set_window_title(title.c_str());
             frames = 0;
@@ -246,6 +252,8 @@ void App::run()
         }
 
         m_scene->draw();
+
+        m_data.text_renderer.draw_text(10, m_data.m_window.get_height() - 50, std::format("Framerate {}", m_fps).c_str(), glm::vec3 { 1.0F });
 
         const ImGuiViewport* main_viewport = ImGui::GetMainViewport();
         ImGui::SetNextWindowPos(ImVec2(main_viewport->WorkPos.x + 20, main_viewport->WorkPos.y + 20), ImGuiCond_FirstUseEver);

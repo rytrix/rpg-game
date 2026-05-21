@@ -72,6 +72,7 @@ void MappedBuffer::init(u32 buffer_count, u32 buffer_size)
 
     m_current_frame = 0;
     m_frame_count = buffer_count;
+    m_buffer_size = buffer_size;
     glCreateBuffers(buffer_count, m_ids.data());
 
     for (u32 i = 0; i < buffer_count; i++) {
@@ -112,6 +113,11 @@ MappedBuffer::~MappedBuffer()
 {
     util_assert(initialized == true, "not initialized");
     return m_ptrs[m_current_frame];
+}
+
+[[nodiscard]] u32 MappedBuffer::get_buffer_size() const
+{
+    return m_buffer_size;
 }
 
 void MappedBuffer::increment_frame()

@@ -1,5 +1,7 @@
 #include "shader.hpp"
 
+#include "../utils/file.hpp"
+
 #include <fstream>
 
 namespace Renderer {
