@@ -30,6 +30,8 @@ public:
 
     void update_view(float width, float height);
 
+    u32 get_max_pixel_height() const { return m_pixel_height; };
+
 private:
     FT_Library m_freetype;
     FT_Face m_face;

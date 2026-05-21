@@ -62,9 +62,10 @@ void TextRenderer::draw_text(u32 x, u32 y, const char* text, glm::vec3 color)
 
     float scale = 1.0F;
 
+    usize text_length = strlen(text);
     std::vector<TextVertex> vertices;
-    for (u32 i = 0; i < strlen(text); i++) {
-        // char character = text[i];
+    vertices.reserve(text_length * 6 * sizeof(TextVertex));
+    for (u32 i = 0; i < text_length; i++) {
         Character character = m_characters[text[i]];
         float x_pos = x + ((float)character.bearing.x * scale);
 
