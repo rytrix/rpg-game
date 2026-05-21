@@ -4,19 +4,6 @@
 
 namespace Renderer {
 
-namespace {
-
-    struct TextVertex {
-        glm::vec4 pos_uv;
-    };
-
-    struct GlyphInstance {
-        float x_pos, y_pos, w, h;
-        float uv_x, uv_y, uv_x_max, uv_y_max;
-    };
-
-} // anonymous namespace
-
 TextRenderer::TextRenderer(const char* font_path, u32 font_height)
 {
     init(font_path, font_height);
@@ -37,7 +24,7 @@ void TextRenderer::init(const char* font_path, u32 font_height)
 
     update_view(800.0F, 800.0F);
 
-    setup_characters();
+    setup_atlas();
     setup_quad();
     setup_shader();
 }
@@ -66,36 +53,38 @@ void TextRenderer::draw_text(u32 x, u32 y, const char* text, glm::vec3 color, fl
     m_shader.set_mat4("projection", m_projection);
 
     usize text_length = strlen(text);
-    std::vector<GlyphInstance> vertices;
-    vertices.resize(text_length);
+    m_vertices.resize(text_length);
     for (u32 i = 0; i < text_length; i++) {
-        Character character = m_characters[text[i]];
-        vertices[i].x_pos = x + ((float)character.bearing.x * scale);
-        vertices[i].y_pos = y - (((float)character.size.y - (float)character.bearing.y) * scale);
+        char c = text[i];
+        load_glyph(c);
 
-        vertices[i].w = (float)character.size.x * scale;
-        vertices[i].h = (float)character.size.y * scale;
+        Character character = m_characters[c];
+        m_vertices[i].x_pos = x + ((float)character.bearing.x * scale);
+        m_vertices[i].y_pos = y - (((float)character.size.y - (float)character.bearing.y) * scale);
 
-        vertices[i].uv_x = character.uv_offset.x;
-        vertices[i].uv_x_max = vertices[i].uv_x + character.uv_size.x;
+        m_vertices[i].w = (float)character.size.x * scale;
+        m_vertices[i].h = (float)character.size.y * scale;
 
-        vertices[i].uv_y = character.uv_offset.y;
-        vertices[i].uv_y_max = vertices[i].uv_y + character.uv_size.y;
+        m_vertices[i].uv_x = character.uv_offset.x;
+        m_vertices[i].uv_x_max = m_vertices[i].uv_x + character.uv_size.x;
+
+        m_vertices[i].uv_y = character.uv_offset.y;
+        m_vertices[i].uv_y_max = m_vertices[i].uv_y + character.uv_size.y;
 
         x += (character.advance >> 6) * scale; // bitshift by 6 to get value in pixels (2^6 = 64)
     }
 
-    usize size = vertices.size() * sizeof(GlyphInstance);
+    usize size = m_vertices.size() * sizeof(GlyphInstance);
     if (size > m_ssbo.get_buffer_size()) {
         m_ssbo.deinit();
         m_ssbo.init(3, size);
     }
 
     void* ptr = m_ssbo.get_ptr();
-    memcpy(ptr, vertices.data(), size);
+    memcpy(ptr, m_vertices.data(), size);
 
     glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, m_ssbo.get_id());
-    glDrawArrays(GL_TRIANGLES, 0, (GLsizei)vertices.size() * 6);
+    glDrawArrays(GL_TRIANGLES, 0, (GLsizei)m_vertices.size() * 6);
 
     Texture::drop_texture_units(1);
     m_ssbo.increment_frame();
@@ -106,7 +95,7 @@ void TextRenderer::update_view(float width, float height)
     m_projection = glm::ortho(0.0F, width, 0.0F, height);
 }
 
-void TextRenderer::setup_characters()
+void TextRenderer::setup_atlas()
 {
     m_pixel_height = (m_face->size->metrics.ascender - m_face->size->metrics.descender) >> 6;
 
@@ -122,42 +111,53 @@ void TextRenderer::setup_characters()
     info.size.depth = 1;
     m_texture_atlas.init(info);
 
+    // for (unsigned char c = 0; c < 128; c++) {
+    //     load_glyph(c);
+    // }
+}
+
+int TextRenderer::load_glyph(char c)
+{
+    if (m_characters.contains(c)) {
+        return 0;
+    }
+
+    if (FT_Load_Char(m_face, c, FT_LOAD_RENDER)) {
+        LOG_ERROR(std::format("FREETYPE: Failed to load glyph {}", (char)c));
+        return -1;
+    }
+
     glPixelStorei(GL_UNPACK_ALIGNMENT, 1); // disable byte-alignment restriction
 
-    for (unsigned char c = 0; c < 128; c++) {
-        if (FT_Load_Char(m_face, c, FT_LOAD_RENDER)) {
-            LOG_ERROR(std::format("FREETYPE: Failed to load glyph {}", (char)c));
-            continue;
-        }
+    TextureSubimageInfo subimage_info {};
+    subimage_info.offsets.width = (GLint)m_current_atlas_width;
+    subimage_info.offsets.height = 0;
+    subimage_info.size.width = (GLint)m_face->glyph->bitmap.width;
+    subimage_info.size.height = (GLint)m_face->glyph->bitmap.rows;
+    subimage_info.format = GL_RED;
+    subimage_info.type = GL_UNSIGNED_BYTE;
+    subimage_info.pixels = m_face->glyph->bitmap.buffer;
+    m_texture_atlas.sub_image(subimage_info);
 
-        TextureSubimageInfo subimage_info {};
-        subimage_info.offsets.width = (GLint)m_current_atlas_width;
-        subimage_info.offsets.height = 0;
-        subimage_info.size.width = (GLint)m_face->glyph->bitmap.width;
-        subimage_info.size.height = (GLint)m_face->glyph->bitmap.rows;
-        subimage_info.format = GL_RED;
-        subimage_info.type = GL_UNSIGNED_BYTE;
-        subimage_info.pixels = m_face->glyph->bitmap.buffer;
-        m_texture_atlas.sub_image(subimage_info);
+    Character character {};
+    character.uv_offset.x = (float)subimage_info.offsets.width / (float)ATLAS_WIDTH;
+    character.uv_offset.y = (float)subimage_info.offsets.height / (float)m_pixel_height;
+    character.uv_size.x = (float)subimage_info.size.width / (float)ATLAS_WIDTH;
+    character.uv_size.y = (float)subimage_info.size.height / (float)m_pixel_height;
+    character.size = { m_face->glyph->bitmap.width, m_face->glyph->bitmap.rows };
+    character.bearing = { m_face->glyph->bitmap_left, m_face->glyph->bitmap_top };
+    character.advance = m_face->glyph->advance.x;
+    m_characters.insert({ c, character });
 
-        Character character {};
-        character.uv_offset.x = (float)subimage_info.offsets.width / (float)ATLAS_WIDTH;
-        character.uv_offset.y = (float)subimage_info.offsets.height / (float)m_pixel_height;
-        character.uv_size.x = (float)subimage_info.size.width / (float)ATLAS_WIDTH;
-        character.uv_size.y = (float)subimage_info.size.height / (float)m_pixel_height;
-        character.size = { m_face->glyph->bitmap.width, m_face->glyph->bitmap.rows };
-        character.bearing = { m_face->glyph->bitmap_left, m_face->glyph->bitmap_top };
-        character.advance = m_face->glyph->advance.x;
-        m_characters.insert({ c, character });
+    m_current_atlas_width += m_face->glyph->bitmap.width + 1;
 
-        m_current_atlas_width += m_face->glyph->bitmap.width + 1;
-    }
+    return 0;
 }
 
 void TextRenderer::setup_quad()
 {
     m_vao.init();
-    m_ssbo.init(3, 1);
+    m_ssbo.init(3, 20);
 
     m_vao.bind();
 }

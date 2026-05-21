@@ -45,11 +45,18 @@ private:
     u32 m_current_atlas_width = 0;
     Texture m_texture_atlas;
 
+    struct GlyphInstance {
+        float x_pos, y_pos, w, h;
+        float uv_x, uv_y, uv_x_max, uv_y_max;
+    };
+    std::vector<GlyphInstance> m_vertices;
+
     VertexArray m_vao;
     MappedBuffer m_ssbo;
     ShaderProgram m_shader;
 
-    void setup_characters();
+    void setup_atlas();
+    int load_glyph(char c);
     void setup_quad();
     void setup_shader();
 };
