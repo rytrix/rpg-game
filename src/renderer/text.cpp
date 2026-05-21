@@ -43,7 +43,7 @@ TextRenderer::~TextRenderer()
     FT_Done_FreeType(m_freetype);
 }
 
-void TextRenderer::draw_text(u32 x, u32 y, const char* text, glm::vec3 color)
+void TextRenderer::draw_text(u32 x, u32 y, const char* text, glm::vec3 color, float scale)
 {
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
@@ -60,11 +60,9 @@ void TextRenderer::draw_text(u32 x, u32 y, const char* text, glm::vec3 color)
     m_shader.set_vec3("text_color", color);
     m_shader.set_mat4("projection", m_projection);
 
-    float scale = 1.0F;
-
     usize text_length = strlen(text);
     std::vector<TextVertex> vertices;
-    vertices.reserve(text_length * 6 * sizeof(TextVertex));
+    vertices.reserve(text_length * 6);
     for (u32 i = 0; i < text_length; i++) {
         Character character = m_characters[text[i]];
         float x_pos = x + ((float)character.bearing.x * scale);

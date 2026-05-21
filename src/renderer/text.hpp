@@ -26,7 +26,7 @@ public:
 
     void init(const char* font_path, u32 font_height);
 
-    void draw_text(u32 x, u32 y, const char* text, glm::vec3 color);
+    void draw_text(u32 x, u32 y, const char* text, glm::vec3 color, float scale = 1.0F);
 
     void update_view(float width, float height);
 
