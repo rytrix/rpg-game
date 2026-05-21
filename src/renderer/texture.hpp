@@ -31,7 +31,15 @@ struct TextureSubimageInfo {
     GLint level = 0;
     TextureSize offsets {};
     TextureSize size {};
+     // Specifies the format of the pixel data. The following symbolic values are accepted: 
+     // GL_RED, GL_RG, GL_RGB, GL_BGR, GL_RGBA, GL_BGRA, GL_DEPTH_COMPONENT, and GL_STENCIL_INDEX. 
     GLenum format = GL_RGBA;
+    // Specifies the data type of the pixel data. The following symbolic values are accepted:
+    // GL_UNSIGNED_BYTE, GL_BYTE, GL_UNSIGNED_SHORT, GL_SHORT, GL_UNSIGNED_INT, GL_INT, GL_FLOAT, 
+    // GL_UNSIGNED_BYTE_3_3_2, GL_UNSIGNED_BYTE_2_3_3_REV, GL_UNSIGNED_SHORT_5_6_5, GL_UNSIGNED_SHORT_5_6_5_REV,
+    // GL_UNSIGNED_SHORT_4_4_4_4, GL_UNSIGNED_SHORT_4_4_4_4_REV, GL_UNSIGNED_SHORT_5_5_5_1, 
+    // GL_UNSIGNED_SHORT_1_5_5_5_REV, GL_UNSIGNED_INT_8_8_8_8, GL_UNSIGNED_INT_8_8_8_8_REV,
+    // GL_UNSIGNED_INT_10_10_10_2, and GL_UNSIGNED_INT_2_10_10_10_REV. 
     GLenum type = GL_UNSIGNED_BYTE;
     void* pixels = nullptr;
 };
