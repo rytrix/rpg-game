@@ -10,6 +10,11 @@ namespace {
         glm::vec4 pos_uv;
     };
 
+    struct GlyphInstance {
+        float x_pos, y_pos, w, h;
+        float uv_x, uv_y, uv_x_max, uv_y_max;
+    };
+
 } // anonymous namespace
 
 TextRenderer::TextRenderer(const char* font_path, u32 font_height)
@@ -61,46 +66,26 @@ void TextRenderer::draw_text(u32 x, u32 y, const char* text, glm::vec3 color, fl
     m_shader.set_mat4("projection", m_projection);
 
     usize text_length = strlen(text);
-    std::vector<TextVertex> vertices;
-    vertices.reserve(text_length * 6);
+    std::vector<GlyphInstance> vertices;
+    vertices.resize(text_length);
     for (u32 i = 0; i < text_length; i++) {
         Character character = m_characters[text[i]];
-        float x_pos = x + ((float)character.bearing.x * scale);
+        vertices[i].x_pos = x + ((float)character.bearing.x * scale);
+        vertices[i].y_pos = y - (((float)character.size.y - (float)character.bearing.y) * scale);
 
-        float y_pos = y - (((float)character.size.y - (float)character.bearing.y) * scale);
+        vertices[i].w = (float)character.size.x * scale;
+        vertices[i].h = (float)character.size.y * scale;
 
-        float w = (float)character.size.x * scale;
-        float h = (float)character.size.y * scale;
+        vertices[i].uv_x = character.uv_offset.x;
+        vertices[i].uv_x_max = vertices[i].uv_x + character.uv_size.x;
 
-        float uv_x = character.uv_offset.x;
-        float uv_x_max = uv_x + character.uv_size.x;
-
-        float uv_y = character.uv_offset.y;
-        float uv_y_max = uv_y + character.uv_size.y;
-
-        TextVertex vertex {};
-        vertex.pos_uv = { x_pos, y_pos + h, uv_x, uv_y };
-        vertices.emplace_back(vertex);
-
-        vertex.pos_uv = { x_pos, y_pos, uv_x, uv_y_max };
-        vertices.emplace_back(vertex);
-
-        vertex.pos_uv = { x_pos + w, y_pos, uv_x_max, uv_y_max };
-        vertices.emplace_back(vertex);
-
-        vertex.pos_uv = { x_pos, y_pos + h, uv_x, uv_y };
-        vertices.emplace_back(vertex);
-
-        vertex.pos_uv = { x_pos + w, y_pos, uv_x_max, uv_y_max };
-        vertices.emplace_back(vertex);
-
-        vertex.pos_uv = { x_pos + w, y_pos + h, uv_x_max, uv_y };
-        vertices.emplace_back(vertex);
+        vertices[i].uv_y = character.uv_offset.y;
+        vertices[i].uv_y_max = vertices[i].uv_y + character.uv_size.y;
 
         x += (character.advance >> 6) * scale; // bitshift by 6 to get value in pixels (2^6 = 64)
     }
 
-    usize size = vertices.size() * sizeof(TextVertex);
+    usize size = vertices.size() * sizeof(GlyphInstance);
     if (size > m_ssbo.get_buffer_size()) {
         m_ssbo.deinit();
         m_ssbo.init(3, size);
@@ -110,7 +95,7 @@ void TextRenderer::draw_text(u32 x, u32 y, const char* text, glm::vec3 color, fl
     memcpy(ptr, vertices.data(), size);
 
     glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, m_ssbo.get_id());
-    glDrawArrays(GL_TRIANGLES, 0, (GLsizei)vertices.size());
+    glDrawArrays(GL_TRIANGLES, 0, (GLsizei)vertices.size() * 6);
 
     Texture::drop_texture_units(1);
     m_ssbo.increment_frame();

@@ -2,16 +2,37 @@
 // Vertex Begin
 out vec2 TexCoords;
 
+struct GlyphInstance {
+    vec4 rect;
+    vec4 uvs;
+};
+
 layout(std430, binding = 0) readonly buffer VertexBuffer {
-    vec4 vertices[];
+    GlyphInstance vertices[];
 };
 
 uniform mat4 projection;
 
+const vec2 corners[6] = vec2[](
+    vec2(0.0, 1.0), // top left
+    vec2(0.0, 0.0), // bottom left
+    vec2(1.0, 0.0), // bottom right
+    vec2(0.0, 1.0), // top left
+    vec2(1.0, 0.0), // bottom right
+    vec2(1.0, 1.0)  // top right
+);
+
 void main() {
-    vec4 vertex = vertices[gl_VertexID];
-    gl_Position = projection * vec4(vertex.xy, 0.0, 1.0);
-    TexCoords = vertex.zw;
+    uint glyph_index = uint(gl_VertexID) / 6;
+    uint corner_index = uint(gl_VertexID) % 6;
+
+    GlyphInstance glyph = vertices[glyph_index];
+    vec2 local_pos = corners[corner_index];
+
+    vec2 pos = glyph.rect.xy + (local_pos * glyph.rect.zw);
+    gl_Position = projection * vec4(pos, 0.0, 1.0);
+    TexCoords.x = mix(glyph.uvs.x, glyph.uvs.z, local_pos.x);
+    TexCoords.y = mix(glyph.uvs.y, glyph.uvs.w, 1.0 - local_pos.y);
 }
 // Vertex End
 
