@@ -65,6 +65,7 @@ private:
         }
     };
     Renderer::RandomSamplingTexture m_random_sampling_texture;
+    Renderer::Skybox m_skybox;
 
     std::vector<ModelMatrix> m_models_instance_draw_cache;
     bool m_models_instance_draw_cache_needs_update = false;

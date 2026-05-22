@@ -125,6 +125,10 @@ Scene::Scene(GlobalAppData* app_data)
 {
     m_physics_system = std::make_unique<Physics::System>();
 
+    Renderer::SkyboxInfo skybox_info {};
+    skybox_info.file = "res/skyboxes/Cubemap_Sky_14-512x512.png";
+    m_skybox.init(skybox_info);
+
     update();
 }
 
@@ -414,6 +418,8 @@ void Scene::draw()
 
         Renderer::Texture::drop_texture_units(1);
     }
+
+    m_skybox.draw(m_app_data->m_camera);
 
     Renderer::Texture::reset_texture_units();
 }

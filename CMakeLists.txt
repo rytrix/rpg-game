@@ -41,6 +41,7 @@ add_executable(${PROJECT_NAME}
     src/renderer/default_textures.cpp
     src/renderer/random_sampling_texture.cpp
     src/renderer/text.cpp
+    src/renderer/skybox.cpp
 
     src/renderer/light/phong/point.cpp
     src/renderer/light/phong/directional.cpp

@@ -1,0 +1,35 @@
+#pragma once
+
+#include "camera.hpp"
+#include "shader.hpp"
+#include "texture.hpp"
+#include "vertex.hpp"
+
+namespace Renderer {
+
+// Expects an image file in the format of
+//    XX
+// XX XX XX XX
+//    XX
+struct SkyboxInfo {
+    const char* file;
+};
+
+class Skybox : public NoCopyNoMove {
+public:
+    Skybox() = default;
+    Skybox(SkyboxInfo& info);
+    void init(SkyboxInfo& info);
+
+    void draw(const Camera& camera);
+
+private:
+    bool initialized = false;
+    Shader m_shader;
+    VertexArray m_vao;
+    Texture m_cubemap;
+
+    void setup_shader();
+};
+
+} // namespace Renderer

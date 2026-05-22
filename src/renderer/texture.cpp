@@ -172,6 +172,7 @@ void Texture::sub_image(TextureSubimageInfo& info)
                 info.pixels);
             break;
         case GL_TEXTURE_3D:
+        case GL_TEXTURE_CUBE_MAP:
             glTextureSubImage3D(m_id,
                 info.level,
                 info.offsets.width,
