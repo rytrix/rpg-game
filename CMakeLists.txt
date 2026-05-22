@@ -10,7 +10,7 @@ add_executable(${PROJECT_NAME}
     src/app.cpp
 
     src/scene/scene.cpp
-    src/scene/entity_builder.cpp
+    src/scene/entity.cpp
     src/scene/transform.cpp
     src/scene/shader_preprocessor.cpp
     src/scene/resource_manager.cpp

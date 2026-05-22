@@ -1,9 +1,55 @@
 #include "directional.hpp"
 
-#include "../../../scene/scene_shaders.hpp"
 #include "../../mesh.hpp"
 
+#include "../../scene/shader_preprocessor.hpp"
+#include "../../utils/file.hpp"
+
 #include <algorithm>
+
+namespace {
+
+constexpr void get_directional_cascade_shader(ShaderInfoData<2>& out, const std::string& vert_defines, const std::string& frag_defines)
+{
+    std::vector<char> shadow_file = read_file<char>("res/shaders/forward_pass/shadow_pass_directional_cascades.glsl");
+    std::string_view shadow_file_view = { shadow_file.data(), shadow_file.size() };
+
+    // Vertex Shader
+    out.data.at(0) = "#version 460 core\n";
+    out.data.at(0) += vert_defines;
+    out.data.at(0) += get_lines_between_delims(shadow_file_view, "// Vertex Begin", "// Vertex End");
+
+    // Fragment Shader
+    out.data.at(1) += "#version 460 core\n";
+    out.data.at(1) += frag_defines;
+    out.data.at(1) += get_lines_between_delims(shadow_file_view, "// Fragment Begin", "// Fragment End");
+
+    out.populate_info();
+}
+
+constexpr void get_directional_cascade_shader_geometry(ShaderInfoData<3>& out, const std::string& vert_defines, const std::string& frag_defines, u32 cascade_count)
+{
+    std::vector<char> shadow_file = read_file<char>("res/shaders/forward_pass/shadow_pass_directional_cascades_geometry.glsl");
+    std::string_view shadow_file_view = { shadow_file.data(), shadow_file.size() };
+
+    // Vertex Shader
+    out.data.at(0) = "#version 460 core\n";
+    out.data.at(0) += vert_defines;
+    out.data.at(0) += get_lines_between_delims(shadow_file_view, "// Vertex Begin", "// Vertex End");
+
+    // Geometry Shader
+    out.data.at(1) = std::format("#version 460 core\n#define CASCADE_COUNT {}\n", cascade_count);
+    out.data.at(1) += get_lines_between_delims(shadow_file_view, "// Geometry Begin", "// Geometry End");
+
+    // Fragment Shader
+    out.data.at(2) += "#version 460 core\n";
+    out.data.at(2) += frag_defines;
+    out.data.at(2) += get_lines_between_delims(shadow_file_view, "// Fragment Begin", "// Fragment End");
+
+    out.populate_info();
+}
+
+} // anonymous namespace
 
 namespace Renderer::Light::Pbr {
 

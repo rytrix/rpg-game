@@ -5,16 +5,20 @@
 
 #include "renderer.hpp"
 
-#include "entity_builder.hpp"
-
 #include "../app_data.hpp"
 
+class Entity;
+
 class Scene : public NoCopyNoMove {
+    friend class Entity;
+    friend class EntityHelper;
+
 public:
     explicit Scene(GlobalAppData* app_data);
     ~Scene();
 
-    void add_entity(const EntityBuilder& entity);
+    Entity create_entity();
+    // void add_entity(const EntityBuilder& entity);
 
     // Call update after adding an entity (or maybe I do that internally)
     void update();
@@ -68,3 +72,5 @@ private:
     bool m_physics_needs_optimize = false;
     std::unique_ptr<Physics::System> m_physics_system = nullptr;
 };
+
+#include "entity.hpp"

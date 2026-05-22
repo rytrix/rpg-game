@@ -2,10 +2,121 @@
 
 #include "../physics/helpers.hpp"
 
+#include "../utils/file.hpp"
+
 #include "glm/gtc/quaternion.hpp"
-#include "scene_shaders.hpp"
+#include "shader_preprocessor.hpp"
 
 #include "../renderer/random_sampling_texture.hpp"
+
+#include "entity.hpp"
+#include "transform.hpp"
+
+namespace {
+
+constexpr void get_pbr_forward_pass_indirect(ShaderInfoData<2>& out, const std::string& light_uniforms, const std::string& light_functions, const std::string& vert_defines, const std::string& frag_defines)
+{
+    std::vector<char> pbr_file = read_file<char>("res/shaders/forward_pass/pbr_combined.glsl");
+    std::string_view pbr_file_view = { pbr_file.data(), pbr_file.size() };
+
+    // Vertex Shader
+    out.data.at(0) = std::format("#version 460 core\n#define SSBO0\n");
+    out.data.at(0) += vert_defines;
+    out.data.at(0) += get_lines_between_delims(pbr_file_view, "// Vertex Begin", "// Vertex End");
+
+    // Fragment Shader
+    out.data.at(1) += "#version 460 core\n#define BINDLESS_TEXTURES\n";
+    out.data.at(1) += frag_defines;
+    out.data.at(1) += get_lines_between_delims(pbr_file_view, "// Fragment Begin", "// Light Uniforms Begin");
+    out.data.at(1) += light_uniforms;
+    out.data.at(1) += get_lines_between_delims(pbr_file_view, "// Light Uniforms End", "// LO Functions Begin");
+    out.data.at(1) += light_functions;
+    out.data.at(1) += get_lines_between_delims(pbr_file_view, "// LO Functions End", "// Fragment End");
+
+    out.populate_info();
+}
+
+constexpr void get_pbr_forward_pass_normal(ShaderInfoData<2>& out, const std::string& light_uniforms, const std::string& light_functions, const std::string& vert_defines, const std::string& frag_defines)
+{
+    std::vector<char> pbr_file = read_file<char>("res/shaders/forward_pass/pbr_combined.glsl");
+    std::string_view pbr_file_view = { pbr_file.data(), pbr_file.size() };
+
+    // Vertex Shader
+    out.data.at(0) = std::format("#version 460 core\n#define SSBO0\n");
+    out.data.at(0) += vert_defines;
+    out.data.at(0) += get_lines_between_delims(pbr_file_view, "// Vertex Begin", "// Vertex End");
+
+    // Fragment Shader
+    out.data.at(1) += "#version 460 core\n#define UNIFORM_TEXTURES\n";
+    out.data.at(1) += frag_defines;
+    out.data.at(1) += get_lines_between_delims(pbr_file_view, "// Fragment Begin", "// Light Uniforms Begin");
+    out.data.at(1) += light_uniforms;
+    out.data.at(1) += get_lines_between_delims(pbr_file_view, "// Light Uniforms End", "// LO Functions Begin");
+    out.data.at(1) += light_functions;
+    out.data.at(1) += get_lines_between_delims(pbr_file_view, "// LO Functions End", "// Fragment End");
+
+    out.populate_info();
+}
+
+constexpr void get_shadow_pass_basic_shaders(ShaderInfoData<2>& out, const std::string& vert_defines, const std::string& frag_defines)
+{
+    std::vector<char> shadow_file = read_file<char>("res/shaders/forward_pass/shadow_pass_basic.glsl");
+    std::string_view shadow_file_view = { shadow_file.data(), shadow_file.size() };
+
+    // Vertex Shader
+    out.data.at(0) = "#version 460 core\n";
+    out.data.at(0) += vert_defines;
+    out.data.at(0) += get_lines_between_delims(shadow_file_view, "// Vertex Begin", "// Vertex End");
+
+    // Fragment Shader
+    out.data.at(1) += "#version 460 core\n";
+    out.data.at(1) += frag_defines;
+    out.data.at(1) += get_lines_between_delims(shadow_file_view, "// Fragment Begin", "// Fragment End");
+
+    out.populate_info();
+}
+
+constexpr void get_shadow_pass_point_shaders(ShaderInfoData<2>& out, const std::string& vert_defines, const std::string& frag_defines)
+{
+    std::vector<char> shadow_file = read_file<char>("res/shaders/forward_pass/shadow_pass_point.glsl");
+    std::string_view shadow_file_view = { shadow_file.data(), shadow_file.size() };
+
+    // Vertex Shader
+    out.data.at(0) = "#version 460 core\n";
+    out.data.at(0) += vert_defines;
+    out.data.at(0) += get_lines_between_delims(shadow_file_view, "// Vertex Begin", "// Vertex End");
+
+    // Fragment Shader
+    out.data.at(1) += "#version 460 core\n";
+    out.data.at(1) += frag_defines;
+    out.data.at(1) += get_lines_between_delims(shadow_file_view, "// Fragment Begin", "// Fragment End");
+
+    out.populate_info();
+}
+
+constexpr void get_shadow_pass_point_geometry_shaders(ShaderInfoData<3>& out, const std::string& vert_defines, const std::string& frag_defines)
+{
+    std::vector<char> shadow_file = read_file<char>("res/shaders/forward_pass/shadow_pass_point_geometry.glsl");
+    std::string_view shadow_file_view = { shadow_file.data(), shadow_file.size() };
+
+    // Vertex Shader
+    out.data.at(0) = "#version 460 core\n";
+    out.data.at(0) += vert_defines;
+    out.data.at(0) += get_lines_between_delims(shadow_file_view, "// Vertex Begin", "// Vertex End");
+
+    // Geometry Shader
+    out.data.at(1) = "#version 460 core\n";
+    out.data.at(1) += get_lines_between_delims(shadow_file_view, "// Geometry Begin", "// Geometry End");
+
+    // Fragment Shader
+    out.data.at(2) += "#version 460 core\n";
+    out.data.at(2) += frag_defines;
+    out.data.at(2) += get_lines_between_delims(shadow_file_view, "// Fragment Begin", "// Fragment End");
+
+    out.populate_info();
+}
+
+} // anonymous namespace
 
 Scene::Scene(GlobalAppData* app_data)
     : m_app_data(app_data)
@@ -26,67 +137,73 @@ Scene::~Scene()
     }
 }
 
-void Scene::add_entity(const EntityBuilder& entity_builder)
+Entity Scene::create_entity()
 {
     auto entity = m_registry.create();
-    if (entity_builder.m_name != nullptr) {
-        m_registry.emplace<const char*>(entity, entity_builder.m_name);
-    }
-
-    if (entity_builder.m_model_path != nullptr) {
-        auto* model_cache = &m_app_data->m_model_cache;
-        auto handle = model_cache->get_or_create(entity_builder.m_model_path, entity_builder.m_model_path, m_app_data);
-        auto* model = model_cache->get(handle);
-
-        if (model->has_bones()) {
-            m_registry.emplace<Renderer::AnimationData>(entity);
-            auto& data = m_registry.get<Renderer::AnimationData>(entity);
-            for (auto& animation : model->get_animations()) {
-                data.data.emplace_back(animation.create_per_animation_data());
-            }
-        }
-
-        m_registry.emplace<Renderer::Model*>(entity, model);
-        // TODO: Decide if I want physics objects without models someday
-        if (entity_builder.m_create_body != nullptr) {
-            auto physics_info
-                = entity_builder.m_create_body(m_physics_system.get(), m_registry.get<Renderer::Model*>(entity));
-            m_registry.emplace<JPH::BodyID>(entity, physics_info.first);
-            m_registry.emplace<JPH::EMotionType>(entity, physics_info.second);
-            m_physics_needs_optimize = true;
-        }
-        m_models_instance_draw_cache_needs_update = true;
-    }
-
-    if (entity_builder.m_pbr_directional != nullptr) {
-        m_registry.emplace<Renderer::Light::Pbr::Directional>(entity, *entity_builder.m_pbr_directional);
-        if (entity_builder.m_pbr_directional_shadow) {
-            m_registry.emplace<Renderer::Light::Pbr::DirectionalShadow>(entity);
-            m_registry.get<Renderer::Light::Pbr::DirectionalShadow>(entity).init();
-        }
-        m_shaders_need_update = true;
-    }
-
-    if (entity_builder.m_pbr_point != nullptr) {
-        m_registry.emplace<Renderer::Light::Pbr::Point>(entity, *entity_builder.m_pbr_point);
-        if (entity_builder.m_pbr_point_shadow) {
-            m_registry.emplace<Renderer::Light::Pbr::PointShadow>(entity);
-            m_registry.get<Renderer::Light::Pbr::PointShadow>(entity).init();
-        }
-        m_shaders_need_update = true;
-    }
-
-    if (entity_builder.m_pbr_spot != nullptr) {
-        m_registry.emplace<Renderer::Light::Pbr::Spot>(entity, *entity_builder.m_pbr_spot);
-        if (entity_builder.m_pbr_spot_shadow) {
-            m_registry.emplace<Renderer::Light::Pbr::SpotShadow>(entity);
-            m_registry.get<Renderer::Light::Pbr::SpotShadow>(entity).init();
-        }
-        m_shaders_need_update = true;
-    }
-
-    m_registry.emplace<Transform>(entity, entity_builder.m_transform);
+    return { this, entity };
 }
+
+// void Scene::add_entity(const EntityBuilder& entity_builder)
+// {
+//     auto entity = m_registry.create();
+//     if (entity_builder.m_name != nullptr) {
+//         m_registry.emplace<const char*>(entity, entity_builder.m_name);
+//     }
+
+//     if (entity_builder.m_model_path != nullptr) {
+//         auto* model_cache = &m_app_data->m_model_cache;
+//         auto handle = model_cache->get_or_create(entity_builder.m_model_path, entity_builder.m_model_path, m_app_data);
+//         auto* model = model_cache->get(handle);
+
+//         if (model->has_bones()) {
+//             m_registry.emplace<Renderer::AnimationData>(entity);
+//             auto& data = m_registry.get<Renderer::AnimationData>(entity);
+//             for (auto& animation : model->get_animations()) {
+//                 data.data.emplace_back(animation.create_per_animation_data());
+//             }
+//         }
+
+//         m_registry.emplace<Renderer::Model*>(entity, model);
+//         // TODO: Decide if I want physics objects without models someday
+//         if (entity_builder.m_create_body != nullptr) {
+//             auto physics_info
+//                 = entity_builder.m_create_body(m_physics_system.get(), m_registry.get<Renderer::Model*>(entity));
+//             m_registry.emplace<JPH::BodyID>(entity, physics_info.first);
+//             m_registry.emplace<JPH::EMotionType>(entity, physics_info.second);
+//             m_physics_needs_optimize = true;
+//         }
+//         m_models_instance_draw_cache_needs_update = true;
+//     }
+
+//     if (entity_builder.m_pbr_directional != nullptr) {
+//         m_registry.emplace<Renderer::Light::Pbr::Directional>(entity, *entity_builder.m_pbr_directional);
+//         if (entity_builder.m_pbr_directional_shadow) {
+//             m_registry.emplace<Renderer::Light::Pbr::DirectionalShadow>(entity);
+//             m_registry.get<Renderer::Light::Pbr::DirectionalShadow>(entity).init();
+//         }
+//         m_shaders_need_update = true;
+//     }
+
+//     if (entity_builder.m_pbr_point != nullptr) {
+//         m_registry.emplace<Renderer::Light::Pbr::Point>(entity, *entity_builder.m_pbr_point);
+//         if (entity_builder.m_pbr_point_shadow) {
+//             m_registry.emplace<Renderer::Light::Pbr::PointShadow>(entity);
+//             m_registry.get<Renderer::Light::Pbr::PointShadow>(entity).init();
+//         }
+//         m_shaders_need_update = true;
+//     }
+
+//     if (entity_builder.m_pbr_spot != nullptr) {
+//         m_registry.emplace<Renderer::Light::Pbr::Spot>(entity, *entity_builder.m_pbr_spot);
+//         if (entity_builder.m_pbr_spot_shadow) {
+//             m_registry.emplace<Renderer::Light::Pbr::SpotShadow>(entity);
+//             m_registry.get<Renderer::Light::Pbr::SpotShadow>(entity).init();
+//         }
+//         m_shaders_need_update = true;
+//     }
+
+//     m_registry.emplace<Transform>(entity, entity_builder.m_transform);
+// }
 
 void Scene::optimize()
 {
@@ -407,7 +524,7 @@ void Scene::draw_debug_imgui()
                     }
                 }
 
-                if (try_transform != nullptr) {
+                if (try_transform != nullptr && try_body_id == nullptr) {
                     auto& transform = *try_transform;
 
                     ImGui::Text("Transform");

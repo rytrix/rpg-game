@@ -1,7 +1,5 @@
 #pragma once
 
-struct AppData;
-
 #include "../app_data.hpp"
 
 #include "mesh.hpp"

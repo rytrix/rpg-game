@@ -50,58 +50,55 @@ App::App()
         }
     });
 
-    EntityBuilder e1;
-    e1.add_name("Directional Light");
+    auto entity = m_scene->create_entity();
     Renderer::Light::Pbr::Directional directional {};
     directional.direction = glm::vec3(-0.2F, -1.0F, 0.3F);
     directional.color = glm::vec3(0.8);
-    e1.add_pbr_directional_light(directional);
-    e1.add_pbr_directional_light_shadow();
-    m_scene->add_entity(e1);
+    Entity::add_name(entity, "Directional Light");
+    Entity::add_pbr_directional_light(entity, directional);
+    Entity::add_pbr_directional_light_shadow(entity);
 
-    // EntityBuilder e2;
-    // e2.add_name("Sponza Model");
-    // // e2.add_model_path("res/models/physics_plane/plane.obj");
-    // e2.add_model_path("res/models/Sponza/glTF/Sponza.gltf");
-    // Transform e2_transform;
-    // e2_transform.set_scale(glm::vec3(0.1));
-    // e2.add_transform(e2_transform);
-    // e2.add_physics_command([&](Physics::System* system, Renderer::Model* model) -> std::pair<JPH::BodyID, JPH::EMotionType> {
-    //     JPH::TriangleList triangles;
-    //     const auto* mesh = model->get_mesh();
-    //     Physics::System::create_mesh_triangle_list_base_index(triangles, e2_transform.get_model(), mesh);
-    //     // Physics::System::create_mesh_triangle_list_base_index(triangles, mesh);
-    //     JPH::BodyID plane_id = system->m_body_interface->CreateAndAddBody(
-    //         JPH::BodyCreationSettings(
-    //             new JPH::MeshShapeSettings(triangles),
-    //             JPH::RVec3::sZero(), JPH::Quat::sIdentity(),
-    //             JPH::EMotionType::Static,
-    //             Physics::Layers::NON_MOVING),
-    //         JPH::EActivation::DontActivate);
-    //     return { plane_id, JPH::EMotionType::Static };
-    // });
-    // m_scene->add_entity(e2);
+    entity = m_scene->create_entity();
+    Entity::add_name(entity, "Sponza Model");
+    Entity::add_model(entity, "res/models/Sponza/glTF/Sponza.gltf", &m_data);
+    // Entity::add_model(entity, "res/models/physics_plane/plane.obj", &m_data);
+    Transform transform {};
+    transform.set_scale(glm::vec3(0.1));
+    Entity::add_transform(entity, transform);
+    Entity::add_physics_command(entity, [&](Physics::System* system, Renderer::Model* model) -> std::pair<JPH::BodyID, JPH::EMotionType> {
+        JPH::TriangleList triangles;
+        const auto* mesh = model->get_mesh();
+        Physics::System::create_mesh_triangle_list_base_index(triangles, transform.get_model(), mesh);
+        // Physics::System::create_mesh_triangle_list_base_index(triangles, mesh);
+        JPH::BodyID plane_id = system->m_body_interface->CreateAndAddBody(
+            JPH::BodyCreationSettings(
+                new JPH::MeshShapeSettings(triangles),
+                JPH::RVec3::sZero(), JPH::Quat::sIdentity(),
+                JPH::EMotionType::Static,
+                Physics::Layers::NON_MOVING),
+            JPH::EActivation::DontActivate);
+        return { plane_id, JPH::EMotionType::Static };
+    });
 
-    // EntityBuilder e3;
-    // e3.add_name("cube");
-    // e3.add_model_path("res/models/physics_cube/cube.obj");
-    // // This will do nothing since it's going to be based off of the physics mat4 anyways
-    // // glm::mat4 e3_model_matrix = glm::scale(glm::mat4(1.0), glm::vec3(1.1));
-    // // e3.add_model_matrix(e3_model_matrix);
-    // e3.add_physics_command([](Physics::System* system, [[maybe_unused]] Renderer::Model* _model) -> std::pair<JPH::BodyID, JPH::EMotionType> {
-    //     JPH::BodyCreationSettings cube_settings(
-    //         new JPH::BoxShape(JPH::Vec3(0.5, 0.5, 0.5)),
-    //         JPH::RVec3(-7.05, 20.0, -5.5),
-    //         JPH::Quat::sIdentity(),
-    //         JPH::EMotionType::Dynamic,
-    //         Physics::Layers::MOVING);
-    //     auto body = system->m_body_interface->CreateAndAddBody(
-    //         cube_settings,
-    //         JPH::EActivation::Activate);
-    //     return { body, JPH::EMotionType::Dynamic };
-    // });
-    // m_scene->add_entity(e3);
-    //
+    entity = m_scene->create_entity();
+    Entity::add_name(entity, "Cube");
+    Entity::add_model(entity, "res/models/physics_cube/cube.obj", &m_data);
+    transform = {};
+    Entity::add_transform(entity, transform);
+    Entity::add_physics_command(entity, [](Physics::System* system, [[maybe_unused]] Renderer::Model* _model) -> std::pair<JPH::BodyID, JPH::EMotionType> {
+        JPH::BodyCreationSettings cube_settings(
+            new JPH::BoxShape(JPH::Vec3(0.5, 0.5, 0.5)),
+            JPH::RVec3(-7.05, 20.0, -5.5),
+            JPH::Quat::sIdentity(),
+            JPH::EMotionType::Dynamic,
+            Physics::Layers::MOVING);
+            
+        auto body = system->m_body_interface->CreateAndAddBody(
+            cube_settings,
+            JPH::EActivation::Activate);
+        return { body, JPH::EMotionType::Dynamic };
+    });
+
     // for (int i = 0; i <= 50; i++) {
     //     e3.add_physics_command([](Physics::System* system, [[maybe_unused]] Renderer::Model* _model) -> std::pair<JPH::BodyID, JPH::EMotionType> {
     //         float y = rand() % 300;
@@ -121,65 +118,47 @@ App::App()
     //     m_scene->add_entity(e3);
     // }
 
-    EntityBuilder e4;
-    e4.add_name("Point light 1");
+    entity = m_scene->create_entity();
     Renderer::Light::Pbr::Point point {};
     point.position = glm::vec3(6.0F, 6.0F, 8.0F);
     point.color = glm::vec3(10.0, 10.0, 10.0);
-    e4.add_pbr_point_light(point);
-    e4.add_pbr_point_light_shadow();
-    m_scene->add_entity(e4);
+    Entity::add_name(entity, "Point light 1");
+    Entity::add_pbr_point_light(entity, point);
+    Entity::add_pbr_point_light_shadow(entity);
 
-    EntityBuilder e5;
-    e5.add_name("Point light 2");
+    entity = m_scene->create_entity();
     point.position = glm::vec3(6.0F, 6.0F, -8.0F);
     point.color = glm::vec3(50.0, 25.0, 25.0);
-    e5.add_pbr_point_light(point);
-    e5.add_pbr_point_light_shadow();
-    m_scene->add_entity(e5);
+    Entity::add_name(entity, "Point light 2");
+    Entity::add_pbr_point_light(entity, point);
+    Entity::add_pbr_point_light_shadow(entity);
 
-    // EntityBuilder e6;
-    // e6.add_name("sphere");
-    // e6.add_model_path("res/models/icosphere/icosphere.obj");
-    // e6.add_physics_command([](Physics::System* system, [[maybe_unused]] Renderer::Model* _model) -> std::pair<JPH::BodyID, JPH::EMotionType> {
-    //     JPH::BodyCreationSettings cube_settings(
-    //         new JPH::SphereShape(1.0),
-    //         JPH::RVec3(-7.05, 20.0, -5.5),
-    //         JPH::Quat::sIdentity(),
-    //         JPH::EMotionType::Dynamic,
-    //         Physics::Layers::MOVING);
-    //     auto body = system->m_body_interface->CreateAndAddBody(
-    //         cube_settings,
-    //         JPH::EActivation::Activate);
-    //     return { body, JPH::EMotionType::Dynamic };
-    // });
-    // m_scene->add_entity(e6);
-
-    EntityBuilder e7;
-    e7.add_name("Spot Light");
+    entity = m_scene->create_entity();
     Renderer::Light::Pbr::Spot spot {};
     spot.position = glm::vec3(-6.0F, 8.0F, 10.0F);
     spot.direction = glm::vec3(0.2, 0.0, -1.0);
     spot.color = glm::vec3(50.0, 25.0, 25.0);
     spot.inner_cutoff = glm::cos(glm::radians(12.5F));
     spot.outer_cutoff = glm::cos(glm::radians(20.5F));
-    e7.add_pbr_spot_light(spot);
-    e7.add_pbr_spot_light_shadow();
-    m_scene->add_entity(e7);
+    Entity::add_name(entity, "Spot Light");
+    Entity::add_pbr_spot_light(entity, spot);
+    Entity::add_pbr_spot_light_shadow(entity);
 
-    EntityBuilder e8;
-    e8.add_name("Defeated");
-    e8.add_model_path("res/models/Defeated.fbx");
-    Transform e8_transform;
-    e8_transform.set_scale(glm::vec3(0.1));
-    e8.add_transform(e8_transform);
-    m_scene->add_entity(e8);
+    entity = m_scene->create_entity();
+    transform = {};
+    transform.set_scale(glm::vec3(0.1));
+    Entity::add_name(entity, "Defeated");
+    Entity::add_model(entity, "res/models/Defeated.fbx", &m_data);
+    Entity::add_transform(entity, transform);
 
-    e8.add_name("Dog");
-    e8.add_model_path("res/models/dog/scene.gltf");
-    e8_transform.set_scale(glm::vec3(10.0F));
-    e8_transform.rotate(-90.0F, glm::vec3(1.0, 0.0, 0.0));
-    m_scene->add_entity(e8);
+    entity = m_scene->create_entity();
+    transform = {};
+    transform.set_scale(glm::vec3(0.1));
+    transform.set_scale(glm::vec3(10.0F));
+    transform.rotate(-90.0F, glm::vec3(1.0, 0.0, 0.0));
+    Entity::add_name(entity, "Dog");
+    Entity::add_model(entity, "res/models/dog/scene.gltf", &m_data);
+    Entity::add_transform(entity, transform);
 
     m_scene->optimize();
     m_scene->update();
