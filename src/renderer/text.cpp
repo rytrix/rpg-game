@@ -11,11 +11,11 @@ TextRenderer::TextRenderer(const char* font_path, u32 font_height)
 
 void TextRenderer::init(const char* font_path, u32 font_height)
 {
-    if (FT_Init_FreeType(&m_freetype)) {
+    if (FT_Init_FreeType(&m_freetype) != 0) {
         util_error("Failed to init freetype");
     }
 
-    if (FT_New_Face(m_freetype, font_path, 0, &m_face)) {
+    if (FT_New_Face(m_freetype, font_path, 0, &m_face) != 0) {
         util_error(std::format("Failed to load font \"{}\"", font_path));
     }
 
@@ -111,6 +111,7 @@ void TextRenderer::setup_atlas()
     info.size.depth = 1;
     m_texture_atlas.init(info);
 
+    m_characters.resize(CHAR_MAX);
     // for (unsigned char c = 0; c < 128; c++) {
     //     load_glyph(c);
     // }
@@ -118,11 +119,11 @@ void TextRenderer::setup_atlas()
 
 int TextRenderer::load_glyph(char c)
 {
-    if (m_characters.contains(c)) {
+    if (m_characters[c].valid) {
         return 0;
     }
 
-    if (FT_Load_Char(m_face, c, FT_LOAD_RENDER)) {
+    if (FT_Load_Char(m_face, c, FT_LOAD_RENDER) != 0) {
         LOG_ERROR(std::format("FREETYPE: Failed to load glyph {}", (char)c));
         return -1;
     }
@@ -139,7 +140,8 @@ int TextRenderer::load_glyph(char c)
     subimage_info.pixels = m_face->glyph->bitmap.buffer;
     m_texture_atlas.sub_image(subimage_info);
 
-    Character character {};
+    Character& character = m_characters[c];
+    character.valid = true;
     character.uv_offset.x = (float)subimage_info.offsets.width / (float)ATLAS_WIDTH;
     character.uv_offset.y = (float)subimage_info.offsets.height / (float)m_pixel_height;
     character.uv_size.x = (float)subimage_info.size.width / (float)ATLAS_WIDTH;
@@ -147,7 +149,6 @@ int TextRenderer::load_glyph(char c)
     character.size = { m_face->glyph->bitmap.width, m_face->glyph->bitmap.rows };
     character.bearing = { m_face->glyph->bitmap_left, m_face->glyph->bitmap_top };
     character.advance = m_face->glyph->advance.x;
-    m_characters.insert({ c, character });
 
     m_current_atlas_width += m_face->glyph->bitmap.width + 1;
 
@@ -166,16 +167,16 @@ void TextRenderer::setup_shader()
 {
     ShaderInfoData<2> out;
 
-    std::vector<char> pbr_file = read_file<char>("res/shaders/text_rendering/text_combined.glsl");
-    std::string_view pbr_file_view = { pbr_file.data(), pbr_file.size() };
+    std::vector<char> text_shader_file = read_file<char>("res/shaders/text_rendering/text_combined.glsl");
+    std::string_view text_shader_file_view = { text_shader_file.data(), text_shader_file.size() };
 
     // Vertex Shader
     out.data.at(0) = std::format("#version 460 core\n");
-    out.data.at(0) += get_lines_between_delims(pbr_file_view, "// Vertex Begin", "// Vertex End");
+    out.data.at(0) += get_lines_between_delims(text_shader_file_view, "// Vertex Begin", "// Vertex End");
 
     // Fragment Shader
     out.data.at(1) += "#version 460 core\n";
-    out.data.at(1) += get_lines_between_delims(pbr_file_view, "// Fragment Begin", "// Fragment End");
+    out.data.at(1) += get_lines_between_delims(text_shader_file_view, "// Fragment Begin", "// Fragment End");
 
     out.populate_info();
 

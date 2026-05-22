@@ -7,17 +7,6 @@
 
 namespace Renderer {
 
-struct Character {
-    // Texture Atlas Coordinates
-    glm::vec2 uv_offset;
-    glm::vec2 uv_size;
-
-    // Freetype Info
-    glm::ivec2 size;
-    glm::ivec2 bearing;
-    u32 advance;
-};
-
 class TextRenderer : public NoCopyNoMove {
 public:
     TextRenderer() = default;
@@ -36,7 +25,19 @@ private:
     FT_Library m_freetype;
     FT_Face m_face;
 
-    std::unordered_map<char, Character> m_characters;
+    struct Character {
+        bool valid = false;
+        // Texture Atlas Coordinates
+        glm::vec2 uv_offset;
+        glm::vec2 uv_size;
+
+        // Freetype Info
+        glm::ivec2 size;
+        glm::ivec2 bearing;
+        u32 advance;
+    };
+
+    std::vector<Character> m_characters;
 
     u32 m_font_height;
     u32 m_pixel_height;
