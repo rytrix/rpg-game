@@ -50,7 +50,7 @@ void Point::update(PointInfo& info)
     m_info = info;
 }
 
-void Point::shadowmap_draw(Renderer::ShaderProgram& shader, const std::function<void()>& draw_function)
+void Point::shadowmap_draw(Renderer::Shader& shader, const std::function<void()>& draw_function)
 {
     util_assert(initialized == true, "Light::Point has not been initialized");
     util_assert(m_info.shadowmap == true, "Trying to call shadowmap_draw on a point light without a shadowmap enabled");
@@ -73,7 +73,7 @@ void Point::shadowmap_draw(Renderer::ShaderProgram& shader, const std::function<
     m_shadowmap_internal->m_shadowmap.unbind();
 }
 
-void Point::set_uniforms(Renderer::ShaderProgram& shader, const char* light_name)
+void Point::set_uniforms(Renderer::Shader& shader, const char* light_name)
 {
     util_assert(initialized == true, "Point has not been initialized");
 

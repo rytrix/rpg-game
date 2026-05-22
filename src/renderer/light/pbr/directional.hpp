@@ -11,7 +11,7 @@ struct Directional {
     glm::vec3 direction;
     glm::vec3 color;
 
-    void set_uniforms(Renderer::ShaderProgram& shader, const char* light_name) const;
+    void set_uniforms(Renderer::Shader& shader, const char* light_name) const;
 };
 
 class DirectionalShadow : public NoCopyNoMove {
@@ -24,7 +24,7 @@ public:
     void shadowmap_begin();
     void shadowmap_draw(Renderer::Model* model);
     void shadowmap_end();
-    void set_uniforms(Renderer::ShaderProgram& shader, const char* light_name);
+    void set_uniforms(Renderer::Shader& shader, const char* light_name);
 
 private:
     glm::mat4 calculate_light_space_matrix(const Directional& light, const glm::mat4 proj, const glm::mat4 view, f32 far);
@@ -33,8 +33,8 @@ private:
     static constexpr usize MAX_CASCADES = 16;
     bool initialized = false;
     u32 m_cascades = 6;
-    Renderer::ShaderProgram m_shader;
-    Renderer::ShaderProgram m_shader_bones;
+    Renderer::Shader m_shader;
+    Renderer::Shader m_shader_bones;
     Renderer::ShadowMap m_shadowmap;
     std::array<glm::mat4, MAX_CASCADES> m_light_space_matrix;
     std::array<f32, MAX_CASCADES + 1> m_cascade_plane_distances;

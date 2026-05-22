@@ -23,8 +23,8 @@ public:
 
     void update(std::span<glm::mat4> models, std::span<AnimationData*> animation_data);
 
-    void draw_untextured(ShaderProgram& shader);
-    void draw(ShaderProgram& shader);
+    void draw_untextured(Shader& shader);
+    void draw(Shader& shader);
 
     const Mesh* get_mesh();
     bool has_bones() const;

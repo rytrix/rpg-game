@@ -49,7 +49,7 @@ void Directional::update(DirectionalInfo& info)
     m_info = info;
 }
 
-void Directional::shadowmap_draw(Renderer::ShaderProgram& shader, const std::function<void()>& draw_function)
+void Directional::shadowmap_draw(Renderer::Shader& shader, const std::function<void()>& draw_function)
 {
     util_assert(initialized == true, "Light::Directional has not been initialized");
     util_assert(m_info.shadowmap == true, "Trying to call shadowmap_draw on a directional light without a shadowmap enabled");
@@ -65,7 +65,7 @@ void Directional::shadowmap_draw(Renderer::ShaderProgram& shader, const std::fun
     m_shadowmap_internal->m_shadowmap.unbind();
 }
 
-void Directional::set_uniforms(Renderer::ShaderProgram& shader, const char* light_name)
+void Directional::set_uniforms(Renderer::Shader& shader, const char* light_name)
 {
     util_assert(initialized == true, "Light::Directional has not been initialized");
 

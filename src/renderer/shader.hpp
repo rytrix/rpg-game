@@ -8,11 +8,11 @@ struct ShaderInfo {
     GLenum type {};
 };
 
-class ShaderProgram : public NoCopyNoMove {
+class Shader : public NoCopyNoMove {
 public:
-    ShaderProgram() = default;
-    ShaderProgram(ShaderInfo* shader_info, std::size_t shader_count);
-    ~ShaderProgram();
+    Shader() = default;
+    Shader(ShaderInfo* shader_info, std::size_t shader_count);
+    ~Shader();
 
     void init(ShaderInfo* shader_info, std::size_t shader_count);
     void deinit();

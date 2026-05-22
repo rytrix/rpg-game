@@ -54,7 +54,7 @@ void GBuffer::bind()
     m_buffer.bind();
 }
 
-void GBuffer::set_uniforms(Renderer::ShaderProgram& shader)
+void GBuffer::set_uniforms(Renderer::Shader& shader)
 {
     util_assert(initialized == true, "not initialized");
 

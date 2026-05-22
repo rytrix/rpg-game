@@ -2,7 +2,7 @@
 
 namespace Renderer::Light::Pbr {
 
-void Point::set_uniforms(Renderer::ShaderProgram& shader, const char* light_name) const
+void Point::set_uniforms(Renderer::Shader& shader, const char* light_name) const
 {
     shader.set_vec3(std::format("{}.position", light_name).c_str(), position);
     shader.set_vec3(std::format("{}.color", light_name).c_str(), color);
@@ -46,7 +46,7 @@ void PointShadow::shadowmap_begin()
     glClear(GL_DEPTH_BUFFER_BIT);
 }
 
-void PointShadow::shadowmap_draw(Renderer::ShaderProgram& shader, const Point& light, Renderer::Model* model)
+void PointShadow::shadowmap_draw(Renderer::Shader& shader, const Point& light, Renderer::Model* model)
 {
     util_assert(initialized == true, "Light::PointShadow has not been initialized");
 
@@ -78,7 +78,7 @@ void PointShadow::shadowmap_end()
     m_shadowmap.unbind();
 }
 
-void PointShadow::set_uniforms(Renderer::ShaderProgram& shader, const char* light_name)
+void PointShadow::set_uniforms(Renderer::Shader& shader, const char* light_name)
 {
     util_assert(initialized == true, "Light::PointShadow has not been initialized");
 

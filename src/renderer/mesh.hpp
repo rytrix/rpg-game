@@ -75,8 +75,8 @@ public:
     void update_bone_matrices(const std::span<AnimationData*> animation_data);
     void next_ssbo_frame();
 
-    void draw_untextured(Renderer::ShaderProgram& shader);
-    void draw(ShaderProgram& shader);
+    void draw_untextured(Renderer::Shader& shader);
+    void draw(Shader& shader);
 
     VertexData m_vertex_data;
 

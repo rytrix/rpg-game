@@ -44,12 +44,12 @@ private:
     bool m_shaders_need_update = true;
 
     // TODO: do I make these global? they never change.
-    Renderer::ShaderProgram m_shader;
-    Renderer::ShaderProgram m_shader_bones;
-    Renderer::ShaderProgram m_shadowmap_shader;
-    Renderer::ShaderProgram m_shadowmap_shader_bones;
-    Renderer::ShaderProgram m_shadowmap_cubemap_shader;
-    Renderer::ShaderProgram m_shadowmap_cubemap_shader_bones;
+    Renderer::Shader m_shader;
+    Renderer::Shader m_shader_bones;
+    Renderer::Shader m_shadowmap_shader;
+    Renderer::Shader m_shadowmap_shader_bones;
+    Renderer::Shader m_shadowmap_cubemap_shader;
+    Renderer::Shader m_shadowmap_cubemap_shader_bones;
 
     entt::registry m_registry;
 

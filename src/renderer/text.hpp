@@ -54,7 +54,7 @@ private:
 
     VertexArray m_vao;
     MappedBuffer m_ssbo;
-    ShaderProgram m_shader;
+    Shader m_shader;
 
     void setup_atlas();
     int load_glyph(char c);

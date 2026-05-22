@@ -8,7 +8,7 @@
 namespace Renderer::Light::Pbr {
 
 struct Point {
-    void set_uniforms(Renderer::ShaderProgram& shader, const char* light_name) const;
+    void set_uniforms(Renderer::Shader& shader, const char* light_name) const;
 
     glm::vec3 position;
     glm::vec3 color;
@@ -22,9 +22,9 @@ public:
     void init();
     void update(const Point& light);
     void shadowmap_begin();
-    void shadowmap_draw(Renderer::ShaderProgram& shader, const Point& light, Renderer::Model* model);
+    void shadowmap_draw(Renderer::Shader& shader, const Point& light, Renderer::Model* model);
     void shadowmap_end();
-    void set_uniforms(Renderer::ShaderProgram& shader, const char* light_name);
+    void set_uniforms(Renderer::Shader& shader, const char* light_name);
 
     static constexpr bool USE_GEOMETRY_SHADER = false;
 

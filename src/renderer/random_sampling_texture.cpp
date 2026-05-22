@@ -43,7 +43,7 @@ RandomSamplingTexture::RandomSamplingTexture(Handle handle, i32 window_size, i32
 {
 }
 
-void RandomSamplingTexture::bind_uniforms(ShaderProgram& shader, const char* uniform_name, TextureCache* cache)
+void RandomSamplingTexture::bind_uniforms(Shader& shader, const char* uniform_name, TextureCache* cache)
 {
     Utils::String buffer;
 

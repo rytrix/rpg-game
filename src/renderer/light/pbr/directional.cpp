@@ -53,7 +53,7 @@ constexpr void get_directional_cascade_shader_geometry(ShaderInfoData<3>& out, c
 
 namespace Renderer::Light::Pbr {
 
-void Directional::set_uniforms(Renderer::ShaderProgram& shader, const char* light_name) const
+void Directional::set_uniforms(Renderer::Shader& shader, const char* light_name) const
 {
     shader.set_vec3(std::format("{}.direction", light_name).c_str(), direction);
     shader.set_vec3(std::format("{}.color", light_name).c_str(), color);
@@ -132,7 +132,7 @@ void DirectionalShadow::shadowmap_draw(Renderer::Model* model)
 {
     util_assert(initialized == true, "Light::DirectionalShadow has not been initialized");
 
-    Renderer::ShaderProgram& shader = model->has_bones() ? m_shader_bones : m_shader;
+    Renderer::Shader& shader = model->has_bones() ? m_shader_bones : m_shader;
     shader.bind();
 
     if constexpr (USE_GEOMETRY_SHADER) {
@@ -162,7 +162,7 @@ void DirectionalShadow::shadowmap_end()
     m_shadowmap.unbind();
 }
 
-void DirectionalShadow::set_uniforms(Renderer::ShaderProgram& shader, const char* light_name)
+void DirectionalShadow::set_uniforms(Renderer::Shader& shader, const char* light_name)
 {
     util_assert(initialized == true, "Light::DirectionalShadow has not been initialized");
 

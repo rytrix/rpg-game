@@ -96,7 +96,7 @@ void Mesh::next_ssbo_frame()
     }
 }
 
-void Mesh::draw_untextured(Renderer::ShaderProgram& shader)
+void Mesh::draw_untextured(Renderer::Shader& shader)
 {
     util_assert(initialized == true, "not initialized");
 
@@ -131,7 +131,7 @@ void Mesh::draw_untextured(Renderer::ShaderProgram& shader)
     }
 }
 
-void Mesh::draw(ShaderProgram& shader)
+void Mesh::draw(Shader& shader)
 {
     util_assert(initialized == true, "not initialized");
 

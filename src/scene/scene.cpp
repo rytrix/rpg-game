@@ -349,7 +349,7 @@ void Scene::draw()
         shadow.update(light);
         shadow.shadowmap_begin();
         for (auto& model : m_models_instance_draw_cache) {
-            Renderer::ShaderProgram& shader = model.m_model->has_bones() ? m_shadowmap_cubemap_shader_bones : m_shadowmap_cubemap_shader;
+            Renderer::Shader& shader = model.m_model->has_bones() ? m_shadowmap_cubemap_shader_bones : m_shadowmap_cubemap_shader;
             shadow.shadowmap_draw(shader, light, model.m_model);
         }
         shadow.shadowmap_end();
@@ -360,7 +360,7 @@ void Scene::draw()
         shadow.update(light);
         shadow.shadowmap_begin();
         for (auto& model : m_models_instance_draw_cache) {
-            Renderer::ShaderProgram& shader = model.m_model->has_bones() ? m_shadowmap_shader_bones : m_shadowmap_shader;
+            Renderer::Shader& shader = model.m_model->has_bones() ? m_shadowmap_shader_bones : m_shadowmap_shader;
             shadow.shadowmap_draw(shader, model.m_model);
         }
         shadow.shadowmap_end();
@@ -371,7 +371,7 @@ void Scene::draw()
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
     for (auto& model : m_models_instance_draw_cache) {
-        Renderer::ShaderProgram& shader = model.m_model->has_bones() ? m_shader_bones : m_shader;
+        Renderer::Shader& shader = model.m_model->has_bones() ? m_shader_bones : m_shader;
         shader.bind();
         shader.set_mat4("proj", m_app_data->m_camera.get_proj());
         shader.set_mat4("view", m_app_data->m_camera.get_view());

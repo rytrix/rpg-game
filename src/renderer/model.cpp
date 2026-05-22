@@ -77,14 +77,14 @@ Model::~Model()
     initialized = false;
 }
 
-void Model::draw_untextured(ShaderProgram& shader)
+void Model::draw_untextured(Shader& shader)
 {
     util_assert(initialized == true, "not initialized");
 
     m_mesh.draw_untextured(shader);
 }
 
-void Model::draw(ShaderProgram& shader)
+void Model::draw(Shader& shader)
 {
     util_assert(initialized == true, "not initialized");
 

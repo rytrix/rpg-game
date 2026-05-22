@@ -8,11 +8,11 @@ namespace Renderer {
 
 namespace {
 
-    class Shader : public NoCopyNoMove {
+    class OpenGLShader : public NoCopyNoMove {
     public:
-        Shader() = default;
-        Shader(bool is_file, const char* shader, GLenum type);
-        ~Shader();
+        OpenGLShader() = default;
+        OpenGLShader(bool is_file, const char* shader, GLenum type);
+        ~OpenGLShader();
 
         void init(bool is_file, const char* shader, GLenum type);
 
@@ -26,19 +26,19 @@ namespace {
         [[nodiscard]] bool has_errors() const;
     };
 
-    Shader::Shader(bool is_file, const char* shader, GLenum type)
+    OpenGLShader::OpenGLShader(bool is_file, const char* shader, GLenum type)
     {
         init(is_file, shader, type);
     }
 
-    Shader::~Shader()
+    OpenGLShader::~OpenGLShader()
     {
         if (!m_errors) {
             glDeleteShader(m_id);
         }
     }
 
-    void Shader::init(bool is_file, const char* shader, GLenum type)
+    void OpenGLShader::init(bool is_file, const char* shader, GLenum type)
     {
         m_id = glCreateShader(type);
 
@@ -73,24 +73,24 @@ namespace {
         m_errors = false;
     }
 
-    [[nodiscard]] GLuint Shader::get_id() const
+    [[nodiscard]] GLuint OpenGLShader::get_id() const
     {
         return m_id;
     }
 
 } // Anonymous namespace
 
-ShaderProgram::ShaderProgram(ShaderInfo* shader_info, std::size_t shader_count)
+Shader::Shader(ShaderInfo* shader_info, std::size_t shader_count)
 {
     init(shader_info, shader_count);
 }
 
-ShaderProgram::~ShaderProgram()
+Shader::~Shader()
 {
     deinit();
 }
 
-void ShaderProgram::deinit()
+void Shader::deinit()
 {
     if (initialized) {
         if (!m_errors) {
@@ -100,7 +100,7 @@ void ShaderProgram::deinit()
     initialized = false;
 }
 
-void ShaderProgram::init(ShaderInfo* shader_info, std::size_t shader_count)
+void Shader::init(ShaderInfo* shader_info, std::size_t shader_count)
 {
     util_assert(initialized == false, "already initialized");
 
@@ -111,7 +111,7 @@ void ShaderProgram::init(ShaderInfo* shader_info, std::size_t shader_count)
         util_assert(m_errors == false, "shader program has errors");
         return;
     }
-    std::array<Shader, MAX_SHADER_COUNT> shaders;
+    std::array<OpenGLShader, MAX_SHADER_COUNT> shaders;
 
     m_id = glCreateProgram();
 
@@ -130,18 +130,18 @@ void ShaderProgram::init(ShaderInfo* shader_info, std::size_t shader_count)
     initialized = true;
 }
 
-[[nodiscard]] bool ShaderProgram::is_initialized() const
+[[nodiscard]] bool Shader::is_initialized() const
 {
     return initialized;
 }
 
-bool ShaderProgram::has_errors() const
+bool Shader::has_errors() const
 {
     util_assert(initialized == true, "not initialized");
     return m_errors;
 }
 
-bool ShaderProgram::errors_internal() const
+bool Shader::errors_internal() const
 {
     int program_linked = 0;
 
@@ -161,79 +161,79 @@ bool ShaderProgram::errors_internal() const
     return false;
 }
 
-void ShaderProgram::bind()
+void Shader::bind()
 {
     util_assert(initialized == true, "not initialized");
     glUseProgram(m_id);
 }
 
-void ShaderProgram::set_bool(const char* name, bool value)
+void Shader::set_bool(const char* name, bool value)
 {
     util_assert(initialized == true, "not initialized");
     glUniform1i(glGetUniformLocation(m_id, name), value);
 }
 
-void ShaderProgram::set_int(const char* name, int value)
+void Shader::set_int(const char* name, int value)
 {
     util_assert(initialized == true, "not initialized");
     glUniform1i(glGetUniformLocation(m_id, name), value);
 }
 
-void ShaderProgram::set_float(const char* name, float value)
+void Shader::set_float(const char* name, float value)
 {
     util_assert(initialized == true, "not initialized");
     glUniform1f(glGetUniformLocation(m_id, name), value);
 }
 
-void ShaderProgram::set_vec2(const char* name, glm::vec2 value)
+void Shader::set_vec2(const char* name, glm::vec2 value)
 {
     util_assert(initialized == true, "not initialized");
     glUniform2fv(glGetUniformLocation(m_id, name), 1, &value[0]);
 }
 
-void ShaderProgram::set_vec2s(const char* name, float value1, float value2)
+void Shader::set_vec2s(const char* name, float value1, float value2)
 {
     util_assert(initialized == true, "not initialized");
     glUniform2f(glGetUniformLocation(m_id, name), value1, value2);
 }
 
-void ShaderProgram::set_vec3(const char* name, glm::vec3 value)
+void Shader::set_vec3(const char* name, glm::vec3 value)
 {
     util_assert(initialized == true, "not initialized");
     glUniform3fv(glGetUniformLocation(m_id, name), 1, &value[0]);
 }
 
-void ShaderProgram::set_vec3s(const char* name, float value1, float value2, float value3)
+void Shader::set_vec3s(const char* name, float value1, float value2, float value3)
 {
     util_assert(initialized == true, "not initialized");
     glUniform3f(glGetUniformLocation(m_id, name), value1, value2, value3);
 }
 
-void ShaderProgram::set_vec4(const char* name, glm::vec4 value)
+void Shader::set_vec4(const char* name, glm::vec4 value)
 {
     util_assert(initialized == true, "not initialized");
     glUniform4fv(glGetUniformLocation(m_id, name), 1, &value[0]);
 }
 
-void ShaderProgram::set_vec4s(const char* name, float value1, float value2, float value3, float value4)
+void Shader::set_vec4s(const char* name, float value1, float value2, float value3, float value4)
 {
     util_assert(initialized == true, "not initialized");
     glUniform4f(glGetUniformLocation(m_id, name), value1, value2, value3, value4);
 }
 
-void ShaderProgram::set_mat2(const char* name, glm::mat2 value)
+void Shader::set_mat2(const char* name, glm::mat2 value)
 {
     util_assert(initialized == true, "not initialized");
     glUniformMatrix2fv(glGetUniformLocation(m_id, name), 1, GL_FALSE, &value[0][0]);
 }
 
-void ShaderProgram::set_mat3(const char* name, glm::mat3 value)
+void Shader::set_mat3(const char* name, glm::mat3 value)
 {
     util_assert(initialized == true, "not initialized");
     glUniformMatrix3fv(glGetUniformLocation(m_id, name), 1, GL_FALSE, &value[0][0]);
 }
 
-void ShaderProgram::set_mat4(const char* name, glm::mat4 value)
+void Shader::set_mat4(const char* name, glm::mat4 value)
 {
     util_assert(initialized == true, "not initialized");
     glUniformMatrix4fv(glGetUniformLocation(m_id, name), 1, GL_FALSE, &value[0][0]);

@@ -32,9 +32,9 @@ public:
     void update(PointInfo& info);
 
     // Changes viewport need to fix after
-    void shadowmap_draw(Renderer::ShaderProgram& shader, const std::function<void()>& draw_function);
+    void shadowmap_draw(Renderer::Shader& shader, const std::function<void()>& draw_function);
 
-    void set_uniforms(Renderer::ShaderProgram& shader, const char* light_name);
+    void set_uniforms(Renderer::Shader& shader, const char* light_name);
 
     bool has_shadowmap();
 

@@ -19,7 +19,7 @@ public:
 
     void blit_depth_buffer();
 
-    void set_uniforms(Renderer::ShaderProgram& shader);
+    void set_uniforms(Renderer::Shader& shader);
 
 private:
     bool initialized = false;

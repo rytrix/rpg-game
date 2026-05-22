@@ -13,7 +13,7 @@ struct Spot {
     f32 inner_cutoff;
     f32 outer_cutoff;
 
-    void set_uniforms(Renderer::ShaderProgram& shader, const char* light_name) const;
+    void set_uniforms(Renderer::Shader& shader, const char* light_name) const;
 };
 
 class SpotShadow : public NoCopyNoMove {
@@ -24,9 +24,9 @@ public:
     void init();
     void update(const Spot& light);
     void shadowmap_begin();
-    void shadowmap_draw(Renderer::ShaderProgram& shader, Renderer::Model* model);
+    void shadowmap_draw(Renderer::Shader& shader, Renderer::Model* model);
     void shadowmap_end();
-    void set_uniforms(Renderer::ShaderProgram& shader, const char* light_name);
+    void set_uniforms(Renderer::Shader& shader, const char* light_name);
 
 private:
     bool initialized = false;

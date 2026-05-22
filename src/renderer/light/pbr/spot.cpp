@@ -2,7 +2,7 @@
 
 namespace Renderer::Light::Pbr {
 
-void Spot::set_uniforms(Renderer::ShaderProgram& shader, const char* light_name) const
+void Spot::set_uniforms(Renderer::Shader& shader, const char* light_name) const
 {
     shader.set_vec3(std::format("{}.position", light_name).c_str(), position);
     shader.set_vec3(std::format("{}.direction", light_name).c_str(), direction);
@@ -53,7 +53,7 @@ void SpotShadow::shadowmap_begin()
     glClear(GL_DEPTH_BUFFER_BIT);
 }
 
-void SpotShadow::shadowmap_draw(Renderer::ShaderProgram& shader, Renderer::Model* model)
+void SpotShadow::shadowmap_draw(Renderer::Shader& shader, Renderer::Model* model)
 {
     util_assert(initialized == true, "Light::SpotShadow has not been initialized");
 
@@ -69,7 +69,7 @@ void SpotShadow::shadowmap_end()
     m_shadowmap.unbind();
 }
 
-void SpotShadow::set_uniforms(Renderer::ShaderProgram& shader, const char* light_name)
+void SpotShadow::set_uniforms(Renderer::Shader& shader, const char* light_name)
 {
     util_assert(initialized == true, "Light::SpotShadow has not been initialized");
 
