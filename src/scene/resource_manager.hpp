@@ -60,7 +60,7 @@ ResourceManager<DataType>::~ResourceManager()
 {
     for (u32 i = 0; i < m_data_size; i++) {
         if (m_data[i].generation.valid == 1) {
-            m_data[i].data.~DataType();
+            std::destroy_at(&m_data[i].data);
         }
     }
 
@@ -151,7 +151,8 @@ DataType* ResourceManager<DataType>::create(Handle handle, Args&&... args)
     if (data == nullptr) {
         return data;
     } else {
-        new (data) DataType(std::forward<Args>(args)...);
+        std::construct_at(data, std::forward<Args>(args)...);
+        // new (data) DataType(std::forward<Args>(args)...);
         return data;
     }
 }
