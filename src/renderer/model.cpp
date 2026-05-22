@@ -267,7 +267,7 @@ Handle Model::load_material_texture(const aiMaterial* mat, const aiTextureType t
             Utils::String texture_path;
             texture_path.format("{}/{}", m_directory.c_str(), str.C_Str());
 
-            texture_info.from_file = GL_TRUE;
+            texture_info.origin = TextureOrigin::File;
             texture_info.file_path = texture_path.c_str();
 
             LOG_INFO(std::format("Loading {} type {}", texture_path.view(), aiTextureTypeToString(type)));
@@ -288,32 +288,41 @@ Handle Model::load_material_texture(const aiMaterial* mat, const aiTextureType t
             if (texture_cache->contains(texture_path)) {
                 return texture_cache->get(texture_path);
             } else {
-                int width, height, channels;
-                TextureSubimageInfo subimage_info;
-                stbi_set_flip_vertically_on_load((int)texture_info.flip);
-                unsigned char* data = stbi_load_from_memory((const stbi_uc*)embedded_texture->pcData, embedded_texture->mWidth, &width, &height, &channels, 0);
+                texture_info.origin = TextureOrigin::Memory;
+                texture_info.memory = (char*)embedded_texture->pcData;
+                texture_info.memory_size = embedded_texture->mWidth;
 
-                texture_info.from_file = GL_FALSE;
-                if (channels == 4) {
-                    texture_info.internal_format = GL_RGBA8;
-                    subimage_info.format = GL_RGBA;
-                } else if (channels == 3) {
-                    texture_info.internal_format = GL_RGB8;
-                    subimage_info.format = GL_RGB;
-                }
-                texture_info.size.width = width;
-                texture_info.size.height = height;
-                texture_info.size.depth = 0;
                 auto handle = texture_cache->get_or_create(texture_path, texture_info);
                 Texture* texture = texture_cache->get(handle);
-
-                subimage_info.pixels = data;
-                subimage_info.size = texture_info.size;
-                subimage_info.type = GL_UNSIGNED_BYTE;
-                texture->sub_image(subimage_info);
                 texture->set_max_anisotropy(16.0F);
 
-                stbi_image_free(data);
+                // int width, height, channels;
+                // TextureSubimageInfo subimage_info;
+                // stbi_set_flip_vertically_on_load((int)texture_info.flip);
+                // unsigned char* data = stbi_load_from_memory((const stbi_uc*)embedded_texture->pcData, embedded_texture->mWidth, &width, &height, &channels, 0);
+
+                // texture_info.from_file = GL_FALSE;
+                // if (channels == 4) {
+                //     texture_info.internal_format = GL_RGBA8;
+                //     subimage_info.format = GL_RGBA;
+                // } else if (channels == 3) {
+                //     texture_info.internal_format = GL_RGB8;
+                //     subimage_info.format = GL_RGB;
+                // }
+                // texture_info.size.width = width;
+                // texture_info.size.height = height;
+                // texture_info.size.depth = 0;
+                // auto handle = texture_cache->get_or_create(texture_path, texture_info);
+                // Texture* texture = texture_cache->get(handle);
+
+                // subimage_info.pixels = data;
+                // subimage_info.size = texture_info.size;
+                // subimage_info.type = GL_UNSIGNED_BYTE;
+                // texture->sub_image(subimage_info);
+
+                // texture->set_max_anisotropy(16.0F);
+
+                // stbi_image_free(data);
 
                 return handle;
             }

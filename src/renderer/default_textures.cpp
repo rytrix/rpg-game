@@ -29,7 +29,7 @@ void DefaultTextures::init(TextureCache* cache)
     };
     TextureInfo texture_info;
     texture_info.size = size;
-    texture_info.from_file = GL_FALSE;
+    texture_info.origin = TextureOrigin::Void;
     texture_info.mipmaps = false;
     texture_info.flip = false;
     texture_info.internal_format = GL_RGBA8;

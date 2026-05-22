@@ -104,8 +104,13 @@ void Texture::init(TextureInfo& info)
 
     initialized = true;
 
-    if (info.from_file) {
+    if (info.origin == TextureOrigin::File) {
         from_file(info.file_path, info.flip, info.mipmap_levels);
+        if (mipmaps) {
+            generate_mipmap();
+        }
+    } else if (info.origin == TextureOrigin::Memory) {
+        from_memory(info.memory, info.memory_size, info.flip, info.mipmap_levels);
         if (mipmaps) {
             generate_mipmap();
         }
@@ -309,6 +314,40 @@ void Texture::from_file(const char* file, bool flip, GLint mipmap_levels)
     }
 
     sub_image(info);
+
+    stbi_image_free(data);
+}
+
+void Texture::from_memory(char* memory, GLint memory_size, bool flip, GLint mipmap_levels)
+{
+    util_assert(initialized == true, "not initialized");
+
+    if (m_dimensions != GL_TEXTURE_2D) {
+        util_error("currently only 2D textures are supported from files");
+    }
+
+    stbi_set_flip_vertically_on_load((int)flip);
+
+    TextureSize size {};
+    int nr_channels {};
+    unsigned char* data = stbi_load_from_memory((const stbi_uc*)memory, memory_size, &size.width, &size.height, &nr_channels, 0);
+
+    TextureSubimageInfo subimage_info;
+    subimage_info.pixels = data;
+    subimage_info.size = size;
+    subimage_info.type = GL_UNSIGNED_BYTE;
+
+    if (nr_channels == 3) {
+        texture_storage(subimage_info.size, GL_RGB8, mipmap_levels);
+        subimage_info.format = GL_RGB;
+    } else if (nr_channels == 4) {
+        texture_storage(subimage_info.size, GL_RGBA8, mipmap_levels);
+        subimage_info.format = GL_RGBA;
+    } else {
+        util_error(std::format("invalid number of channels \"{}\"", nr_channels));
+    }
+
+    sub_image(subimage_info);
 
     stbi_image_free(data);
 }

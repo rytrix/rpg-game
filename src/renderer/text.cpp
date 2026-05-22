@@ -11,6 +11,7 @@ TextRenderer::TextRenderer(const char* font_path, u32 font_height)
 
 void TextRenderer::init(const char* font_path, u32 font_height)
 {
+    util_assert(initialized == false, "already initialized");
     if (FT_Init_FreeType(&m_freetype) != 0) {
         util_error("Failed to init freetype");
     }
@@ -22,21 +23,25 @@ void TextRenderer::init(const char* font_path, u32 font_height)
     FT_Set_Pixel_Sizes(m_face, 0, font_height);
     m_font_height = font_height;
 
-    update_view(800.0F, 800.0F);
-
     setup_atlas();
     setup_quad();
     setup_shader();
+    initialized = true;
+
+    update_view(800.0F, 800.0F);
 }
 
 TextRenderer::~TextRenderer()
 {
-    FT_Done_Face(m_face);
-    FT_Done_FreeType(m_freetype);
+    if (initialized) {
+        FT_Done_Face(m_face);
+        FT_Done_FreeType(m_freetype);
+    }
 }
 
 void TextRenderer::draw_text(u32 x, u32 y, const char* text, glm::vec3 color, float scale)
 {
+    util_assert(initialized == true, "not initialized");
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
@@ -92,6 +97,7 @@ void TextRenderer::draw_text(u32 x, u32 y, const char* text, glm::vec3 color, fl
 
 void TextRenderer::update_view(float width, float height)
 {
+    util_assert(initialized == true, "not initialized");
     m_projection = glm::ortho(0.0F, width, 0.0F, height);
 }
 
