@@ -115,11 +115,11 @@ void Skybox::setup_shader()
 {
     ShaderInfoData<2> out;
 
-    std::vector<char> text_shader_file = read_file<char>("res/shaders/forward_pass/skybox.glsl");
+    std::vector<char> text_shader_file = read_file<char>("res/shaders/skybox/skybox.glsl");
     std::string_view text_shader_file_view = { text_shader_file.data(), text_shader_file.size() };
 
     // Vertex Shader
-    out.data.at(0) = std::format("#version 460 core\n");
+    out.data.at(0) = "#version 460 core\n";
     out.data.at(0) += get_lines_between_delims(text_shader_file_view, "// Vertex Begin", "// Vertex End");
 
     // Fragment Shader
