@@ -93,6 +93,8 @@ public:
 
     std::vector<BaseVertex> m_base_vertices;
 
+    std::deque<Animation> m_animations;
+
 private:
     void setup_mesh();
 

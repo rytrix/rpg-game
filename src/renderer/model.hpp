@@ -26,10 +26,7 @@ public:
     void draw_untextured(Shader& shader);
     void draw(Shader& shader);
 
-    const Mesh* get_mesh();
-    bool has_bones() const;
-
-    std::deque<Animation>& get_animations();
+    Mesh* get_mesh();
 
 private:
     bool initialized = false;
@@ -39,7 +36,6 @@ private:
     std::string m_directory;
 
     Mesh m_mesh;
-    std::deque<Animation> m_animations;
 
     void setup_mesh(const aiScene* scene);
     void setup_animations(const aiScene* scene);

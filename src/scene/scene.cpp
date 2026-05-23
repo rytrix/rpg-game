@@ -147,68 +147,6 @@ Entity Scene::create_entity()
     return { this, entity };
 }
 
-// void Scene::add_entity(const EntityBuilder& entity_builder)
-// {
-//     auto entity = m_registry.create();
-//     if (entity_builder.m_name != nullptr) {
-//         m_registry.emplace<const char*>(entity, entity_builder.m_name);
-//     }
-
-//     if (entity_builder.m_model_path != nullptr) {
-//         auto* model_cache = &m_app_data->m_model_cache;
-//         auto handle = model_cache->get_or_create(entity_builder.m_model_path, entity_builder.m_model_path, m_app_data);
-//         auto* model = model_cache->get(handle);
-
-//         if (model->has_bones()) {
-//             m_registry.emplace<Renderer::AnimationData>(entity);
-//             auto& data = m_registry.get<Renderer::AnimationData>(entity);
-//             for (auto& animation : model->get_animations()) {
-//                 data.data.emplace_back(animation.create_per_animation_data());
-//             }
-//         }
-
-//         m_registry.emplace<Renderer::Model*>(entity, model);
-//         // TODO: Decide if I want physics objects without models someday
-//         if (entity_builder.m_create_body != nullptr) {
-//             auto physics_info
-//                 = entity_builder.m_create_body(m_physics_system.get(), m_registry.get<Renderer::Model*>(entity));
-//             m_registry.emplace<JPH::BodyID>(entity, physics_info.first);
-//             m_registry.emplace<JPH::EMotionType>(entity, physics_info.second);
-//             m_physics_needs_optimize = true;
-//         }
-//         m_models_instance_draw_cache_needs_update = true;
-//     }
-
-//     if (entity_builder.m_pbr_directional != nullptr) {
-//         m_registry.emplace<Renderer::Light::Pbr::Directional>(entity, *entity_builder.m_pbr_directional);
-//         if (entity_builder.m_pbr_directional_shadow) {
-//             m_registry.emplace<Renderer::Light::Pbr::DirectionalShadow>(entity);
-//             m_registry.get<Renderer::Light::Pbr::DirectionalShadow>(entity).init();
-//         }
-//         m_shaders_need_update = true;
-//     }
-
-//     if (entity_builder.m_pbr_point != nullptr) {
-//         m_registry.emplace<Renderer::Light::Pbr::Point>(entity, *entity_builder.m_pbr_point);
-//         if (entity_builder.m_pbr_point_shadow) {
-//             m_registry.emplace<Renderer::Light::Pbr::PointShadow>(entity);
-//             m_registry.get<Renderer::Light::Pbr::PointShadow>(entity).init();
-//         }
-//         m_shaders_need_update = true;
-//     }
-
-//     if (entity_builder.m_pbr_spot != nullptr) {
-//         m_registry.emplace<Renderer::Light::Pbr::Spot>(entity, *entity_builder.m_pbr_spot);
-//         if (entity_builder.m_pbr_spot_shadow) {
-//             m_registry.emplace<Renderer::Light::Pbr::SpotShadow>(entity);
-//             m_registry.get<Renderer::Light::Pbr::SpotShadow>(entity).init();
-//         }
-//         m_shaders_need_update = true;
-//     }
-
-//     m_registry.emplace<Transform>(entity, entity_builder.m_transform);
-// }
-
 void Scene::optimize()
 {
     m_physics_system->optimize();
@@ -269,7 +207,7 @@ void Scene::draw()
                 if (model == model_cached.m_model) {
                     model_cached.m_model_matrices.emplace_back(transform.get_model());
 
-                    if (model_cached.m_model->has_bones()) {
+                    if (model_cached.m_model->get_mesh()->m_has_bones) {
                         auto& data = m_registry.get<Renderer::AnimationData>(entity);
                         model_cached.m_animation_data.emplace_back(&data);
                     }
@@ -353,7 +291,7 @@ void Scene::draw()
         shadow.update(light);
         shadow.shadowmap_begin();
         for (auto& model : m_models_instance_draw_cache) {
-            Renderer::Shader& shader = model.m_model->has_bones() ? m_shadowmap_cubemap_shader_bones : m_shadowmap_cubemap_shader;
+            Renderer::Shader& shader = model.m_model->get_mesh()->m_has_bones ? m_shadowmap_cubemap_shader_bones : m_shadowmap_cubemap_shader;
             shadow.shadowmap_draw(shader, light, model.m_model);
         }
         shadow.shadowmap_end();
@@ -364,7 +302,7 @@ void Scene::draw()
         shadow.update(light);
         shadow.shadowmap_begin();
         for (auto& model : m_models_instance_draw_cache) {
-            Renderer::Shader& shader = model.m_model->has_bones() ? m_shadowmap_shader_bones : m_shadowmap_shader;
+            Renderer::Shader& shader = model.m_model->get_mesh()->m_has_bones ? m_shadowmap_shader_bones : m_shadowmap_shader;
             shadow.shadowmap_draw(shader, model.m_model);
         }
         shadow.shadowmap_end();
@@ -375,7 +313,7 @@ void Scene::draw()
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
     for (auto& model : m_models_instance_draw_cache) {
-        Renderer::Shader& shader = model.m_model->has_bones() ? m_shader_bones : m_shader;
+        Renderer::Shader& shader = model.m_model->get_mesh()->m_has_bones ? m_shader_bones : m_shader;
         shader.bind();
         shader.set_mat4("proj", m_app_data->m_camera.get_proj());
         shader.set_mat4("view", m_app_data->m_camera.get_view());
@@ -471,7 +409,7 @@ void Scene::draw_debug_imgui()
                     auto& model = *try_model;
                     auto& animation_data = *try_animation_data;
 
-                    auto& animations = model->get_animations();
+                    auto& animations = model->get_mesh()->m_animations;
                     i32 current_animation = static_cast<int>(animation_data.selected_animation);
 
                     ImGui::Text("Animation");

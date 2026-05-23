@@ -11,14 +11,12 @@ class Entity;
 
 class Scene : public NoCopyNoMove {
     friend class Entity;
-    friend class EntityHelper;
 
 public:
     explicit Scene(GlobalAppData* app_data);
     ~Scene();
 
     Entity create_entity();
-    // void add_entity(const EntityBuilder& entity);
 
     // Call update after adding an entity (or maybe I do that internally)
     void update();
@@ -43,7 +41,6 @@ private:
 
     bool m_shaders_need_update = true;
 
-    // TODO: do I make these global? they never change.
     Renderer::Shader m_shader;
     Renderer::Shader m_shader_bones;
     Renderer::Shader m_shadowmap_shader;

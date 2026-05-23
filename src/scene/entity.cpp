@@ -19,9 +19,9 @@ void Entity::add_model(Entity entity, const char* path, GlobalAppData* app_data)
     auto handle = model_cache->get_or_create(path, path, app_data);
     auto* model = model_cache->get(handle);
 
-    if (model->has_bones()) {
+    if (model->get_mesh()->m_has_bones) {
         auto& data = entity.add_component<Renderer::AnimationData>();
-        for (auto& animation : model->get_animations()) {
+        for (auto& animation : model->get_mesh()->m_animations) {
             data.data.emplace_back(animation.create_per_animation_data());
         }
     }

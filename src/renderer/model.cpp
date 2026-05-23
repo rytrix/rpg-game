@@ -59,13 +59,13 @@ void Model::setup_animations(const aiScene* scene)
 {
     glm::mat4 global_inverse_transform = glm::inverse(mat4_to_mat4(scene->mRootNode->mTransformation));
 
-    m_animations.resize(scene->mNumAnimations);
+    m_mesh.m_animations.resize(scene->mNumAnimations);
 
     for (u32 i = 0; i < scene->mNumAnimations; i++) {
         auto* animation = scene->mAnimations[i];
         LOG_INFO(std::format("Animation info: Name: {}, Duration: {}, Ticks Per Second: {}", animation->mName.C_Str(), animation->mDuration, animation->mTicksPerSecond));
 
-        m_animations[i].init(scene,
+        m_mesh.m_animations[i].init(scene,
             animation,
             m_mesh.m_bone_id_map,
             global_inverse_transform);
@@ -102,22 +102,10 @@ void Model::update(std::span<glm::mat4> models, std::span<AnimationData*> animat
     }
 }
 
-const Mesh* Model::get_mesh()
+Mesh* Model::get_mesh()
 {
     util_assert(initialized == true, "not initialized");
     return &m_mesh;
-}
-
-bool Model::has_bones() const
-{
-    util_assert(initialized == true, "not initialized");
-    return m_mesh.m_has_bones;
-}
-
-std::deque<Animation>& Model::get_animations()
-{
-    util_assert(initialized == true, "not initialized");
-    return m_animations;
 }
 
 void Model::process_node(aiNode* node, const aiScene* scene)
