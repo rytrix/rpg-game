@@ -89,6 +89,13 @@ void Skybox::init(SkyboxInfo& info)
     initialized = true;
 }
 
+Skybox::~Skybox()
+{
+    if (initialized) {
+        initialized = false;
+    }
+}
+
 void Skybox::draw(const Camera& camera)
 {
     util_assert(initialized == true, "not initialized");

@@ -21,6 +21,8 @@ public:
     Skybox(SkyboxInfo& info);
     void init(SkyboxInfo& info);
 
+    ~Skybox();
+
     void draw(const Camera& camera);
 
 private:

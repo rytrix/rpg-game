@@ -36,6 +36,8 @@ TextRenderer::~TextRenderer()
     if (initialized) {
         FT_Done_Face(m_face);
         FT_Done_FreeType(m_freetype);
+
+        initialized = false;
     }
 }
 

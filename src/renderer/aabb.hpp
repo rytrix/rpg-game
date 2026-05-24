@@ -15,13 +15,49 @@ struct Ray {
     }
 };
 
+struct Plane {
+    glm::vec3 normal;
+};
+
+struct Ring {
+    glm::vec3 position;
+    glm::vec3 normal;
+    f32 radius;
+    f32 thickness;
+};
+
+constexpr std::optional<float> intersect_ray_ring(const Ray& ray, const Ring& ring)
+{
+    float denom = glm::dot(ray.direction, ring.normal);
+
+    if (glm::abs(denom) < 1e-6F) {
+        return std::nullopt; // Parallel to plane
+    }
+
+    float t = glm::dot(ring.position - ray.position, ring.normal) / denom;
+
+    if (t < 0.0F) {
+        return std::nullopt;
+    }
+
+    glm::vec3 hit_point = ray.position + (ray.direction * t);
+
+    float dist_from_center = glm::length(hit_point - ring.position);
+
+    if (glm::abs(dist_from_center - ring.radius) <= ring.thickness * 0.5F) {
+        return t;
+    }
+
+    return std::nullopt;
+}
+
 struct AABB {
     glm::vec3 min;
     glm::vec3 max;
 
-    [[nodiscard]] AABB transformed(const glm::mat4& transform) const
+    [[nodiscard]] AABB transform(const glm::mat4& transform) const
     {
-        return transformed_fast(transform);
+        return transform_fast(transform);
     }
 
     [[nodiscard]] bool intersection(const glm::vec3& position) const
@@ -65,7 +101,7 @@ struct AABB {
 
 private:
     // I know this function is correct
-    [[nodiscard]] AABB transformed_naive(const glm::mat4& transform)
+    [[nodiscard]] AABB transform_naive(const glm::mat4& transform)
     {
         AABB result;
 
@@ -92,7 +128,7 @@ private:
         return result;
     }
 
-    [[nodiscard]] AABB transformed_fast(const glm::mat4& transform) const
+    [[nodiscard]] AABB transform_fast(const glm::mat4& transform) const
     {
         AABB result;
 

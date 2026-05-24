@@ -2,11 +2,9 @@
 
 #include "renderer/text.hpp"
 
-#define DEBUG_RAY_HIT
-bool ray_intersecton_mouse(const Renderer::AABB& aabb, Transform& transform, GlobalAppData* data)
+// #define DEBUG_RAY_HIT
+bool ray_intersecton_mouse(const Renderer::AABB& aabb, GlobalAppData* data)
 {
-    auto transform_AABB = aabb.transformed(transform.get_model());
-
     glm::mat4 inv_proj_view = data->m_camera.get_inverse_proj_view();
 
     glm::vec2 mouse_pos = data->m_window.get_mouse_pos();
@@ -24,39 +22,51 @@ bool ray_intersecton_mouse(const Renderer::AABB& aabb, Transform& transform, Glo
 
 #ifdef DEBUG_RAY_HIT
     std::println("ray_dir {} {} {}", ray_dir.x, ray_dir.y, ray_dir.z);
-    std::println("AABB min: {} {} {}", transform_AABB.min.x, transform_AABB.min.y, transform_AABB.min.z);
-    std::println("AABB max: {} {} {}", transform_AABB.max.x, transform_AABB.max.y, transform_AABB.max.z);
+    std::println("AABB min: {} {} {}", aabb.min.x, aabb.min.y, aabb.min.z);
+    std::println("AABB max: {} {} {}", aabb.max.x, aabb.max.y, aabb.max.z);
 #endif
 
-    return transform_AABB.ray_intersection(ray);
+    return aabb.ray_intersection(ray);
+}
+
+bool ray_intersecton_mouse(const Renderer::AABB& aabb, Transform& transform, GlobalAppData* data)
+{
+    auto transform_AABB = aabb.transform(transform.get_model());
+
+    return ray_intersecton_mouse(transform_AABB, data);
+}
+
+std::optional<glm::vec3> ray_intersecton_mouse_point(const Renderer::AABB& aabb, GlobalAppData* data)
+{
+    glm::mat4 inv_proj_view = data->m_camera.get_inverse_proj_view();
+
+    glm::vec2 mouse_pos = data->m_window.get_mouse_pos();
+    glm::vec2 screen_size = data->m_window.get_size_f32();
+
+    glm::vec2 screen_coord = (mouse_pos / screen_size);
+    screen_coord.y = 1.0F - screen_coord.y;
+    screen_coord = 2.0F * screen_coord - 1.0F;
+
+    glm::vec4 target
+        = inv_proj_view * glm::vec4(screen_coord.x, screen_coord.y, 1.0F, 1.0F);
+    glm::vec3 ray_dir = glm::normalize(glm::vec3(target) / target.w);
+
+    Renderer::Ray ray(data->m_camera.get_pos(), ray_dir);
+
+#ifdef DEBUG_RAY_HIT
+    std::println("ray_dir {} {} {}", ray_dir.x, ray_dir.y, ray_dir.z);
+    std::println("AABB min: {} {} {}", aabb.min.x, aabb.min.y, aabb.min.z);
+    std::println("AABB max: {} {} {}", aabb.max.x, aabb.max.y, aabb.max.z);
+#endif
+
+    return aabb.ray_intersection_point(ray);
 }
 
 std::optional<glm::vec3> ray_intersecton_mouse_point(const Renderer::AABB& aabb, Transform& transform, GlobalAppData* data)
 {
-    auto transform_AABB = aabb.transformed(transform.get_model());
+    auto transform_AABB = aabb.transform(transform.get_model());
 
-    glm::mat4 inv_proj_view = data->m_camera.get_inverse_proj_view();
-
-    glm::vec2 mouse_pos = data->m_window.get_mouse_pos();
-    glm::vec2 screen_size = data->m_window.get_size_f32();
-
-    glm::vec2 screen_coord = (mouse_pos / screen_size);
-    screen_coord.y = 1.0F - screen_coord.y;
-    screen_coord = 2.0F * screen_coord - 1.0F;
-
-    glm::vec4 target
-        = inv_proj_view * glm::vec4(screen_coord.x, screen_coord.y, 1.0F, 1.0F);
-    glm::vec3 ray_dir = glm::normalize(glm::vec3(target) / target.w);
-
-    Renderer::Ray ray(data->m_camera.get_pos(), ray_dir);
-
-#ifdef DEBUG_RAY_HIT
-    std::println("ray_dir {} {} {}", ray_dir.x, ray_dir.y, ray_dir.z);
-    std::println("AABB min: {} {} {}", transform_AABB.min.x, transform_AABB.min.y, transform_AABB.min.z);
-    std::println("AABB max: {} {} {}", transform_AABB.max.x, transform_AABB.max.y, transform_AABB.max.z);
-#endif
-
-    return transform_AABB.ray_intersection_point(ray);
+    return ray_intersecton_mouse_point(transform_AABB, data);
 }
 
 App::App()
@@ -76,6 +86,9 @@ App::App()
 
     m_data.text_renderer.init("res/fonts/AdwaitaSans-Regular.ttf", 24);
     m_data.text_renderer.update_view(m_data.m_window.get_width(), m_data.m_window.get_height());
+
+    m_data.debug_renderer.init();
+
     m_scene = new Scene(&m_data);
 
     m_data.m_window.process_input_callback([&](SDL_Event& event) {
@@ -103,17 +116,11 @@ App::App()
                 auto base_AABB = model->get_mesh()->m_aabbs[0];
 
                 auto result = ray_intersecton_mouse(base_AABB, transform, &m_data);
-#ifdef DEBUG_RAY_HIT
                 if (result)
                     std::println("Hit");
                 else {
                     std::println("No hit");
                 }
-#endif
-            }
-            if (event.key.key == SDLK_P) {
-                glm::vec3 pos = m_data.m_camera.get_pos();
-                std::println("Camera_position: {}, {}, {}", pos.x, pos.y, pos.z);
             }
             if (event.key.key == SDLK_Q) {
                 m_data.m_window.set_should_close();
@@ -304,6 +311,19 @@ void App::run()
         m_scene->draw();
 
         m_data.text_renderer.draw_text(10, m_data.m_window.get_height() - m_data.text_renderer.get_max_pixel_height(), std::format("Framerate {}", m_fps).c_str(), glm::vec3 { 1.0F });
+
+        auto& transform = m_cube_entity.get_component<Transform>();
+        auto* model = m_cube_entity.get_component<Renderer::Model*>();
+        auto base_aabb = model->get_mesh()->m_aabbs[0];
+        auto transform_aabb = base_aabb.transform(transform.get_model());
+        m_data.debug_renderer.add_aabb(transform_aabb);
+        if (ray_intersecton_mouse(transform_aabb, &m_data)) {
+            m_data.debug_renderer.draw(glm::vec3(0.0, 0.0, 1.0), m_data.m_camera);
+        } else {
+            m_data.debug_renderer.draw(glm::vec3(1.0, 0.0, 0.0), m_data.m_camera);
+        }
+
+        // m_data.debug_renderer.add_circle(transform.get_model(), 2.0F);
 
         const ImGuiViewport* main_viewport = ImGui::GetMainViewport();
         ImGui::SetNextWindowPos(ImVec2(main_viewport->WorkPos.x + 20, main_viewport->WorkPos.y + 20), ImGuiCond_FirstUseEver);
