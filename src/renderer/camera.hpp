@@ -10,9 +10,6 @@ public:
 
     void init(float fov, float near, float far, float aspect_ratio, glm::vec3 pos);
 
-    void update_vectors();
-    void update_proj();
-    void update_view();
     void update_aspect(float aspect_ratio);
     void update();
 
@@ -22,10 +19,10 @@ public:
 
     [[nodiscard]] glm::mat4 get_proj() const;
     [[nodiscard]] glm::mat4 get_view() const;
-    [[nodiscard]] glm::mat4 get_combined() const;
+    [[nodiscard]] glm::mat4 get_proj_view() const;
     [[nodiscard]] glm::mat4 get_inverse_view() const;
     [[nodiscard]] glm::mat4 get_inverse_proj() const;
-    [[nodiscard]] glm::mat4 get_inverse_proj_view() const;
+    [[nodiscard]] glm::mat4 get_inverse_proj_view();
     [[nodiscard]] glm::vec3 get_pos() const;
     [[nodiscard]] glm::vec3 get_front() const;
     [[nodiscard]] glm::vec3 get_up() const;
@@ -74,6 +71,13 @@ private:
 
     glm::mat4 m_proj {};
     glm::mat4 m_view {};
+
+    bool m_inv_proj_view_needs_update = true;
+    glm::mat4 m_inv_proj_view {};
+
+    void update_vectors();
+    void update_proj();
+    void update_view();
 };
 
 } // namespace Renderer

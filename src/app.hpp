@@ -24,5 +24,7 @@ private:
 
     GlobalAppData m_data;
 
+    Entity m_cube_entity;
+
     Scene* m_scene = nullptr;
 };

@@ -7,11 +7,11 @@ struct Ray {
     glm::vec3 direction;
     glm::vec3 inv_direction;
 
-    Ray(glm::vec3 position, glm::vec3 direction)
-        : position(position)
-        , direction(direction)
+    Ray(glm::vec3 in_position, glm::vec3 in_direction)
+        : position(in_position)
+        , direction(in_direction)
     {
-        inv_direction = 1.0F / direction;
+        inv_direction = 1.0F / in_direction;
     }
 };
 
@@ -19,12 +19,12 @@ struct AABB {
     glm::vec3 min;
     glm::vec3 max;
 
-    [[nodiscard]] AABB transformed(const glm::mat4& transform)
+    [[nodiscard]] AABB transformed(const glm::mat4& transform) const
     {
         return transformed_fast(transform);
     }
 
-    [[nodiscard]] bool intersection(glm::vec3 position) const
+    [[nodiscard]] bool intersection(const glm::vec3& position) const
     {
         return position.x >= min.x && position.y >= min.y && position.z >= min.z
             && position.x <= max.x && position.y <= max.y && position.z <= max.z;
@@ -65,7 +65,7 @@ struct AABB {
 
 private:
     // I know this function is correct
-    [[nodiscard]] AABB transformed_naive(const glm::mat4 transform)
+    [[nodiscard]] AABB transformed_naive(const glm::mat4& transform)
     {
         AABB result;
 

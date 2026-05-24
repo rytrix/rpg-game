@@ -41,6 +41,7 @@ void Camera::update()
         update_vectors();
         update_proj();
         update_view();
+        m_inv_proj_view_needs_update = true;
         m_needs_update = false;
     }
 }
@@ -126,7 +127,6 @@ void Camera::rotate(float x_pos, float y_pos)
     m_pitch = std::clamp(m_pitch, -89.0F, 89.0F);
 
     m_needs_update = true;
-    // update();
 }
 
 void Camera::zoom(float y_offset)
@@ -139,7 +139,6 @@ void Camera::zoom(float y_offset)
     m_fov = std::min(m_fov, defaults::max_fov);
 
     m_needs_update = true;
-    // update_proj();
 }
 
 glm::mat4 Camera::get_proj() const
@@ -152,7 +151,7 @@ glm::mat4 Camera::get_view() const
     return m_view;
 }
 
-glm::mat4 Camera::get_combined() const
+glm::mat4 Camera::get_proj_view() const
 {
     return m_proj * m_view;
 }
@@ -167,9 +166,13 @@ glm::mat4 Camera::get_inverse_proj() const
     return glm::inverse(m_proj);
 }
 
-glm::mat4 Camera::get_inverse_proj_view() const
+glm::mat4 Camera::get_inverse_proj_view()
 {
-    return glm::inverse(m_proj * m_view);
+    if (m_inv_proj_view_needs_update) {
+        m_inv_proj_view = glm::inverse(m_proj * m_view);
+        m_inv_proj_view_needs_update = false;
+    }
+    return m_inv_proj_view;
 }
 
 glm::vec3 Camera::get_pos() const

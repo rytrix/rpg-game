@@ -2,6 +2,63 @@
 
 #include "renderer/text.hpp"
 
+#define DEBUG_RAY_HIT
+bool ray_intersecton_mouse(const Renderer::AABB& aabb, Transform& transform, GlobalAppData* data)
+{
+    auto transform_AABB = aabb.transformed(transform.get_model());
+
+    glm::mat4 inv_proj_view = data->m_camera.get_inverse_proj_view();
+
+    glm::vec2 mouse_pos = data->m_window.get_mouse_pos();
+    glm::vec2 screen_size = data->m_window.get_size_f32();
+
+    glm::vec2 screen_coord = (mouse_pos / screen_size);
+    screen_coord.y = 1.0F - screen_coord.y;
+    screen_coord = 2.0F * screen_coord - 1.0F;
+
+    glm::vec4 target
+        = inv_proj_view * glm::vec4(screen_coord.x, screen_coord.y, 1.0F, 1.0F);
+    glm::vec3 ray_dir = glm::normalize(glm::vec3(target) / target.w);
+
+    Renderer::Ray ray(data->m_camera.get_pos(), ray_dir);
+
+#ifdef DEBUG_RAY_HIT
+    std::println("ray_dir {} {} {}", ray_dir.x, ray_dir.y, ray_dir.z);
+    std::println("AABB min: {} {} {}", transform_AABB.min.x, transform_AABB.min.y, transform_AABB.min.z);
+    std::println("AABB max: {} {} {}", transform_AABB.max.x, transform_AABB.max.y, transform_AABB.max.z);
+#endif
+
+    return transform_AABB.ray_intersection(ray);
+}
+
+std::optional<glm::vec3> ray_intersecton_mouse_point(const Renderer::AABB& aabb, Transform& transform, GlobalAppData* data)
+{
+    auto transform_AABB = aabb.transformed(transform.get_model());
+
+    glm::mat4 inv_proj_view = data->m_camera.get_inverse_proj_view();
+
+    glm::vec2 mouse_pos = data->m_window.get_mouse_pos();
+    glm::vec2 screen_size = data->m_window.get_size_f32();
+
+    glm::vec2 screen_coord = (mouse_pos / screen_size);
+    screen_coord.y = 1.0F - screen_coord.y;
+    screen_coord = 2.0F * screen_coord - 1.0F;
+
+    glm::vec4 target
+        = inv_proj_view * glm::vec4(screen_coord.x, screen_coord.y, 1.0F, 1.0F);
+    glm::vec3 ray_dir = glm::normalize(glm::vec3(target) / target.w);
+
+    Renderer::Ray ray(data->m_camera.get_pos(), ray_dir);
+
+#ifdef DEBUG_RAY_HIT
+    std::println("ray_dir {} {} {}", ray_dir.x, ray_dir.y, ray_dir.z);
+    std::println("AABB min: {} {} {}", transform_AABB.min.x, transform_AABB.min.y, transform_AABB.min.z);
+    std::println("AABB max: {} {} {}", transform_AABB.max.x, transform_AABB.max.y, transform_AABB.max.z);
+#endif
+
+    return transform_AABB.ray_intersection_point(ray);
+}
+
 App::App()
 {
     Physics::Engine::setup_singletons();
@@ -40,6 +97,20 @@ App::App()
             if (event.key.key == SDLK_E) {
                 m_physics_on = !m_physics_on;
             }
+            if (event.key.key == SDLK_R) {
+                auto& transform = m_cube_entity.get_component<Transform>();
+                auto* model = m_cube_entity.get_component<Renderer::Model*>();
+                auto base_AABB = model->get_mesh()->m_aabbs[0];
+
+                auto result = ray_intersecton_mouse(base_AABB, transform, &m_data);
+#ifdef DEBUG_RAY_HIT
+                if (result)
+                    std::println("Hit");
+                else {
+                    std::println("No hit");
+                }
+#endif
+            }
             if (event.key.key == SDLK_P) {
                 glm::vec3 pos = m_data.m_camera.get_pos();
                 std::println("Camera_position: {}, {}, {}", pos.x, pos.y, pos.z);
@@ -58,46 +129,46 @@ App::App()
     Entity::add_pbr_directional_light(entity, directional);
     Entity::add_pbr_directional_light_shadow(entity);
 
-    entity = m_scene->create_entity();
-    Entity::add_name(entity, "Sponza Model");
-    Entity::add_model(entity, "res/models/Sponza/glTF/Sponza.gltf", &m_data);
-    // Entity::add_model(entity, "res/models/physics_plane/plane.obj", &m_data);
+    // entity = m_scene->create_entity();
+    // Entity::add_name(entity, "Sponza Model");
+    // Entity::add_model(entity, "res/models/Sponza/glTF/Sponza.gltf", &m_data);
+    // // Entity::add_model(entity, "res/models/physics_plane/plane.obj", &m_data);
     Transform transform {};
-    transform.set_scale(glm::vec3(0.1));
-    Entity::add_transform(entity, transform);
-    Entity::add_physics_command(entity, [&](Physics::System* system, Renderer::Model* model) -> std::pair<JPH::BodyID, JPH::EMotionType> {
-        JPH::TriangleList triangles;
-        const auto* mesh = model->get_mesh();
-        Physics::System::create_mesh_triangle_list_base_index(triangles, transform.get_model(), mesh);
-        // Physics::System::create_mesh_triangle_list_base_index(triangles, mesh);
-        JPH::BodyID plane_id = system->m_body_interface->CreateAndAddBody(
-            JPH::BodyCreationSettings(
-                new JPH::MeshShapeSettings(triangles),
-                JPH::RVec3::sZero(), JPH::Quat::sIdentity(),
-                JPH::EMotionType::Static,
-                Physics::Layers::NON_MOVING),
-            JPH::EActivation::DontActivate);
-        return { plane_id, JPH::EMotionType::Static };
-    });
+    // transform.set_scale(glm::vec3(0.1));
+    // Entity::add_transform(entity, transform);
+    // Entity::add_physics_command(entity, [&](Physics::System* system, Renderer::Model* model) -> std::pair<JPH::BodyID, JPH::EMotionType> {
+    //     JPH::TriangleList triangles;
+    //     const auto* mesh = model->get_mesh();
+    //     Physics::System::create_mesh_triangle_list_base_index(triangles, transform.get_model(), mesh);
+    //     // Physics::System::create_mesh_triangle_list_base_index(triangles, mesh);
+    //     JPH::BodyID plane_id = system->m_body_interface->CreateAndAddBody(
+    //         JPH::BodyCreationSettings(
+    //             new JPH::MeshShapeSettings(triangles),
+    //             JPH::RVec3::sZero(), JPH::Quat::sIdentity(),
+    //             JPH::EMotionType::Static,
+    //             Physics::Layers::NON_MOVING),
+    //         JPH::EActivation::DontActivate);
+    //     return { plane_id, JPH::EMotionType::Static };
+    // });
 
-    entity = m_scene->create_entity();
-    Entity::add_name(entity, "Cube");
-    Entity::add_model(entity, "res/models/physics_cube/cube.obj", &m_data);
+    m_cube_entity = m_scene->create_entity();
+    Entity::add_name(m_cube_entity, "Cube");
+    Entity::add_model(m_cube_entity, "res/models/physics_cube/cube.obj", &m_data);
     transform = {};
-    Entity::add_transform(entity, transform);
-    Entity::add_physics_command(entity, [](Physics::System* system, [[maybe_unused]] Renderer::Model* _model) -> std::pair<JPH::BodyID, JPH::EMotionType> {
-        JPH::BodyCreationSettings cube_settings(
-            new JPH::BoxShape(JPH::Vec3(0.5, 0.5, 0.5)),
-            JPH::RVec3(-7.05, 20.0, -5.5),
-            JPH::Quat::sIdentity(),
-            JPH::EMotionType::Dynamic,
-            Physics::Layers::MOVING);
-            
-        auto body = system->m_body_interface->CreateAndAddBody(
-            cube_settings,
-            JPH::EActivation::Activate);
-        return { body, JPH::EMotionType::Dynamic };
-    });
+    Entity::add_transform(m_cube_entity, transform);
+    // Entity::add_physics_command(m_cube_entity, [](Physics::System* system, [[maybe_unused]] Renderer::Model* _model) -> std::pair<JPH::BodyID, JPH::EMotionType> {
+    //     JPH::BodyCreationSettings cube_settings(
+    //         new JPH::BoxShape(JPH::Vec3(0.5, 0.5, 0.5)),
+    //         JPH::RVec3(-7.05, 20.0, -5.5),
+    //         JPH::Quat::sIdentity(),
+    //         JPH::EMotionType::Dynamic,
+    //         Physics::Layers::MOVING);
+
+    //     auto body = system->m_body_interface->CreateAndAddBody(
+    //         cube_settings,
+    //         JPH::EActivation::Activate);
+    //     return { body, JPH::EMotionType::Dynamic };
+    // });
 
     // for (int i = 0; i <= 50; i++) {
     //     e3.add_physics_command([](Physics::System* system, [[maybe_unused]] Renderer::Model* _model) -> std::pair<JPH::BodyID, JPH::EMotionType> {

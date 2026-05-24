@@ -132,7 +132,7 @@ void DirectionalShadow::shadowmap_draw(Renderer::Model* model)
 {
     util_assert(initialized == true, "Light::DirectionalShadow has not been initialized");
 
-    Renderer::Shader& shader = model->has_bones() ? m_shader_bones : m_shader;
+    Renderer::Shader& shader = model->get_mesh()->m_has_bones ? m_shader_bones : m_shader;
     shader.bind();
 
     if constexpr (USE_GEOMETRY_SHADER) {

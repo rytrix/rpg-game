@@ -18,11 +18,14 @@ public:
     void set_swap_interval(int value);
 
     [[nodiscard]] SDL_Window* get_window_ptr() const;
-    [[nodiscard]] std::pair<int, int> get_size() const;
+    [[nodiscard]] glm::ivec2 get_size() const;
+    [[nodiscard]] glm::vec2 get_size_f32() const;
     [[nodiscard]] int get_width() const;
     [[nodiscard]] int get_height() const;
-    [[nodiscard]] std::pair<f32, f32> get_size_f32() const;
     [[nodiscard]] f32 get_aspect_ratio() const;
+    [[nodiscard]] f32 get_mouse_x() const;
+    [[nodiscard]] f32 get_mouse_y() const;
+    [[nodiscard]] glm::vec2 get_mouse_pos() const;
     void set_should_close();
     void set_window_title(const char* title);
 

@@ -32,7 +32,8 @@ void Model::init(const char* file_path, GlobalAppData* app_data)
         aiProcess_Triangulate
             | aiProcess_FlipUVs
             | aiProcess_CalcTangentSpace
-            | aiProcess_JoinIdenticalVertices);
+            | aiProcess_JoinIdenticalVertices
+            | aiProcess_GenBoundingBoxes);
 
     setup_mesh(scene);
     setup_animations(scene);

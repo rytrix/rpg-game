@@ -192,7 +192,7 @@ void Window::set_swap_interval(int value)
     return m_window;
 }
 
-[[nodiscard]] std::pair<int, int> Window::get_size() const
+[[nodiscard]] glm::ivec2 Window::get_size() const
 {
     util_assert(initialized == true, "not initialized");
     return { m_width, m_height };
@@ -210,7 +210,7 @@ void Window::set_swap_interval(int value)
     return m_height;
 }
 
-[[nodiscard]] std::pair<f32, f32> Window::get_size_f32() const
+[[nodiscard]] glm::vec2 Window::get_size_f32() const
 {
     util_assert(initialized == true, "not initialized");
     return { static_cast<f32>(m_width), static_cast<f32>(m_height) };
@@ -220,7 +220,28 @@ void Window::set_swap_interval(int value)
 {
     util_assert(initialized == true, "not initialized");
     auto size = get_size_f32();
-    return size.first / size.second;
+    return size.x / size.y;
+}
+
+[[nodiscard]] f32 Window::get_mouse_x() const
+{
+    f32 x;
+    SDL_GetMouseState(&x, nullptr);
+    return x;
+}
+
+[[nodiscard]] f32 Window::get_mouse_y() const
+{
+    f32 y;
+    SDL_GetMouseState(nullptr, &y);
+    return y;
+}
+
+[[nodiscard]] glm::vec2 Window::get_mouse_pos() const
+{
+    glm::vec2 pos;
+    SDL_GetMouseState(&pos.x, &pos.y);
+    return pos;
 }
 
 void Window::set_should_close()

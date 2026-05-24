@@ -8,6 +8,7 @@ using PhysicsFn = std::function<std::pair<JPH::BodyID, JPH::EMotionType>(Physics
 
 class Entity {
 public:
+    Entity() = default;
     Entity(Scene* scene, entt::entity entity);
 
     template <typename T, typename... Args>
