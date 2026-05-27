@@ -2,74 +2,11 @@
 
 #include "renderer/text.hpp"
 
-// #define DEBUG_RAY_HIT
-bool ray_intersecton_mouse(const Renderer::AABB& aabb, GlobalAppData* data)
-{
-    glm::mat4 inv_proj_view = data->m_camera.get_inverse_proj_view();
-
-    glm::vec2 mouse_pos = data->m_window.get_mouse_pos();
-    glm::vec2 screen_size = data->m_window.get_size_f32();
-
-    glm::vec2 screen_coord = (mouse_pos / screen_size);
-    screen_coord.y = 1.0F - screen_coord.y;
-    screen_coord = 2.0F * screen_coord - 1.0F;
-
-    glm::vec4 target
-        = inv_proj_view * glm::vec4(screen_coord.x, screen_coord.y, 1.0F, 1.0F);
-    glm::vec3 ray_dir = glm::normalize(glm::vec3(target) / target.w);
-
-    Renderer::Ray ray(data->m_camera.get_pos(), ray_dir);
-
-#ifdef DEBUG_RAY_HIT
-    std::println("ray_dir {} {} {}", ray_dir.x, ray_dir.y, ray_dir.z);
-    std::println("AABB min: {} {} {}", aabb.min.x, aabb.min.y, aabb.min.z);
-    std::println("AABB max: {} {} {}", aabb.max.x, aabb.max.y, aabb.max.z);
-#endif
-
-    return aabb.ray_intersection(ray);
-}
-
-bool ray_intersecton_mouse(const Renderer::AABB& aabb, Transform& transform, GlobalAppData* data)
-{
-    auto transform_AABB = aabb.transform(transform.get_model());
-
-    return ray_intersecton_mouse(transform_AABB, data);
-}
-
-std::optional<glm::vec3> ray_intersecton_mouse_point(const Renderer::AABB& aabb, GlobalAppData* data)
-{
-    glm::mat4 inv_proj_view = data->m_camera.get_inverse_proj_view();
-
-    glm::vec2 mouse_pos = data->m_window.get_mouse_pos();
-    glm::vec2 screen_size = data->m_window.get_size_f32();
-
-    glm::vec2 screen_coord = (mouse_pos / screen_size);
-    screen_coord.y = 1.0F - screen_coord.y;
-    screen_coord = 2.0F * screen_coord - 1.0F;
-
-    glm::vec4 target
-        = inv_proj_view * glm::vec4(screen_coord.x, screen_coord.y, 1.0F, 1.0F);
-    glm::vec3 ray_dir = glm::normalize(glm::vec3(target) / target.w);
-
-    Renderer::Ray ray(data->m_camera.get_pos(), ray_dir);
-
-#ifdef DEBUG_RAY_HIT
-    std::println("ray_dir {} {} {}", ray_dir.x, ray_dir.y, ray_dir.z);
-    std::println("AABB min: {} {} {}", aabb.min.x, aabb.min.y, aabb.min.z);
-    std::println("AABB max: {} {} {}", aabb.max.x, aabb.max.y, aabb.max.z);
-#endif
-
-    return aabb.ray_intersection_point(ray);
-}
-
-std::optional<glm::vec3> ray_intersecton_mouse_point(const Renderer::AABB& aabb, Transform& transform, GlobalAppData* data)
-{
-    auto transform_AABB = aabb.transform(transform.get_model());
-
-    return ray_intersecton_mouse_point(transform_AABB, data);
-}
+#include "utils/color.hpp"
+#include "utils/math/ray.hpp"
 
 App::App()
+    : m_gizmo(&m_data)
 {
     Physics::Engine::setup_singletons();
 
@@ -95,7 +32,7 @@ App::App()
         if (event.type == SDL_EVENT_WINDOW_RESIZED) {
             m_data.m_camera.update_aspect(m_data.m_window.get_aspect_ratio());
             m_scene->update();
-            m_data.text_renderer.update_view(m_data.m_window.get_width(), m_data.m_window.get_height());
+            m_data.text_renderer.update_view((float)m_data.m_window.get_width(), (float)m_data.m_window.get_height());
         }
         if (event.type == SDL_EVENT_MOUSE_MOTION) {
             if (m_capture_mouse) {
@@ -111,16 +48,18 @@ App::App()
                 m_physics_on = !m_physics_on;
             }
             if (event.key.key == SDLK_R) {
-                auto& transform = m_cube_entity.get_component<Transform>();
-                auto* model = m_cube_entity.get_component<Renderer::Model*>();
-                auto base_AABB = model->get_mesh()->m_aabbs[0];
+                m_gizmo.test_reset();
+                // auto& transform = m_cube_entity.get_component<Transform>();
+                // auto* model = m_cube_entity.get_component<Renderer::Model*>();
+                // auto aabb = model->get_mesh()->m_aabbs[0];
 
-                auto result = ray_intersecton_mouse(base_AABB, transform, &m_data);
-                if (result)
-                    std::println("Hit");
-                else {
-                    std::println("No hit");
-                }
+                // auto ray = Utils::ray_from_mouse(&m_data);
+                // auto result = Utils::intersect_ray_aabb(ray, aabb.transform(transform.get_model()));
+                // if (result) {
+                //     std::println("Hit");
+                // } else {
+                //     std::println("No hit");
+                // }
             }
             if (event.key.key == SDLK_Q) {
                 m_data.m_window.set_should_close();
@@ -238,7 +177,10 @@ App::App()
     Entity::add_model(entity, "res/models/dog/scene.gltf", &m_data);
     Entity::add_transform(entity, transform);
 
-    m_scene->optimize();
+    Renderer::SkyboxInfo skybox_info {};
+    skybox_info.file = "res/skyboxes/Cubemap_Sky_14-512x512.png";
+    m_scene->add_component<Renderer::Skybox>(skybox_info);
+
     m_scene->update();
 }
 
@@ -312,18 +254,39 @@ void App::run()
 
         m_data.text_renderer.draw_text(10, m_data.m_window.get_height() - m_data.text_renderer.get_max_pixel_height(), std::format("Framerate {}", m_fps).c_str(), glm::vec3 { 1.0F });
 
-        auto& transform = m_cube_entity.get_component<Transform>();
-        auto* model = m_cube_entity.get_component<Renderer::Model*>();
-        auto base_aabb = model->get_mesh()->m_aabbs[0];
-        auto transform_aabb = base_aabb.transform(transform.get_model());
-        m_data.debug_renderer.add_aabb(transform_aabb);
-        if (ray_intersecton_mouse(transform_aabb, &m_data)) {
-            m_data.debug_renderer.draw(glm::vec3(0.0, 0.0, 1.0), m_data.m_camera);
-        } else {
-            m_data.debug_renderer.draw(glm::vec3(1.0, 0.0, 0.0), m_data.m_camera);
-        }
+        // auto& transform = m_cube_entity.get_component<Transform>();
+        // auto* model = m_cube_entity.get_component<Renderer::Model*>();
+        // auto base_aabb = model->get_mesh()->m_aabbs[0];
+        // auto transform_aabb = base_aabb.transform(transform.get_model());
+        // m_data.debug_renderer.add_aabb(transform_aabb);
+        // if (ray_intersecton_mouse(transform_aabb, &m_data)) {
+        //     m_data.debug_renderer.draw(glm::vec3(0.0, 0.0, 1.0), m_data.m_camera);
+        // } else {
+        //     m_data.debug_renderer.draw(glm::vec3(1.0, 0.0, 0.0), m_data.m_camera);
+        // }
 
-        // m_data.debug_renderer.add_circle(transform.get_model(), 2.0F);
+        // Transform transform;
+        // m_data.debug_renderer.add_circle(transform.get_model(), 2.0, Color::Blue);
+        // transform.set_euler_angles(glm::vec3(90.0, 0.0, 0.0));
+        // m_data.debug_renderer.add_circle(transform.get_model(), 2.0, Color::Green);
+        // transform.set_euler_angles(glm::vec3(0.0, 90.0, 0.0));
+        // m_data.debug_renderer.add_circle(transform.get_model(), 2.0, Color::Red);
+
+        // transform = {};
+        // transform.translate(glm::vec3(0.0, 0.0, 4.0));
+        // m_data.debug_renderer.add_line(transform.get_model(),
+        //     glm::vec3(0.0, -2.0, 0.0), glm::vec3(0.0, 2.0, 0.0), Color::Blue);
+        // m_data.debug_renderer.add_line(transform.get_model(),
+        //     glm::vec3(-2.0, 0.0, 0.0), glm::vec3(2.0, 0.0, 0.0), Color::Green);
+        // m_data.debug_renderer.add_line(transform.get_model(),
+        //     glm::vec3(0.0, 0.0, -2.0), glm::vec3(0.0, 0.0, 2.0), Color::Red);
+
+        m_gizmo.m_state = Gizmo::State::Rotation;
+        m_gizmo.draw();
+        auto& transform = m_cube_entity.get_component<Transform>();
+        m_gizmo.test_intersection_rotation(&transform);
+
+        m_data.debug_renderer.draw(m_data.m_camera);
 
         const ImGuiViewport* main_viewport = ImGui::GetMainViewport();
         ImGui::SetNextWindowPos(ImVec2(main_viewport->WorkPos.x + 20, main_viewport->WorkPos.y + 20), ImGuiCond_FirstUseEver);

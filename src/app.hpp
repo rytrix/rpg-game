@@ -1,6 +1,8 @@
 #pragma once
 
 #include "renderer.hpp"
+
+#include "scene/gizmo.hpp"
 #include "scene/scene.hpp"
 
 #include "app_data.hpp"
@@ -23,6 +25,7 @@ private:
     const char* m_window_title = "test window";
 
     GlobalAppData m_data;
+    Gizmo m_gizmo;
 
     Entity m_cube_entity;
 
