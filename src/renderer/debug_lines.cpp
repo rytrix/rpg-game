@@ -1,7 +1,8 @@
 #include "debug_lines.hpp"
 
-#include "../scene/shader_preprocessor.hpp"
+#include "../renderer/shader_preprocessor.hpp"
 
+#include "../utils/color.hpp"
 #include "../utils/file.hpp"
 
 namespace Renderer {
@@ -35,18 +36,29 @@ LineRenderer::~LineRenderer()
     }
 }
 
-void LineRenderer::add_line(glm::vec3 begin, glm::vec3 end)
+void LineRenderer::add_line(glm::vec3 begin, glm::vec3 end, glm::vec3 color)
 {
     util_assert(initialized == true, "not initialized");
     if (m_vertices.size() + 2 > m_max_vertices) {
         LOG_ERROR("Exceeding max number of lines, new lines are not being added");
         return;
     }
-    m_vertices.push_back({ begin });
-    m_vertices.push_back({ end });
+    m_vertices.push_back({ begin, Color::pack(color) });
+    m_vertices.push_back({ end, Color::pack(color) });
 }
 
-void LineRenderer::add_aabb(const AABB& aabb)
+void LineRenderer::add_line(const glm::mat4& transform, glm::vec3 begin, glm::vec3 end, glm::vec3 color)
+{
+    util_assert(initialized == true, "not initialized");
+    if (m_vertices.size() + 2 > m_max_vertices) {
+        LOG_ERROR("Exceeding max number of lines, new lines are not being added");
+        return;
+    }
+    m_vertices.push_back({ transform * glm::vec4(begin, 1.0), Color::pack(color) });
+    m_vertices.push_back({ transform * glm::vec4(end, 1.0), Color::pack(color) });
+}
+
+void LineRenderer::add_aabb(const Utils::AABB& aabb, glm::vec3 color)
 {
     util_assert(initialized == true, "not initialized");
 
@@ -62,69 +74,71 @@ void LineRenderer::add_aabb(const AABB& aabb)
     };
 
     // Bottom face
-    add_line(c[0], c[1]);
-    add_line(c[1], c[2]);
-    add_line(c[2], c[3]);
-    add_line(c[3], c[0]);
+    add_line(c[0], c[1], color);
+    add_line(c[1], c[2], color);
+    add_line(c[2], c[3], color);
+    add_line(c[3], c[0], color);
 
     // Top face
-    add_line(c[4], c[5]);
-    add_line(c[5], c[6]);
-    add_line(c[6], c[7]);
-    add_line(c[7], c[4]);
+    add_line(c[4], c[5], color);
+    add_line(c[5], c[6], color);
+    add_line(c[6], c[7], color);
+    add_line(c[7], c[4], color);
 
     // Vertical pillars
-    add_line(c[0], c[4]);
-    add_line(c[1], c[5]);
-    add_line(c[2], c[6]);
-    add_line(c[3], c[7]);
+    add_line(c[0], c[4], color);
+    add_line(c[1], c[5], color);
+    add_line(c[2], c[6], color);
+    add_line(c[3], c[7], color);
 }
 
-void LineRenderer::add_ray(const Ray& ray, float length)
+void LineRenderer::add_ray(const Utils::Ray& ray, float length, glm::vec3 color)
 {
     util_assert(initialized == true, "not initialized");
     glm::vec3 end = ray.position + (ray.direction * length);
-    add_line(ray.position, end);
+    add_line(ray.position, end, color);
 }
 
-void LineRenderer::add_circle(const glm::mat4& transform, f32 radius, u32 segments)
+void LineRenderer::add_circle(const glm::mat4& transform, f32 radius, glm::vec3 color)
+{
+    util_assert(initialized == true, "not initialized");
+    add_circle(transform, radius, DEFAULT_CIRCLE_SEGMENTS, color);
+}
+
+void LineRenderer::add_circle(const glm::mat4& transform, f32 radius, u32 segments, glm::vec3 color)
 {
     util_assert(initialized == true, "not initialized");
 
     float angle_step = glm::two_pi<float>() / static_cast<float>(segments);
 
-    // Generate the first point at angle 0
     glm::vec4 first_local(radius, 0.0f, 0.0f, 1.0f);
     glm::vec3 first_world = transform * first_local;
 
     glm::vec3 prev_world = first_world;
 
-    for (u32 i = 1; i <= segments; ++i) {
+    for (u32 i = 1; i <= segments + 1; ++i) {
         float angle = static_cast<float>(i) * angle_step;
 
-        // Plot the next point on the local XY plane
         glm::vec4 local_pos(
             glm::cos(angle) * radius,
             glm::sin(angle) * radius,
             0.0f,
             1.0f);
 
-        // Transform it into 3D world space
         glm::vec3 current_world = transform * local_pos;
 
-        // Draw the segment
-        add_line(prev_world, current_world);
+        add_line(prev_world, current_world, color);
         prev_world = current_world;
     }
 }
 
-void LineRenderer::draw(glm::vec3 color, const Camera& camera)
+void LineRenderer::draw(const Camera& camera)
 {
     util_assert(initialized == true, "not initialized");
     m_vao.bind();
     m_shader.bind();
 
-    m_shader.set_vec3("color", color);
+    // m_shader.set_vec3("color", color);
     m_shader.set_mat4("proj", camera.get_proj());
     m_shader.set_mat4("view", camera.get_view());
 

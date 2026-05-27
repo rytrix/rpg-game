@@ -12,12 +12,14 @@ add_executable(${PROJECT_NAME}
     src/scene/scene.cpp
     src/scene/entity.cpp
     src/scene/transform.cpp
-    src/scene/shader_preprocessor.cpp
     src/scene/resource_manager.cpp
+    src/scene/gizmo.cpp
 
     src/physics/engine.cpp
 
     src/utils/deltatime.cpp
+    src/utils/math/ray.cpp
+    src/utils/math/aabb.cpp
 
     src/game_logic/gear.cpp
     src/game_logic/character.cpp
@@ -28,6 +30,7 @@ add_executable(${PROJECT_NAME}
     src/renderer/buffer.cpp
     src/renderer/vertex.cpp
     src/renderer/shader.cpp
+    src/renderer/shader_preprocessor.cpp
     src/renderer/texture.cpp
     src/renderer/camera.cpp
     src/renderer/framebuffer.cpp
