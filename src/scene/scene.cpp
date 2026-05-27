@@ -5,9 +5,6 @@
 #include "../utils/file.hpp"
 
 #include "glm/gtc/quaternion.hpp"
-#include "shader_preprocessor.hpp"
-
-#include "../renderer/random_sampling_texture.hpp"
 
 #include "entity.hpp"
 #include "transform.hpp"
@@ -125,10 +122,6 @@ Scene::Scene(GlobalAppData* app_data)
 {
     m_physics_system = std::make_unique<Physics::System>();
 
-    Renderer::SkyboxInfo skybox_info {};
-    skybox_info.file = "res/skyboxes/Cubemap_Sky_14-512x512.png";
-    m_skybox.init(skybox_info);
-
     update();
 }
 
@@ -147,15 +140,19 @@ Entity Scene::create_entity()
     return { this, entity };
 }
 
-void Scene::optimize()
+void Scene::remove_entity(Entity entity)
 {
-    m_physics_system->optimize();
-    m_physics_needs_optimize = false;
+    m_registry.destroy(entity.get_id());
 }
 
 void Scene::update()
 {
     m_clock.update();
+
+    if (m_physics_needs_optimize) {
+        m_physics_system->optimize();
+        m_physics_needs_optimize = false;
+    }
 
     compile_shaders();
 }
@@ -357,7 +354,10 @@ void Scene::draw()
         Renderer::Texture::drop_texture_units(1);
     }
 
-    m_skybox.draw(m_app_data->m_camera);
+    if (has_component<Renderer::Skybox>()) {
+        auto& skybox = get_component<Renderer::Skybox>();
+        skybox.draw(m_app_data->m_camera);
+    }
 
     Renderer::Texture::reset_texture_units();
 }

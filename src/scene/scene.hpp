@@ -17,10 +17,23 @@ public:
     ~Scene();
 
     Entity create_entity();
+    void remove_entity(Entity entity);
+
+    // Crashes if the scene already has this component
+    template <typename T, typename... Args>
+    T& add_component(Args&&... args);
+
+    template <typename T>
+    void remove_component();
+
+    template <typename T>
+    T& get_component();
+
+    template <typename T>
+    bool has_component();
 
     // Call update after adding an entity (or maybe I do that internally)
     void update();
-    void optimize();
 
     void physics();
     void draw();
@@ -62,7 +75,6 @@ private:
         }
     };
     Renderer::RandomSamplingTexture m_random_sampling_texture;
-    Renderer::Skybox m_skybox;
 
     std::vector<ModelMatrix> m_models_instance_draw_cache;
     bool m_models_instance_draw_cache_needs_update = false;
@@ -70,5 +82,34 @@ private:
     bool m_physics_needs_optimize = false;
     std::unique_ptr<Physics::System> m_physics_system = nullptr;
 };
+
+template <typename T, typename... Args>
+T& Scene::add_component(Args&&... args)
+{
+    // if (has_component<T>()) {
+    //     LOG_ERROR(std::format("Scene already has component \"{}\"", typeid(T).name()));
+    //     return;
+    // }
+    util_assert(has_component<T>() == false, std::format("Scene already has component \"{}\"", typeid(T).name()));
+    return m_registry.ctx().emplace<T>(std::forward<Args>(args)...);
+}
+
+template <typename T>
+void Scene::remove_component()
+{
+    m_registry.ctx().erase<T>();
+}
+
+template <typename T>
+T& Scene::get_component()
+{
+    return m_registry.ctx().get<T>();
+}
+
+template <typename T>
+bool Scene::has_component()
+{
+    return m_registry.ctx().contains<T>();
+}
 
 #include "entity.hpp"

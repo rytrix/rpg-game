@@ -24,6 +24,7 @@ public:
     bool has_component();
 
     entt::entity get_id() { return m_entity; }
+    entt::registry& get_registry() { return m_scene->m_registry; }
     Scene* get_scene() { return m_scene; }
 
     // Helper functions
