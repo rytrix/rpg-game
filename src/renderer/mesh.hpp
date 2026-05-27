@@ -1,6 +1,7 @@
 #pragma once
 
-#include "aabb.hpp"
+#include "../utils/math/aabb.hpp"
+
 #include "animation.hpp"
 #include "buffer.hpp"
 #include "extensions.hpp"
@@ -84,7 +85,7 @@ public:
     std::vector<Handle> m_metallic_roughness_textures;
     std::vector<Handle> m_normal_textures;
 
-    std::vector<AABB> m_aabbs;
+    std::vector<Utils::AABB> m_aabbs;
 
     bool m_has_bones = false;
     std::unordered_map<Utils::String, u32> m_bone_id_map;

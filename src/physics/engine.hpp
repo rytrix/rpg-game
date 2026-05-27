@@ -2,26 +2,14 @@
 
 #include "../renderer/mesh.hpp"
 
-#include <Jolt/Core/Factory.h>
-#include <Jolt/Core/JobSystemThreadPool.h>
-#include <Jolt/Core/TempAllocator.h>
-#include <Jolt/Geometry/Triangle.h>
-#include <Jolt/Physics/Body/BodyActivationListener.h>
-#include <Jolt/Physics/Body/BodyCreationSettings.h>
-#include <Jolt/Physics/Collision/Shape/BoxShape.h>
-#include <Jolt/Physics/Collision/Shape/MeshShape.h>
-#include <Jolt/Physics/Collision/Shape/SphereShape.h>
-#include <Jolt/Physics/PhysicsSettings.h>
-#include <Jolt/Physics/PhysicsSystem.h>
-#include <Jolt/RegisterTypes.h>
-
 namespace Physics {
 
 namespace Layers {
 
     static constexpr JPH::ObjectLayer NON_MOVING = 0;
     static constexpr JPH::ObjectLayer MOVING = 1;
-    static constexpr JPH::ObjectLayer NUM_LAYERS = 2;
+    static constexpr JPH::ObjectLayer RENDER_ONLY = 2;
+    static constexpr JPH::ObjectLayer NUM_LAYERS = 3;
 
 };
 
@@ -30,6 +18,10 @@ class ObjectLayerPairFilterImpl : public JPH::ObjectLayerPairFilter {
 public:
     [[nodiscard]] bool ShouldCollide(JPH::ObjectLayer inObject1, JPH::ObjectLayer inObject2) const override
     {
+        if (inObject1 == Layers::RENDER_ONLY || inObject2 == Layers::RENDER_ONLY) {
+            return false;
+        }
+
         switch (inObject1) {
             case Layers::NON_MOVING:
                 return inObject2 == Layers::MOVING; // Non moving only collides with moving
@@ -46,7 +38,8 @@ namespace BroadPhaseLayers {
 
     static constexpr JPH::BroadPhaseLayer NON_MOVING(0);
     static constexpr JPH::BroadPhaseLayer MOVING(1);
-    static constexpr uint NUM_LAYERS(2);
+    static constexpr JPH::BroadPhaseLayer RENDER_ONLY(2);
+    static constexpr uint NUM_LAYERS(3);
 
 };
 
@@ -57,6 +50,7 @@ public:
         // Create a mapping table from object to broad phase layer
         mObjectToBroadPhase[Layers::NON_MOVING] = BroadPhaseLayers::NON_MOVING;
         mObjectToBroadPhase[Layers::MOVING] = BroadPhaseLayers::MOVING;
+        mObjectToBroadPhase[Layers::RENDER_ONLY] = BroadPhaseLayers::RENDER_ONLY;
     }
 
     [[nodiscard]] uint GetNumBroadPhaseLayers() const override
@@ -78,6 +72,8 @@ public:
                 return "NON_MOVING";
             case static_cast<JPH::BroadPhaseLayer::Type>(BroadPhaseLayers::MOVING):
                 return "MOVING";
+            case static_cast<JPH::BroadPhaseLayer::Type>(BroadPhaseLayers::RENDER_ONLY):
+                return "RENDER_ONLY";
             default:
                 JPH_ASSERT(false);
                 return "INVALID";
@@ -94,6 +90,10 @@ class ObjectVsBroadPhaseLayerFilterImpl : public JPH::ObjectVsBroadPhaseLayerFil
 public:
     [[nodiscard]] bool ShouldCollide(JPH::ObjectLayer inLayer1, JPH::BroadPhaseLayer inLayer2) const override
     {
+        if (inLayer1 == Layers::RENDER_ONLY || inLayer2 == BroadPhaseLayers::RENDER_ONLY) {
+            return false;
+        }
+
         switch (inLayer1) {
             case Layers::NON_MOVING:
                 return inLayer2 == BroadPhaseLayers::MOVING;
@@ -103,6 +103,15 @@ public:
                 JPH_ASSERT(false);
                 return false;
         }
+    }
+};
+
+class RenderPickingFilter : public JPH::ObjectLayerFilter {
+public:
+    [[nodiscard]] virtual bool ShouldCollide(JPH::ObjectLayer inLayer) const override {
+        return inLayer == Layers::RENDER_ONLY || 
+               inLayer == Layers::MOVING || 
+               inLayer == Layers::NON_MOVING;
     }
 };
 
