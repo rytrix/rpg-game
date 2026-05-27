@@ -2,7 +2,7 @@
 
 #include <cstddef>
 
-#include "../scene/shader_preprocessor.hpp"
+#include "shader_preprocessor.hpp"
 #include "../utils/file.hpp"
 
 namespace Renderer {
@@ -62,7 +62,7 @@ void Skybox::init(SkyboxInfo& info)
         { face_size * 3, face_size * 1 },
     };
 
-    char* const image_sub_data = (char*)malloc(512 * 512 * 3);
+    unsigned char* const image_sub_data = (unsigned char*)malloc(512 * 512 * 3);
 
     for (u32 i = 0; i < 6; i++) {
         int face_start_x = texture_offsets[i].x;
@@ -70,7 +70,7 @@ void Skybox::init(SkyboxInfo& info)
 
         for (u32 j = 0; j < face_size; j++) {
             int current_atlas_y = face_start_y + j;
-            char* dest = image_sub_data + (j * face_size * nr_channels);
+            unsigned char* dest = image_sub_data + (j * face_size * nr_channels);
             unsigned char* src = data + (face_start_x + (current_atlas_y * atlas_width)) * nr_channels;
             memcpy(dest, src, face_size * nr_channels);
         }

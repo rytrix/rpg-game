@@ -220,7 +220,7 @@ void Model::process_mesh(aiMesh* mesh, const aiScene* scene)
         }
     }
 
-    AABB& aabb = m_mesh.m_aabbs.emplace_back();
+    auto& aabb = m_mesh.m_aabbs.emplace_back();
     aabb.min.x = mesh->mAABB.mMin.x;
     aabb.min.y = mesh->mAABB.mMin.y;
     aabb.min.z = mesh->mAABB.mMin.z;

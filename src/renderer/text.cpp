@@ -1,5 +1,5 @@
 #include "text.hpp"
-#include "../scene/shader_preprocessor.hpp"
+#include "shader_preprocessor.hpp"
 #include "../utils/file.hpp"
 
 namespace Renderer {

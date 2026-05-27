@@ -27,8 +27,9 @@ public:
 
 private:
     bool initialized = false;
-    Shader m_shader;
+
     VertexArray m_vao;
+    Shader m_shader;
     Texture m_cubemap;
 
     void setup_shader();

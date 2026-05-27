@@ -20,4 +20,4 @@ private:
     u32 m_id {};
 };
 
-}
+} // namespace Renderer
