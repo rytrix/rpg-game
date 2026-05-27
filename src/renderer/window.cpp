@@ -161,13 +161,6 @@ void Window::loop(const std::function<void()>& commands)
     }
 }
 
-// void Window::windowMouseCallback(UNUSED GLFWwindow* _window, double x, double y)
-// {
-//     if (currentWindowPtr != nullptr && currentWindowPtr->mouseCallbackFn != nullptr) {
-//         currentWindowPtr->mouseCallbackFn(x, y);
-//     }
-// }
-
 void Window::set_capture_mouse(bool value)
 {
     util_assert(initialized == true, "not initialized");
