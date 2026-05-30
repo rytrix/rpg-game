@@ -1,6 +1,7 @@
 *.db
 
 res/models/*
+res/skyboxes/*
 
 imgui.ini
 
