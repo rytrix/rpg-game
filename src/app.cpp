@@ -288,7 +288,7 @@ void App::run()
         // m_data.debug_renderer.add_line(transform.get_model(),
         //     glm::vec3(0.0, 0.0, -2.0), glm::vec3(0.0, 0.0, 2.0), Color::Red);
 
-        m_gizmo.m_state = Gizmo::State::Translation;
+        m_gizmo.m_state = Gizmo::State::Rotation;
         m_gizmo.update();
         m_gizmo.draw();
         // auto& transform = m_cube_entity.get_component<Transform>();

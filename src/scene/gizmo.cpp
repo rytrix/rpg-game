@@ -77,8 +77,7 @@ void Gizmo::update()
                 angle = -angle;
             }
 
-            std::println("Rotate {} degrees, axis: {} {} {}", angle, m_prev_hit.normal.x, m_prev_hit.normal.y, m_prev_hit.normal.z);
-            auto angle_difference = angle - m_prev_hit.prev_rotation;
+            float angle_difference = angle - m_prev_hit.prev_rotation;
             m_prev_hit.prev_rotation = angle;
             m_transform->rotate(angle_difference, plane.normal);
         }
@@ -128,6 +127,10 @@ void Gizmo::draw()
 
 void Gizmo::test_intersection()
 {
+    if (m_prev_hit.on_down) {
+        return;
+    }
+
     if (m_state == State::Rotation) {
         test_intersection_rotation();
     } else {
@@ -137,9 +140,6 @@ void Gizmo::test_intersection()
 
 void Gizmo::test_intersection_lines()
 {
-    if (m_prev_hit.on_down) {
-        return;
-    }
     auto ray = Utils::ray_from_mouse(m_data);
 
     Utils::Line line {};
@@ -153,9 +153,9 @@ void Gizmo::test_intersection_lines()
         float distance = glm::distance(hit, closest);
         if (distance < closest_distance) {
             closest_distance = distance;
-            // std::println("Gizmo intersection worked {}", glm::length(ray.position - hit));
-            m_prev_hit.hit = closest;
+
             m_prev_hit.on_down = true;
+            m_prev_hit.hit = closest;
             m_prev_hit.normal = line.normal;
             m_prev_hit.direction = line.direction;
             m_prev_hit.scale = m_transform->get_scale();
@@ -199,9 +199,6 @@ void Gizmo::test_intersection_lines()
 
 void Gizmo::test_intersection_rotation()
 {
-    if (m_prev_hit.on_down) {
-        return;
-    }
     auto ray = Utils::ray_from_mouse(m_data);
 
     Utils::Ring ring {};
@@ -210,39 +207,35 @@ void Gizmo::test_intersection_rotation()
     ring.radius = m_radius;
     ring.thickness = 0.3;
 
+    float closest_distance = std::numeric_limits<float>::max();
+
+    auto handle_result = [&](Utils::RayRingResult result) {
+        auto [hit, distance] = result;
+        if (distance < closest_distance) {
+            closest_distance = distance;
+            // std::println("Gizmo intersection worked {}", glm::length(ray.position - hit));
+            m_prev_hit.on_down = true;
+            m_prev_hit.hit = hit;
+            m_prev_hit.normal = ring.normal;
+            m_prev_hit.prev_rotation = 0.0F;
+        }
+    };
+
     auto result = Utils::intersect_ray_ring(ray, ring);
     if (result.has_value()) {
-        glm::vec3 hit = result.value();
-        // std::println("Gizmo intersection worked {}", glm::length(ray.position - hit));
-        m_prev_hit.hit = hit;
-        m_prev_hit.on_down = true;
-        m_prev_hit.normal = ring.normal;
-        m_prev_hit.prev_rotation = 0.0F;
-        return;
+        handle_result(result.value());
     }
 
     ring.normal = glm::vec3(0.0, 1.0, 0.0);
     result = Utils::intersect_ray_ring(ray, ring);
     if (result.has_value()) {
-        glm::vec3 hit = result.value();
-        // std::println("Gizmo intersection worked {}", glm::length(ray.position - hit));
-        m_prev_hit.hit = hit;
-        m_prev_hit.on_down = true;
-        m_prev_hit.normal = ring.normal;
-        m_prev_hit.prev_rotation = 0.0F;
-        return;
+        handle_result(result.value());
     }
 
     ring.normal = glm::vec3(0.0, 0.0, 1.0);
     result = Utils::intersect_ray_ring(ray, ring);
     if (result.has_value()) {
-        glm::vec3 hit = result.value();
-        // std::println("Gizmo intersection worked {}", glm::length(ray.position - hit));
-        m_prev_hit.hit = hit;
-        m_prev_hit.on_down = true;
-        m_prev_hit.normal = ring.normal;
-        m_prev_hit.prev_rotation = 0.0F;
-        return;
+        handle_result(result.value());
     }
 }
 

@@ -47,7 +47,7 @@ glm::vec3 Ray::get_inverse()
     return { data->m_camera.get_pos(), ray_dir };
 }
 
-[[nodiscard]] std::optional<glm::vec3> intersect_ray_ring(const Ray& ray, const Ring& ring)
+[[nodiscard]] std::optional<RayRingResult> intersect_ray_ring(const Ray& ray, const Ring& ring)
 {
     float denom = glm::dot(ray.direction, ring.normal);
 
@@ -65,8 +65,9 @@ glm::vec3 Ray::get_inverse()
 
     float dist_from_center = glm::length(hit_point - ring.position);
 
-    if (glm::abs(dist_from_center - ring.radius) <= ring.thickness * 0.5) {
-        return hit_point;
+    float dist_from_radius = glm::abs(dist_from_center - ring.radius);
+    if (dist_from_radius <= ring.thickness * 0.5) {
+        return RayRingResult { .hit = hit_point, .distance = dist_from_radius };
     }
 
     return std::nullopt;
@@ -173,7 +174,7 @@ glm::vec3 Ray::get_inverse()
     return t_max >= std::max(0.0f, t_min);
 }
 
-[[nodiscard]] std::optional<glm::vec3> intersect_ray_aabb_hit(Ray& ray, const AABB& aabb)
+[[nodiscard]] std::optional<RayAABBResult> intersect_ray_aabb_hit(Ray& ray, const AABB& aabb)
 {
     glm::vec3 t0 = (aabb.min - ray.position) * ray.get_inverse();
     glm::vec3 t1 = (aabb.max - ray.position) * ray.get_inverse();
@@ -186,7 +187,8 @@ glm::vec3 Ray::get_inverse()
 
     if (t_max >= std::max(0.0f, t_min)) {
         float t_hit = std::max(0.0f, t_min);
-        return ray.position + (t_hit * ray.direction);
+        glm::vec3 hit = ray.position + (t_hit * ray.direction);
+        return RayAABBResult { .hit = hit, .distance = t_hit };
     }
 
     return std::nullopt;

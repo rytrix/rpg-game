@@ -25,7 +25,12 @@ private:
 [[nodiscard]] Utils::Ray ray_from_mouse(GlobalAppData* data);
 [[nodiscard]] Utils::Ray ray_from_center(GlobalAppData* data);
 
-[[nodiscard]] std::optional<glm::vec3> intersect_ray_ring(const Ray& ray, const Ring& ring);
+struct RayRingResult {
+    glm::vec3 hit;
+    float distance;
+};
+[[nodiscard]] std::optional<RayRingResult> intersect_ray_ring(const Ray& ray, const Ring& ring);
+
 [[nodiscard]] std::optional<glm::vec3> intersect_ray_plane(const Ray& ray, const Plane& plane);
 
 struct RayLineResult {
@@ -35,7 +40,11 @@ struct RayLineResult {
 [[nodiscard]] std::optional<glm::vec3> intersect_ray_line(const Ray& ray, const Line& line);
 [[nodiscard]] std::optional<RayLineResult> intersect_ray_line_closest(const Ray& ray, const Line& line);
 
+struct RayAABBResult {
+    glm::vec3 hit;
+    float distance;
+};
 [[nodiscard]] bool intersect_ray_aabb(Ray& ray, const AABB& aabb);
-[[nodiscard]] std::optional<glm::vec3> intersect_ray_aabb_hit(Ray& ray, const AABB& aabb);
+[[nodiscard]] std::optional<RayAABBResult> intersect_ray_aabb_hit(Ray& ray, const AABB& aabb);
 
 } // namespace Utils
