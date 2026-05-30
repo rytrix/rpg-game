@@ -117,7 +117,6 @@ constexpr void get_shadow_pass_point_geometry_shaders(ShaderInfoData<3>& out, co
 
 Scene::Scene(GlobalAppData* app_data)
     : m_app_data(app_data)
-    , m_camera_speed(app_data->m_camera.get_speed())
     , m_random_sampling_texture(Renderer::RandomSamplingTexture::create(16, 8, 2, &app_data->m_texture_cache))
 {
     m_physics_system = std::make_unique<Physics::System>();
@@ -154,31 +153,30 @@ void Scene::update()
         m_physics_needs_optimize = false;
     }
 
-    compile_shaders();
-}
+    if (m_physics_on) {
+        m_physics_system->update(m_clock.delta_time<float>());
 
-void Scene::physics()
-{
-    m_physics_system->update(m_clock.delta_time<float>());
+        auto view = m_registry.view<Transform, JPH::BodyID, JPH::EMotionType>();
 
-    auto view = m_registry.view<Transform, JPH::BodyID, JPH::EMotionType>();
+        for (auto [entity, transform, body, motion] : view.each()) {
+            if (motion != JPH::EMotionType::Static) {
+                auto& model = transform.get_model_ref();
+                model = mat4_to_mat4(m_physics_system->m_body_interface->GetCenterOfMassTransform(body));
 
-    for (auto [entity, transform, body, motion] : view.each()) {
-        if (motion != JPH::EMotionType::Static) {
-            auto& model = transform.get_model_ref();
-            model = mat4_to_mat4(m_physics_system->m_body_interface->GetCenterOfMassTransform(body));
+                auto* point_light = m_registry.try_get<Renderer::Light::Pbr::Point>(entity);
+                if (point_light != nullptr) {
+                    point_light->position = model[3];
+                }
 
-            auto* point_light = m_registry.try_get<Renderer::Light::Pbr::Point>(entity);
-            if (point_light != nullptr) {
-                point_light->position = model[3];
-            }
-
-            auto* spot_light = m_registry.try_get<Renderer::Light::Pbr::Spot>(entity);
-            if (spot_light != nullptr) {
-                spot_light->position = model[3];
+                auto* spot_light = m_registry.try_get<Renderer::Light::Pbr::Spot>(entity);
+                if (spot_light != nullptr) {
+                    spot_light->position = model[3];
+                }
             }
         }
     }
+
+    compile_shaders();
 }
 
 void Scene::draw()
@@ -370,8 +368,10 @@ void Scene::draw_debug_imgui()
 
     glm::vec3 cam_pos = m_app_data->m_camera.get_pos();
     ImGui::Text("%s", std::format("Camera Pos: {}, {}, {}", cam_pos.x, cam_pos.y, cam_pos.z).c_str());
-    if (ImGui::DragFloat("Camera Speed", &m_camera_speed, 0.1F, 1.0F, 20.0F)) {
-        m_app_data->m_camera.set_speed(m_camera_speed);
+
+    float camera_speed = m_app_data->m_camera.get_speed();
+    if (ImGui::DragFloat("Camera Speed", &camera_speed, 0.1F, 1.0F, 20.0F)) {
+        m_app_data->m_camera.set_speed(camera_speed);
     }
 
     constexpr float MAX_TRANSFORM = 64.0F;
@@ -404,6 +404,12 @@ void Scene::draw_debug_imgui()
                 auto* try_point = m_registry.try_get<Renderer::Light::Pbr::Point>(entity);
                 auto* try_directional = m_registry.try_get<Renderer::Light::Pbr::Directional>(entity);
                 auto* try_spot = m_registry.try_get<Renderer::Light::Pbr::Spot>(entity);
+
+                if (try_transform != nullptr) {
+                    if (ImGui::Button("Select Entity")) {
+                        m_app_data->selected_entity = entity;
+                    }
+                }
 
                 if (try_model != nullptr && try_animation_data != nullptr) {
                     auto& model = *try_model;

@@ -16,6 +16,17 @@ public:
     explicit Scene(GlobalAppData* app_data);
     ~Scene();
 
+    void update();
+
+    void draw();
+
+    void draw_debug_imgui();
+
+    Renderer::Camera& get_camera();
+    const Utils::DeltaTime& get_clock();
+
+    // ECS components
+
     Entity create_entity();
     void remove_entity(Entity entity);
 
@@ -32,16 +43,9 @@ public:
     template <typename T>
     bool has_component();
 
-    // Call update after adding an entity (or maybe I do that internally)
-    void update();
+    bool m_physics_on = true;
 
-    void physics();
-    void draw();
-
-    void draw_debug_imgui();
-
-    Renderer::Camera& get_camera();
-    const Utils::DeltaTime& get_clock();
+    entt::registry m_registry;
 
 private:
     void compile_shaders();
@@ -50,7 +54,6 @@ private:
     Utils::DeltaTime m_clock;
 
     GlobalAppData* m_app_data;
-    float m_camera_speed = 5.0F;
 
     bool m_shaders_need_update = true;
 
@@ -60,8 +63,6 @@ private:
     Renderer::Shader m_shadowmap_shader_bones;
     Renderer::Shader m_shadowmap_cubemap_shader;
     Renderer::Shader m_shadowmap_cubemap_shader_bones;
-
-    entt::registry m_registry;
 
     struct ModelMatrix {
         Renderer::Model* m_model;

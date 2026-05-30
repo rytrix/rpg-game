@@ -45,7 +45,8 @@ App::App()
                 m_data.m_window.set_relative_mode(m_capture_mouse);
             }
             if (event.key.key == SDLK_E) {
-                m_physics_on = !m_physics_on;
+                m_scene->m_physics_on = !m_scene->m_physics_on;
+                // m_physics_on = !m_physics_on;
             }
             if (event.key.key == SDLK_R) {
                 // auto& transform = m_cube_entity.get_component<Transform>();
@@ -103,12 +104,12 @@ App::App()
     //     return { plane_id, JPH::EMotionType::Static };
     // });
 
-    m_cube_entity = m_scene->create_entity();
-    Entity::add_name(m_cube_entity, "Cube");
-    Entity::add_model(m_cube_entity, "res/models/physics_cube/cube.obj", &m_data);
+    entity = m_scene->create_entity();
+    Entity::add_name(entity, "Cube");
+    Entity::add_model(entity, "res/models/physics_cube/cube.obj", &m_data);
     transform = {};
-    Entity::add_transform(m_cube_entity, transform);
-    m_gizmo.m_transform = &m_cube_entity.get_component<Transform>();
+    Entity::add_transform(entity, transform);
+    m_gizmo.m_transform = &entity.get_component<Transform>();
     // Entity::add_physics_command(m_cube_entity, [](Physics::System* system, [[maybe_unused]] Renderer::Model* _model) -> std::pair<JPH::BodyID, JPH::EMotionType> {
     //     JPH::BodyCreationSettings cube_settings(
     //         new JPH::BoxShape(JPH::Vec3(0.5, 0.5, 0.5)),
@@ -249,13 +250,11 @@ void App::run()
     };
 
     m_data.m_window.loop([&]() {
-        m_scene->update();
-        scancodes();
         fps_counter();
 
-        if (m_physics_on) {
-            m_scene->physics();
-        }
+        scancodes();
+
+        m_scene->update();
 
         m_scene->draw();
 
@@ -272,27 +271,12 @@ void App::run()
         //     m_data.debug_renderer.draw(glm::vec3(1.0, 0.0, 0.0), m_data.m_camera);
         // }
 
-        // Transform transform;
-        // m_data.debug_renderer.add_circle(transform.get_model(), 2.0, Color::Blue);
-        // transform.set_euler_angles(glm::vec3(90.0, 0.0, 0.0));
-        // m_data.debug_renderer.add_circle(transform.get_model(), 2.0, Color::Green);
-        // transform.set_euler_angles(glm::vec3(0.0, 90.0, 0.0));
-        // m_data.debug_renderer.add_circle(transform.get_model(), 2.0, Color::Red);
-
-        // transform = {};
-        // transform.translate(glm::vec3(0.0, 0.0, 4.0));
-        // m_data.debug_renderer.add_line(transform.get_model(),
-        //     glm::vec3(0.0, -2.0, 0.0), glm::vec3(0.0, 2.0, 0.0), Color::Blue);
-        // m_data.debug_renderer.add_line(transform.get_model(),
-        //     glm::vec3(-2.0, 0.0, 0.0), glm::vec3(2.0, 0.0, 0.0), Color::Green);
-        // m_data.debug_renderer.add_line(transform.get_model(),
-        //     glm::vec3(0.0, 0.0, -2.0), glm::vec3(0.0, 0.0, 2.0), Color::Red);
-
-        m_gizmo.m_state = Gizmo::State::Rotation;
-        m_gizmo.update();
-        m_gizmo.draw();
-        // auto& transform = m_cube_entity.get_component<Transform>();
-        // m_gizmo.test_intersection_rotation(&transform);
+        if (m_data.selected_entity != entt::null) {
+            // m_gizmo.m_state = Gizmo::State::Rotation;
+            m_gizmo.m_transform = &m_scene->m_registry.get<Transform>(m_data.selected_entity);
+            m_gizmo.update();
+            m_gizmo.draw();
+        }
 
         m_data.debug_renderer.draw(m_data.m_camera);
 
@@ -316,7 +300,17 @@ void App::run()
             }
         }
 
-        ImGui::Checkbox("Toggle physics", &m_physics_on);
+        ImGui::Checkbox("Toggle physics", &m_scene->m_physics_on);
+
+        if (ImGui::Button("Gizmo Translation")) {
+            m_gizmo.m_state = Gizmo::State::Translation;
+        }
+        if (ImGui::Button("Gizmo Rotation")) {
+            m_gizmo.m_state = Gizmo::State::Rotation;
+        }
+        if (ImGui::Button("Gizmo Scale")) {
+            m_gizmo.m_state = Gizmo::State::Scale;
+        }
 
         if (ImGui::CollapsingHeader("Scene_1")) {
             m_scene->draw_debug_imgui();

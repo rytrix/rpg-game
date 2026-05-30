@@ -27,4 +27,6 @@ struct GlobalAppData {
 
     Renderer::TextRenderer text_renderer;
     Renderer::LineRenderer debug_renderer;
+
+    entt::entity selected_entity = entt::null;
 };
