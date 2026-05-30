@@ -5,6 +5,8 @@
 #include "../utils/helpers.hpp"
 #include "assimp/material.h"
 
+#include "../app_data.hpp"
+
 namespace Renderer {
 
 VertexBone::VertexBone()

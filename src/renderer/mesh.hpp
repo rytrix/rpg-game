@@ -9,7 +9,9 @@
 #include "texture.hpp"
 #include "vertex.hpp"
 
-#include "../app_data.hpp"
+#include "../scene/resource_manager.hpp"
+
+class GlobalAppData;
 
 namespace Renderer {
 

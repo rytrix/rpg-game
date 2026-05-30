@@ -2,10 +2,35 @@
 
 #include "scene.hpp"
 
+#include "../app_data.hpp"
+
 Entity::Entity(Scene* scene, entt::entity entity)
     : m_scene(scene)
     , m_entity(entity)
 {
+}
+
+bool Entity::valid()
+{
+    if (m_entity == entt::null) {
+        return false;
+    }
+    return m_scene->m_registry.valid(m_entity);
+}
+
+entt::entity Entity::get_id()
+{
+    return m_entity;
+}
+
+entt::registry& Entity::get_registry()
+{
+    return m_scene->m_registry;
+}
+
+Scene* Entity::get_scene()
+{
+    return m_scene;
 }
 
 void Entity::add_name(Entity entity, const char* name)

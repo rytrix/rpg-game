@@ -1,13 +1,11 @@
 #pragma once
 
-#include "../app_data.hpp"
+class GlobalAppData;
 
 #include "mesh.hpp"
 #include "shader.hpp"
-#include "texture.hpp"
 
 #include "../scene/resource_manager.hpp"
-#include "../utils/deltatime.hpp"
 
 #include <assimp/scene.h>
 

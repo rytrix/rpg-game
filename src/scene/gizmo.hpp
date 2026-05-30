@@ -28,7 +28,7 @@ public:
     Transform* m_transform = nullptr;
 
 private:
-    GlobalAppData* m_data = nullptr;
+    GlobalAppData* m_app_data = nullptr;
 
     struct PreviousHit {
         bool on_down;

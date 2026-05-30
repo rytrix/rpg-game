@@ -5,7 +5,7 @@
 
 #include "renderer.hpp"
 
-#include "../app_data.hpp"
+class GlobalAppData;
 
 class Entity;
 
@@ -112,5 +112,3 @@ bool Scene::has_component()
 {
     return m_registry.ctx().contains<T>();
 }
-
-#include "entity.hpp"

@@ -6,43 +6,43 @@
 #include "utils/math/ray.hpp"
 
 App::App()
-    : m_gizmo(&m_data)
+    : m_gizmo(&m_app_data)
 {
     Physics::Engine::setup_singletons();
 
-    m_data.m_window.init(m_window_title, 800, 600);
-    m_data.m_window.set_relative_mode(m_capture_mouse);
+    m_app_data.m_window.init(m_window_title, 800, 600);
+    m_app_data.m_window.set_relative_mode(m_capture_mouse);
 
-    m_data.m_camera.init(90.0F, 1.0F, 500.0F, m_data.m_window.get_aspect_ratio(), { -2.0F, 1.5F, 4.0F });
-    m_data.m_camera.set_speed(10.0F);
+    m_app_data.m_camera.init(90.0F, 1.0F, 500.0F, m_app_data.m_window.get_aspect_ratio(), { -2.0F, 1.5F, 4.0F });
+    m_app_data.m_camera.set_speed(10.0F);
 
-    m_data.m_model_cache.init(100);
-    m_data.m_texture_cache.init(500);
+    m_app_data.m_model_cache.init(100);
+    m_app_data.m_texture_cache.init(500);
 
-    m_data.m_default_textures.init(&m_data.m_texture_cache);
+    m_app_data.m_default_textures.init(&m_app_data.m_texture_cache);
 
-    m_data.text_renderer.init("res/fonts/AdwaitaSans-Regular.ttf", 24);
-    m_data.text_renderer.update_view(m_data.m_window.get_width(), m_data.m_window.get_height());
+    m_app_data.text_renderer.init("res/fonts/AdwaitaSans-Regular.ttf", 24);
+    m_app_data.text_renderer.update_view(m_app_data.m_window.get_width(), m_app_data.m_window.get_height());
 
-    m_data.debug_renderer.init();
+    m_app_data.debug_renderer.init();
 
-    m_scene = new Scene(&m_data);
+    m_scene = new Scene(&m_app_data);
 
-    m_data.m_window.process_input_callback([&](SDL_Event& event) {
+    m_app_data.m_window.process_input_callback([&](SDL_Event& event) {
         if (event.type == SDL_EVENT_WINDOW_RESIZED) {
-            m_data.m_camera.update_aspect(m_data.m_window.get_aspect_ratio());
+            m_app_data.m_camera.update_aspect(m_app_data.m_window.get_aspect_ratio());
             m_scene->update();
-            m_data.text_renderer.update_view((float)m_data.m_window.get_width(), (float)m_data.m_window.get_height());
+            m_app_data.text_renderer.update_view((float)m_app_data.m_window.get_width(), (float)m_app_data.m_window.get_height());
         }
         if (event.type == SDL_EVENT_MOUSE_MOTION) {
             if (m_capture_mouse) {
-                m_data.m_camera.rotate(event.motion.xrel, -event.motion.yrel);
+                m_app_data.m_camera.rotate(event.motion.xrel, -event.motion.yrel);
             }
         }
         if (event.type == SDL_EVENT_KEY_DOWN) {
             if (event.key.key == SDLK_ESCAPE) {
                 m_capture_mouse = !m_capture_mouse;
-                m_data.m_window.set_relative_mode(m_capture_mouse);
+                m_app_data.m_window.set_relative_mode(m_capture_mouse);
             }
             if (event.key.key == SDLK_E) {
                 m_scene->m_physics_on = !m_scene->m_physics_on;
@@ -62,7 +62,7 @@ App::App()
                 // }
             }
             if (event.key.key == SDLK_Q) {
-                m_data.m_window.set_should_close();
+                m_app_data.m_window.set_should_close();
             }
         }
 
@@ -106,7 +106,7 @@ App::App()
 
     entity = m_scene->create_entity();
     Entity::add_name(entity, "Cube");
-    Entity::add_model(entity, "res/models/physics_cube/cube.obj", &m_data);
+    Entity::add_model(entity, "res/models/physics_cube/cube.obj", &m_app_data);
     transform = {};
     Entity::add_transform(entity, transform);
     m_gizmo.m_transform = &entity.get_component<Transform>();
@@ -173,7 +173,7 @@ App::App()
     transform = {};
     transform.set_scale(glm::vec3(0.1));
     Entity::add_name(entity, "Defeated");
-    Entity::add_model(entity, "res/models/Defeated.fbx", &m_data);
+    Entity::add_model(entity, "res/models/Defeated.fbx", &m_app_data);
     Entity::add_transform(entity, transform);
 
     entity = m_scene->create_entity();
@@ -182,7 +182,7 @@ App::App()
     transform.set_scale(glm::vec3(10.0F));
     transform.rotate(-90.0F, glm::vec3(1.0, 0.0, 0.0));
     Entity::add_name(entity, "Dog");
-    Entity::add_model(entity, "res/models/dog/scene.gltf", &m_data);
+    Entity::add_model(entity, "res/models/dog/scene.gltf", &m_app_data);
     Entity::add_transform(entity, transform);
 
     Renderer::SkyboxInfo skybox_info {};
@@ -215,7 +215,7 @@ void App::fps_counter()
             time_passed = 0;
             m_fps = frames;
             auto title = std::format("{} {} fps", m_window_title, frames);
-            m_data.m_window.set_window_title(title.c_str());
+            m_app_data.m_window.set_window_title(title.c_str());
             frames = 0;
         }
     }
@@ -229,27 +229,27 @@ void App::run()
             float delta_time = m_scene->get_clock().delta_time<float>();
             using Dir = Renderer::Camera::Movement;
             if (keys[SDL_SCANCODE_W]) {
-                m_data.m_camera.move(Dir::Forward, delta_time);
+                m_app_data.m_camera.move(Dir::Forward, delta_time);
             }
             if (keys[SDL_SCANCODE_S]) {
-                m_data.m_camera.move(Dir::Backward, delta_time);
+                m_app_data.m_camera.move(Dir::Backward, delta_time);
             }
             if (keys[SDL_SCANCODE_A]) {
-                m_data.m_camera.move(Dir::Left, delta_time);
+                m_app_data.m_camera.move(Dir::Left, delta_time);
             }
             if (keys[SDL_SCANCODE_D]) {
-                m_data.m_camera.move(Dir::Right, delta_time);
+                m_app_data.m_camera.move(Dir::Right, delta_time);
             }
             if (keys[SDL_SCANCODE_SPACE]) {
-                m_data.m_camera.move(Dir::Up, delta_time);
+                m_app_data.m_camera.move(Dir::Up, delta_time);
             }
             if (keys[SDL_SCANCODE_LSHIFT]) {
-                m_data.m_camera.move(Dir::Down, delta_time);
+                m_app_data.m_camera.move(Dir::Down, delta_time);
             }
         }
     };
 
-    m_data.m_window.loop([&]() {
+    m_app_data.m_window.loop([&]() {
         fps_counter();
 
         scancodes();
@@ -258,7 +258,7 @@ void App::run()
 
         m_scene->draw();
 
-        m_data.text_renderer.draw_text(10, m_data.m_window.get_height() - m_data.text_renderer.get_max_pixel_height(), std::format("Framerate {}", m_fps).c_str(), glm::vec3 { 1.0F });
+        m_app_data.text_renderer.draw_text(10, m_app_data.m_window.get_height() - m_app_data.text_renderer.get_max_pixel_height(), std::format("Framerate {}", m_fps).c_str(), glm::vec3 { 1.0F });
 
         // auto& transform = m_cube_entity.get_component<Transform>();
         // auto* model = m_cube_entity.get_component<Renderer::Model*>();
@@ -271,14 +271,14 @@ void App::run()
         //     m_data.debug_renderer.draw(glm::vec3(1.0, 0.0, 0.0), m_data.m_camera);
         // }
 
-        if (m_data.selected_entity != entt::null) {
+        if (m_app_data.selected_entity.valid()) {
             // m_gizmo.m_state = Gizmo::State::Rotation;
-            m_gizmo.m_transform = &m_scene->m_registry.get<Transform>(m_data.selected_entity);
+            m_gizmo.m_transform = &m_scene->m_registry.get<Transform>(m_app_data.selected_entity.get_id());
             m_gizmo.update();
             m_gizmo.draw();
         }
 
-        m_data.debug_renderer.draw(m_data.m_camera);
+        m_app_data.debug_renderer.draw(m_app_data.m_camera);
 
         const ImGuiViewport* main_viewport = ImGui::GetMainViewport();
         ImGui::SetNextWindowPos(ImVec2(main_viewport->WorkPos.x + 20, main_viewport->WorkPos.y + 20), ImGuiCond_FirstUseEver);
@@ -294,9 +294,9 @@ void App::run()
         if (ImGui::Checkbox("Toggle vsync", &m_vsync)) {
             LOG_INFO(std::format("Setting swap interval to {}", m_vsync));
             if (m_vsync) {
-                m_data.m_window.set_swap_interval(1);
+                m_app_data.m_window.set_swap_interval(1);
             } else {
-                m_data.m_window.set_swap_interval(0);
+                m_app_data.m_window.set_swap_interval(0);
             }
         }
 

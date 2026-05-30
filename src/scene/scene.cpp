@@ -9,6 +9,8 @@
 #include "entity.hpp"
 #include "transform.hpp"
 
+#include "../app_data.hpp"
+
 namespace {
 
 constexpr void get_pbr_forward_pass_indirect(ShaderInfoData<2>& out, const std::string& light_uniforms, const std::string& light_functions, const std::string& vert_defines, const std::string& frag_defines)
@@ -407,7 +409,7 @@ void Scene::draw_debug_imgui()
 
                 if (try_transform != nullptr) {
                     if (ImGui::Button("Select Entity")) {
-                        m_app_data->selected_entity = entity;
+                        m_app_data->selected_entity = Entity(this, entity);
                     }
                 }
 

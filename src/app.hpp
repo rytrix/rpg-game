@@ -23,7 +23,7 @@ private:
 
     const char* m_window_title = "test window";
 
-    GlobalAppData m_data;
+    GlobalAppData m_app_data;
     Gizmo m_gizmo;
 
     Scene* m_scene = nullptr;

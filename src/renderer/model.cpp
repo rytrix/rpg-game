@@ -8,6 +8,8 @@
 
 #include "../utils/helpers.hpp"
 
+#include "../app_data.hpp"
+
 namespace Renderer {
 
 Model::Model(const char* file_path, GlobalAppData* app_data)

@@ -16,7 +16,10 @@ class Texture;
 #include "renderer/debug_lines.hpp"
 #include "renderer/text.hpp"
 
-struct GlobalAppData {
+#include "scene/entity.hpp"
+
+class GlobalAppData {
+public:
     Renderer::Window m_window;
     Renderer::Camera m_camera;
 
@@ -28,5 +31,5 @@ struct GlobalAppData {
     Renderer::TextRenderer text_renderer;
     Renderer::LineRenderer debug_renderer;
 
-    entt::entity selected_entity = entt::null;
+    Entity selected_entity;
 };

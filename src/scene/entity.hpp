@@ -1,7 +1,6 @@
 #pragma once
 
 #include "scene.hpp"
-
 #include "transform.hpp"
 
 using PhysicsFn = std::function<std::pair<JPH::BodyID, JPH::EMotionType>(Physics::System* engine, Renderer::Model* model)>;
@@ -23,9 +22,11 @@ public:
     template <typename T>
     bool has_component();
 
-    entt::entity get_id() { return m_entity; }
-    entt::registry& get_registry() { return m_scene->m_registry; }
-    Scene* get_scene() { return m_scene; }
+    bool valid();
+
+    entt::entity get_id();
+    entt::registry& get_registry();
+    Scene* get_scene();
 
     // Helper functions
     static void add_name(Entity entity, const char* name);
