@@ -134,6 +134,9 @@ void LineRenderer::add_circle(const glm::mat4& transform, f32 radius, u32 segmen
 
 void LineRenderer::draw(const Camera& camera)
 {
+    if (m_vertices.size() == 0) {
+        return;
+    }
     util_assert(initialized == true, "not initialized");
     m_vao.bind();
     m_shader.bind();
