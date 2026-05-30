@@ -125,7 +125,7 @@ glm::vec3 Ray::get_inverse()
     return std::nullopt;
 }
 
-[[nodiscard]] std::optional<glm::vec3> intersect_ray_line_closest(const Ray& ray, const Line& line)
+[[nodiscard]] std::optional<RayLineResult> intersect_ray_line_closest(const Ray& ray, const Line& line)
 {
     float denom = glm::dot(ray.direction, line.normal);
 
@@ -153,7 +153,7 @@ glm::vec3 Ray::get_inverse()
     bool is_touching_line = squared_distance_to_line <= squared_thickness;
 
     if (within_bounds && is_touching_line) {
-        return closest_point;
+        return RayLineResult { .hit = plane_hit_point, .closest = closest_point };
     }
 
     return std::nullopt;

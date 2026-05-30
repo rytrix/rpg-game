@@ -143,42 +143,41 @@ void Gizmo::test_intersection_lines()
     auto ray = Utils::ray_from_mouse(m_data);
 
     Utils::Line line {};
-    line.position = m_transform->get_position() - glm::vec3(0.0, m_radius, 0.0);
     line.length = m_radius * 2;
     line.thickness = 0.3;
 
+    float closest_distance = std::numeric_limits<float>::max();
+
+    auto handle_result = [&](Utils::RayLineResult result) {
+        auto [hit, closest] = result;
+        float distance = glm::distance(hit, closest);
+        if (distance < closest_distance) {
+            closest_distance = distance;
+            // std::println("Gizmo intersection worked {}", glm::length(ray.position - hit));
+            m_prev_hit.hit = closest;
+            m_prev_hit.on_down = true;
+            m_prev_hit.normal = line.normal;
+            m_prev_hit.direction = line.direction;
+            m_prev_hit.scale = m_transform->get_scale();
+            // closest_point - transform_position
+            m_prev_hit.outward_direction = glm::normalize(closest - m_transform->get_position());
+            m_prev_hit.position = m_transform->get_position();
+        }
+    };
+
+    line.position = m_transform->get_position() - glm::vec3(0.0, m_radius, 0.0);
     line.normal = glm::vec3(1.0, 0.0, 0.0);
     line.direction = glm::vec3(0.0, 1.0, 0.0);
     auto result = Utils::intersect_ray_line_closest(ray, line);
     if (result.has_value()) {
-        glm::vec3 hit = result.value();
-        // std::println("Gizmo intersection worked {}", glm::length(ray.position - hit));
-        m_prev_hit.hit = hit;
-        m_prev_hit.on_down = true;
-        m_prev_hit.normal = line.normal;
-        m_prev_hit.direction = line.direction;
-        m_prev_hit.scale = m_transform->get_scale();
-        // closest_point - transform_position
-        m_prev_hit.outward_direction = glm::normalize(hit - m_transform->get_position());
-        m_prev_hit.position = m_transform->get_position();
-        return;
+        handle_result(result.value());
     }
 
     line.normal = glm::vec3(0.0, 0.0, 1.0);
     line.direction = glm::vec3(0.0, 1.0, 0.0);
     result = Utils::intersect_ray_line_closest(ray, line);
     if (result.has_value()) {
-        glm::vec3 hit = result.value();
-        // std::println("Gizmo intersection worked {}", glm::length(ray.position - hit));
-        m_prev_hit.hit = hit;
-        m_prev_hit.on_down = true;
-        m_prev_hit.normal = line.normal;
-        m_prev_hit.direction = line.direction;
-        m_prev_hit.scale = m_transform->get_scale();
-        // closest_point - transform_position
-        m_prev_hit.outward_direction = glm::normalize(hit - m_transform->get_position());
-        m_prev_hit.position = m_transform->get_position();
-        return;
+        handle_result(result.value());
     }
 
     line.position = m_transform->get_position() - glm::vec3(m_radius, 0.0, 0.0);
@@ -186,17 +185,7 @@ void Gizmo::test_intersection_lines()
     line.direction = glm::vec3(1.0, 0.0, 0.0);
     result = Utils::intersect_ray_line_closest(ray, line);
     if (result.has_value()) {
-        glm::vec3 hit = result.value();
-        // std::println("Gizmo intersection worked {}", glm::length(ray.position - hit));
-        m_prev_hit.hit = hit;
-        m_prev_hit.on_down = true;
-        m_prev_hit.normal = line.normal;
-        m_prev_hit.direction = line.direction;
-        m_prev_hit.scale = m_transform->get_scale();
-        // closest_point - transform_position
-        m_prev_hit.outward_direction = glm::normalize(hit - m_transform->get_position());
-        m_prev_hit.position = m_transform->get_position();
-        return;
+        handle_result(result.value());
     }
 
     line.position = m_transform->get_position() - glm::vec3(0.0, 0.0, m_radius);
@@ -204,17 +193,7 @@ void Gizmo::test_intersection_lines()
     line.direction = glm::vec3(0.0, 0.0, 1.0);
     result = Utils::intersect_ray_line_closest(ray, line);
     if (result.has_value()) {
-        glm::vec3 hit = result.value();
-        // std::println("Gizmo intersection worked {}", glm::length(ray.position - hit));
-        m_prev_hit.hit = hit;
-        m_prev_hit.on_down = true;
-        m_prev_hit.normal = line.normal;
-        m_prev_hit.direction = line.direction;
-        m_prev_hit.scale = m_transform->get_scale();
-        // closest_point - transform_position
-        m_prev_hit.outward_direction = glm::normalize(hit - m_transform->get_position());
-        m_prev_hit.position = m_transform->get_position();
-        return;
+        handle_result(result.value());
     }
 }
 

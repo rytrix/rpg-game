@@ -27,8 +27,13 @@ private:
 
 [[nodiscard]] std::optional<glm::vec3> intersect_ray_ring(const Ray& ray, const Ring& ring);
 [[nodiscard]] std::optional<glm::vec3> intersect_ray_plane(const Ray& ray, const Plane& plane);
+
+struct RayLineResult {
+    glm::vec3 hit;
+    glm::vec3 closest;
+};
 [[nodiscard]] std::optional<glm::vec3> intersect_ray_line(const Ray& ray, const Line& line);
-[[nodiscard]] std::optional<glm::vec3> intersect_ray_line_closest(const Ray& ray, const Line& line);
+[[nodiscard]] std::optional<RayLineResult> intersect_ray_line_closest(const Ray& ray, const Line& line);
 
 [[nodiscard]] bool intersect_ray_aabb(Ray& ray, const AABB& aabb);
 [[nodiscard]] std::optional<glm::vec3> intersect_ray_aabb_hit(Ray& ray, const AABB& aabb);
