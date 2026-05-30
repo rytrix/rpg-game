@@ -1,63 +1,61 @@
 #include "gizmo.hpp"
 
 #include "../utils/color.hpp"
+#include "../utils/math/line.hpp"
 
 #include "transform.hpp"
+
+Gizmo::Gizmo(GlobalAppData* app_data, Transform* transform)
+    : m_transform(transform)
+    , m_data(app_data)
+{
+}
 
 Gizmo::Gizmo(GlobalAppData* app_data)
     : m_data(app_data)
 {
 }
 
-void Gizmo::test_intersection_rotation(Transform* transform)
+void Gizmo::on_event(Event event)
 {
+    if (m_transform == nullptr) {
+        return;
+    }
+
+    if (event.m_consumed) {
+        return;
+    }
+
+    if (event.m_type == Event::Type::SDL) {
+        if (event.m_sdl_event.type == SDL_EVENT_MOUSE_BUTTON_DOWN) {
+            if (event.m_sdl_event.button.button == SDL_BUTTON_LEFT) {
+                test_intersection();
+            }
+        } else if (event.m_sdl_event.type == SDL_EVENT_MOUSE_BUTTON_UP) {
+            if (event.m_sdl_event.button.button == SDL_BUTTON_LEFT) {
+                m_prev_hit.on_down = false;
+            }
+        }
+    }
+}
+
+void Gizmo::update()
+{
+    if (m_transform == nullptr) {
+        return;
+    }
+
+    if (m_prev_hit.on_down == false) {
+        return;
+    }
+
     auto ray = Utils::ray_from_mouse(m_data);
+    glm::vec3 position = m_transform->get_position();
 
-    if (m_prev_hit.reset) {
-        Utils::Ring ring {};
-        ring.position = m_position;
-        ring.normal = glm::vec3(1.0, 0.0, 0.0);
-        ring.radius = m_radius;
-        ring.thickness = 0.3;
-
-        auto result = Utils::intersect_ray_ring(ray, ring);
-        if (result.has_value()) {
-            glm::vec3 hit = result.value();
-            std::println("Gizmo intersection worked {}", glm::length(ray.position - hit));
-            m_prev_hit.hit = hit;
-            m_prev_hit.reset = false;
-            m_prev_hit.normal = ring.normal;
-            m_prev_hit.prev_rotation = 0.0F;
-            return;
-        }
-
-        ring.normal = glm::vec3(0.0, 1.0, 0.0);
-        result = Utils::intersect_ray_ring(ray, ring);
-        if (result.has_value()) {
-            glm::vec3 hit = result.value();
-            std::println("Gizmo intersection worked {}", glm::length(ray.position - hit));
-            m_prev_hit.hit = hit;
-            m_prev_hit.reset = false;
-            m_prev_hit.normal = ring.normal;
-            m_prev_hit.prev_rotation = 0.0F;
-            return;
-        }
-
-        ring.normal = glm::vec3(0.0, 0.0, 1.0);
-        result = Utils::intersect_ray_ring(ray, ring);
-        if (result.has_value()) {
-            glm::vec3 hit = result.value();
-            std::println("Gizmo intersection worked {}", glm::length(ray.position - hit));
-            m_prev_hit.hit = hit;
-            m_prev_hit.reset = false;
-            m_prev_hit.normal = ring.normal;
-            m_prev_hit.prev_rotation = 0.0F;
-            return;
-        }
-    } else {
+    if (m_state == State::Rotation) {
         Utils::Plane plane {};
         plane.normal = m_prev_hit.normal;
-        plane.position = m_position;
+        plane.position = position;
 
         auto result = Utils::intersect_ray_plane(ray, plane);
         if (result.has_value()) {
@@ -65,8 +63,8 @@ void Gizmo::test_intersection_rotation(Transform* transform)
             // Use trig to find the angle between that and the new hitpoint
             // Add the angle to the stored translation
 
-            glm::vec3 a = glm::normalize(m_prev_hit.hit - m_position);
-            glm::vec3 b = glm::normalize(hit - m_position);
+            glm::vec3 a = glm::normalize(m_prev_hit.hit - position);
+            glm::vec3 b = glm::normalize(hit - position);
 
             float dot = glm::dot(a, b);
             dot = glm::clamp(dot, -1.0F, 1.0F);
@@ -82,19 +80,41 @@ void Gizmo::test_intersection_rotation(Transform* transform)
             std::println("Rotate {} degrees, axis: {} {} {}", angle, m_prev_hit.normal.x, m_prev_hit.normal.y, m_prev_hit.normal.z);
             auto angle_difference = angle - m_prev_hit.prev_rotation;
             m_prev_hit.prev_rotation = angle;
-            transform->rotate(angle_difference, plane.normal);
+            m_transform->rotate(angle_difference, plane.normal);
+        }
+    } else {
+        Utils::Plane plane {};
+        plane.normal = m_prev_hit.normal;
+        plane.position = position;
+
+        auto result = Utils::intersect_ray_plane(ray, plane);
+        if (result.has_value()) {
+            auto hit = result.value();
+
+            glm::vec3 vector_to_hit = hit - plane.position;
+            float length_along_line = glm::dot(vector_to_hit, m_prev_hit.direction);
+            glm::vec3 closest_point = position + (length_along_line * m_prev_hit.direction);
+
+            glm::vec3 movement_vector = closest_point - m_prev_hit.hit;
+            float distance = glm::dot(movement_vector, m_prev_hit.direction);
+
+            if (m_state == State::Translation) {
+                glm::vec3 new_position = m_prev_hit.position + m_prev_hit.direction * distance;
+                m_transform->set_position(new_position);
+            } else {
+                glm::vec3 scale = m_prev_hit.scale + m_prev_hit.outward_direction * distance;
+                m_transform->set_scale(scale);
+            }
         }
     }
 }
 
-void Gizmo::test_reset()
-{
-    // Event for keyup to reset the internal state
-    m_prev_hit.reset = true;
-}
-
 void Gizmo::draw()
 {
+    if (m_transform == nullptr) {
+        return;
+    }
+
     switch (m_state) {
         case State::Translation:
         case State::Scale:
@@ -106,15 +126,151 @@ void Gizmo::draw()
     }
 }
 
-void Gizmo::set_position(glm::vec3 position)
+void Gizmo::test_intersection()
 {
-    m_position = position;
+    if (m_state == State::Rotation) {
+        test_intersection_rotation();
+    } else {
+        test_intersection_lines();
+    }
+}
+
+void Gizmo::test_intersection_lines()
+{
+    if (m_prev_hit.on_down) {
+        return;
+    }
+    auto ray = Utils::ray_from_mouse(m_data);
+
+    Utils::Line line {};
+    line.position = m_transform->get_position() - glm::vec3(0.0, m_radius, 0.0);
+    line.length = m_radius * 2;
+    line.thickness = 0.3;
+
+    line.normal = glm::vec3(1.0, 0.0, 0.0);
+    line.direction = glm::vec3(0.0, 1.0, 0.0);
+    auto result = Utils::intersect_ray_line_closest(ray, line);
+    if (result.has_value()) {
+        glm::vec3 hit = result.value();
+        // std::println("Gizmo intersection worked {}", glm::length(ray.position - hit));
+        m_prev_hit.hit = hit;
+        m_prev_hit.on_down = true;
+        m_prev_hit.normal = line.normal;
+        m_prev_hit.direction = line.direction;
+        m_prev_hit.scale = m_transform->get_scale();
+        // closest_point - transform_position
+        m_prev_hit.outward_direction = glm::normalize(hit - m_transform->get_position());
+        m_prev_hit.position = m_transform->get_position();
+        return;
+    }
+
+    line.normal = glm::vec3(0.0, 0.0, 1.0);
+    line.direction = glm::vec3(0.0, 1.0, 0.0);
+    result = Utils::intersect_ray_line_closest(ray, line);
+    if (result.has_value()) {
+        glm::vec3 hit = result.value();
+        // std::println("Gizmo intersection worked {}", glm::length(ray.position - hit));
+        m_prev_hit.hit = hit;
+        m_prev_hit.on_down = true;
+        m_prev_hit.normal = line.normal;
+        m_prev_hit.direction = line.direction;
+        m_prev_hit.scale = m_transform->get_scale();
+        // closest_point - transform_position
+        m_prev_hit.outward_direction = glm::normalize(hit - m_transform->get_position());
+        m_prev_hit.position = m_transform->get_position();
+        return;
+    }
+
+    line.position = m_transform->get_position() - glm::vec3(m_radius, 0.0, 0.0);
+    line.normal = glm::vec3(0.0, 1.0, 0.0);
+    line.direction = glm::vec3(1.0, 0.0, 0.0);
+    result = Utils::intersect_ray_line_closest(ray, line);
+    if (result.has_value()) {
+        glm::vec3 hit = result.value();
+        // std::println("Gizmo intersection worked {}", glm::length(ray.position - hit));
+        m_prev_hit.hit = hit;
+        m_prev_hit.on_down = true;
+        m_prev_hit.normal = line.normal;
+        m_prev_hit.direction = line.direction;
+        m_prev_hit.scale = m_transform->get_scale();
+        // closest_point - transform_position
+        m_prev_hit.outward_direction = glm::normalize(hit - m_transform->get_position());
+        m_prev_hit.position = m_transform->get_position();
+        return;
+    }
+
+    line.position = m_transform->get_position() - glm::vec3(0.0, 0.0, m_radius);
+    line.normal = glm::vec3(0.0, 1.0, 0.0);
+    line.direction = glm::vec3(0.0, 0.0, 1.0);
+    result = Utils::intersect_ray_line_closest(ray, line);
+    if (result.has_value()) {
+        glm::vec3 hit = result.value();
+        // std::println("Gizmo intersection worked {}", glm::length(ray.position - hit));
+        m_prev_hit.hit = hit;
+        m_prev_hit.on_down = true;
+        m_prev_hit.normal = line.normal;
+        m_prev_hit.direction = line.direction;
+        m_prev_hit.scale = m_transform->get_scale();
+        // closest_point - transform_position
+        m_prev_hit.outward_direction = glm::normalize(hit - m_transform->get_position());
+        m_prev_hit.position = m_transform->get_position();
+        return;
+    }
+}
+
+void Gizmo::test_intersection_rotation()
+{
+    if (m_prev_hit.on_down) {
+        return;
+    }
+    auto ray = Utils::ray_from_mouse(m_data);
+
+    Utils::Ring ring {};
+    ring.position = m_transform->get_position();
+    ring.normal = glm::vec3(1.0, 0.0, 0.0);
+    ring.radius = m_radius;
+    ring.thickness = 0.3;
+
+    auto result = Utils::intersect_ray_ring(ray, ring);
+    if (result.has_value()) {
+        glm::vec3 hit = result.value();
+        // std::println("Gizmo intersection worked {}", glm::length(ray.position - hit));
+        m_prev_hit.hit = hit;
+        m_prev_hit.on_down = true;
+        m_prev_hit.normal = ring.normal;
+        m_prev_hit.prev_rotation = 0.0F;
+        return;
+    }
+
+    ring.normal = glm::vec3(0.0, 1.0, 0.0);
+    result = Utils::intersect_ray_ring(ray, ring);
+    if (result.has_value()) {
+        glm::vec3 hit = result.value();
+        // std::println("Gizmo intersection worked {}", glm::length(ray.position - hit));
+        m_prev_hit.hit = hit;
+        m_prev_hit.on_down = true;
+        m_prev_hit.normal = ring.normal;
+        m_prev_hit.prev_rotation = 0.0F;
+        return;
+    }
+
+    ring.normal = glm::vec3(0.0, 0.0, 1.0);
+    result = Utils::intersect_ray_ring(ray, ring);
+    if (result.has_value()) {
+        glm::vec3 hit = result.value();
+        // std::println("Gizmo intersection worked {}", glm::length(ray.position - hit));
+        m_prev_hit.hit = hit;
+        m_prev_hit.on_down = true;
+        m_prev_hit.normal = ring.normal;
+        m_prev_hit.prev_rotation = 0.0F;
+        return;
+    }
 }
 
 void Gizmo::batch_rotations(f32 radius)
 {
     Transform transform;
-    transform.set_position(m_position);
+    transform.set_position(m_transform->get_position());
     m_data->debug_renderer.add_circle(transform.get_model(), radius, Color::Blue);
     transform.set_euler_angles(glm::vec3(90.0, 0.0, 0.0));
     m_data->debug_renderer.add_circle(transform.get_model(), radius, Color::Green);
@@ -125,7 +281,7 @@ void Gizmo::batch_rotations(f32 radius)
 void Gizmo::batch_lines(f32 radius)
 {
     Transform transform;
-    transform.set_position(m_position);
+    transform.set_position(m_transform->get_position());
     m_data->debug_renderer.add_line(transform.get_model(),
         glm::vec3(0.0, -radius, 0.0), glm::vec3(0.0, radius, 0.0), Color::Blue);
     m_data->debug_renderer.add_line(transform.get_model(),

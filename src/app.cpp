@@ -48,7 +48,6 @@ App::App()
                 m_physics_on = !m_physics_on;
             }
             if (event.key.key == SDLK_R) {
-                m_gizmo.test_reset();
                 // auto& transform = m_cube_entity.get_component<Transform>();
                 // auto* model = m_cube_entity.get_component<Renderer::Model*>();
                 // auto aabb = model->get_mesh()->m_aabbs[0];
@@ -65,6 +64,13 @@ App::App()
                 m_data.m_window.set_should_close();
             }
         }
+
+        Event engine_event {};
+        engine_event.m_type = Event::Type::SDL;
+        engine_event.m_sdl_event = event;
+        engine_event.m_consumed = false;
+
+        m_gizmo.on_event(engine_event);
     });
 
     auto entity = m_scene->create_entity();
@@ -102,6 +108,7 @@ App::App()
     Entity::add_model(m_cube_entity, "res/models/physics_cube/cube.obj", &m_data);
     transform = {};
     Entity::add_transform(m_cube_entity, transform);
+    m_gizmo.m_transform = &m_cube_entity.get_component<Transform>();
     // Entity::add_physics_command(m_cube_entity, [](Physics::System* system, [[maybe_unused]] Renderer::Model* _model) -> std::pair<JPH::BodyID, JPH::EMotionType> {
     //     JPH::BodyCreationSettings cube_settings(
     //         new JPH::BoxShape(JPH::Vec3(0.5, 0.5, 0.5)),
@@ -281,10 +288,11 @@ void App::run()
         // m_data.debug_renderer.add_line(transform.get_model(),
         //     glm::vec3(0.0, 0.0, -2.0), glm::vec3(0.0, 0.0, 2.0), Color::Red);
 
-        m_gizmo.m_state = Gizmo::State::Rotation;
+        m_gizmo.m_state = Gizmo::State::Translation;
+        m_gizmo.update();
         m_gizmo.draw();
-        auto& transform = m_cube_entity.get_component<Transform>();
-        m_gizmo.test_intersection_rotation(&transform);
+        // auto& transform = m_cube_entity.get_component<Transform>();
+        // m_gizmo.test_intersection_rotation(&transform);
 
         m_data.debug_renderer.draw(m_data.m_camera);
 

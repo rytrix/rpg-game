@@ -91,6 +91,74 @@ glm::vec3 Ray::get_inverse()
     return hit_point;
 }
 
+[[nodiscard]] std::optional<glm::vec3> intersect_ray_line(const Ray& ray, const Line& line)
+{
+    float denom = glm::dot(ray.direction, line.normal);
+
+    if (glm::abs(denom) < 1e-6F) {
+        return std::nullopt; // Parallel to plane
+    }
+
+    float t = glm::dot(line.position - ray.position, line.normal) / denom;
+
+    if (t < 0.0F) {
+        return std::nullopt;
+    }
+
+    glm::vec3 plane_hit_point = ray.position + (ray.direction * t);
+
+    glm::vec3 vector_to_hit = plane_hit_point - line.position;
+    float length_along_line = glm::dot(vector_to_hit, line.direction);
+    glm::vec3 closest_point = line.position + (length_along_line * line.direction);
+
+    bool within_bounds = (length_along_line >= 0.0F) && (length_along_line <= line.length);
+
+    // Use squared distance instead of glm::distance to avoid sqrt
+    float squared_distance_to_line = glm::dot(plane_hit_point - closest_point, plane_hit_point - closest_point);
+    float squared_thickness = line.thickness * line.thickness;
+    bool is_touching_line = squared_distance_to_line <= squared_thickness;
+
+    if (within_bounds && is_touching_line) {
+        return plane_hit_point;
+    }
+
+    return std::nullopt;
+}
+
+[[nodiscard]] std::optional<glm::vec3> intersect_ray_line_closest(const Ray& ray, const Line& line)
+{
+    float denom = glm::dot(ray.direction, line.normal);
+
+    if (glm::abs(denom) < 1e-6F) {
+        return std::nullopt; // Parallel to plane
+    }
+
+    float t = glm::dot(line.position - ray.position, line.normal) / denom;
+
+    if (t < 0.0F) {
+        return std::nullopt;
+    }
+
+    glm::vec3 plane_hit_point = ray.position + (ray.direction * t);
+
+    glm::vec3 vector_to_hit = plane_hit_point - line.position;
+    float length_along_line = glm::dot(vector_to_hit, line.direction);
+    glm::vec3 closest_point = line.position + (length_along_line * line.direction);
+
+    bool within_bounds = (length_along_line >= 0.0F) && (length_along_line <= line.length);
+
+    // Use squared distance instead of glm::distance to avoid sqrt
+    float squared_distance_to_line = glm::dot(plane_hit_point - closest_point, plane_hit_point - closest_point);
+    float squared_thickness = line.thickness * line.thickness;
+    bool is_touching_line = squared_distance_to_line <= squared_thickness;
+
+    if (within_bounds && is_touching_line) {
+        return closest_point;
+    }
+
+    return std::nullopt;
+}
+
 [[nodiscard]] bool intersect_ray_aabb(Ray& ray, const AABB& aabb)
 {
     glm::vec3 t0 = (aabb.min - ray.position) * ray.get_inverse();
