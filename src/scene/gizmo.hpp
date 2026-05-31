@@ -23,12 +23,14 @@ public:
     // app_data->debug_renderer.draw() has to be called after
     void draw();
 
-    State m_state { State::Translation };
+    State m_state = State::Translation;
     f32 m_radius = 2.0;
     Transform* m_transform = nullptr;
 
 private:
     GlobalAppData* m_app_data = nullptr;
+
+    static constexpr f32 LINE_THICKNESS = 1.0F;
 
     struct PreviousHit {
         bool on_down;

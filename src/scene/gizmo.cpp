@@ -144,7 +144,7 @@ void Gizmo::test_intersection_lines()
 
     Utils::Line line {};
     line.length = m_radius * 2;
-    line.thickness = 0.3;
+    line.thickness = LINE_THICKNESS;
 
     float closest_distance = std::numeric_limits<float>::max();
 
@@ -205,7 +205,7 @@ void Gizmo::test_intersection_rotation()
     ring.position = m_transform->get_position();
     ring.normal = glm::vec3(1.0, 0.0, 0.0);
     ring.radius = m_radius;
-    ring.thickness = 0.3;
+    ring.thickness = LINE_THICKNESS;
 
     float closest_distance = std::numeric_limits<float>::max();
 
@@ -243,21 +243,21 @@ void Gizmo::batch_rotations(f32 radius)
 {
     Transform transform;
     transform.set_position(m_transform->get_position());
-    m_app_data->debug_renderer.add_circle(transform.get_model(), radius, Color::Blue);
+    m_app_data->line_renderer.add_circle(transform.get_model(), radius, Color::Blue);
     transform.set_euler_angles(glm::vec3(90.0, 0.0, 0.0));
-    m_app_data->debug_renderer.add_circle(transform.get_model(), radius, Color::Green);
+    m_app_data->line_renderer.add_circle(transform.get_model(), radius, Color::Green);
     transform.set_euler_angles(glm::vec3(0.0, 90.0, 0.0));
-    m_app_data->debug_renderer.add_circle(transform.get_model(), radius, Color::Red);
+    m_app_data->line_renderer.add_circle(transform.get_model(), radius, Color::Red);
 }
 
 void Gizmo::batch_lines(f32 radius)
 {
     Transform transform;
     transform.set_position(m_transform->get_position());
-    m_app_data->debug_renderer.add_line(transform.get_model(),
+    m_app_data->line_renderer.add_line(transform.get_model(),
         glm::vec3(0.0, -radius, 0.0), glm::vec3(0.0, radius, 0.0), Color::Blue);
-    m_app_data->debug_renderer.add_line(transform.get_model(),
+    m_app_data->line_renderer.add_line(transform.get_model(),
         glm::vec3(-radius, 0.0, 0.0), glm::vec3(radius, 0.0, 0.0), Color::Green);
-    m_app_data->debug_renderer.add_line(transform.get_model(),
+    m_app_data->line_renderer.add_line(transform.get_model(),
         glm::vec3(0.0, 0.0, -radius), glm::vec3(0.0, 0.0, radius), Color::Red);
 }

@@ -1,7 +1,7 @@
 #pragma once
 
 struct Event {
-    enum Type {
+    enum struct Type {
         SDL,
     };
 

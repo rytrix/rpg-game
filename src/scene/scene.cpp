@@ -534,11 +534,6 @@ void Scene::draw_debug_imgui()
     }
 }
 
-Renderer::Camera& Scene::get_camera()
-{
-    return m_app_data->m_camera;
-}
-
 const Utils::DeltaTime& Scene::get_clock()
 {
     return m_clock;

@@ -22,7 +22,6 @@ public:
 
     void draw_debug_imgui();
 
-    Renderer::Camera& get_camera();
     const Utils::DeltaTime& get_clock();
 
     // ECS components
@@ -45,13 +44,13 @@ public:
 
     bool m_physics_on = true;
 
+    Utils::DeltaTime m_clock;
+
     entt::registry m_registry;
 
 private:
     void compile_shaders();
     void compile_pbr_shaders(const std::string& empty_defines, const std::string& bone_defines);
-
-    Utils::DeltaTime m_clock;
 
     GlobalAppData* m_app_data;
 
@@ -75,10 +74,10 @@ private:
         {
         }
     };
-    Renderer::RandomSamplingTexture m_random_sampling_texture;
-
     std::vector<ModelMatrix> m_models_instance_draw_cache;
     bool m_models_instance_draw_cache_needs_update = false;
+
+    Renderer::RandomSamplingTexture m_random_sampling_texture;
 
     bool m_physics_needs_optimize = false;
     std::unique_ptr<Physics::System> m_physics_system = nullptr;

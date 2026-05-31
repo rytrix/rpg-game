@@ -4,6 +4,10 @@
 
 namespace Utils {
 
+static constexpr f32 PARALLEL_PRECISION = 1e-6F;
+
+#define PARALLEL_TO_PLANE_CHECK
+
 Ray::Ray(glm::vec3 in_position, glm::vec3 in_direction)
     : position(in_position)
     , direction(in_direction)
@@ -51,9 +55,11 @@ glm::vec3 Ray::get_inverse()
 {
     float denom = glm::dot(ray.direction, ring.normal);
 
-    if (glm::abs(denom) < 1e-6F) {
+#ifdef PARALLEL_TO_PLANE_CHECK
+    if (glm::abs(denom) < PARALLEL_PRECISION) {
         return std::nullopt; // Parallel to plane
     }
+#endif
 
     float t = glm::dot(ring.position - ray.position, ring.normal) / denom;
 
@@ -77,9 +83,11 @@ glm::vec3 Ray::get_inverse()
 {
     float denom = glm::dot(ray.direction, plane.normal);
 
-    if (glm::abs(denom) < 1e-6F) {
+#ifdef PARALLEL_TO_PLANE_CHECK
+    if (glm::abs(denom) < PARALLEL_PRECISION) {
         return std::nullopt; // Parallel to plane
     }
+#endif
 
     float t = glm::dot(plane.position - ray.position, plane.normal) / denom;
 
@@ -96,9 +104,11 @@ glm::vec3 Ray::get_inverse()
 {
     float denom = glm::dot(ray.direction, line.normal);
 
-    if (glm::abs(denom) < 1e-6F) {
+#ifdef PARALLEL_TO_PLANE_CHECK
+    if (glm::abs(denom) < PARALLEL_PRECISION) {
         return std::nullopt; // Parallel to plane
     }
+#endif
 
     float t = glm::dot(line.position - ray.position, line.normal) / denom;
 
@@ -130,9 +140,11 @@ glm::vec3 Ray::get_inverse()
 {
     float denom = glm::dot(ray.direction, line.normal);
 
-    if (glm::abs(denom) < 1e-6F) {
+#ifdef PARALLEL_TO_PLANE_CHECK
+    if (glm::abs(denom) < PARALLEL_PRECISION) {
         return std::nullopt; // Parallel to plane
     }
+#endif
 
     float t = glm::dot(line.position - ray.position, line.normal) / denom;
 
