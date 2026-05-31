@@ -108,10 +108,9 @@ public:
 
 class RenderPickingFilter : public JPH::ObjectLayerFilter {
 public:
-    [[nodiscard]] virtual bool ShouldCollide(JPH::ObjectLayer inLayer) const override {
-        return inLayer == Layers::RENDER_ONLY || 
-               inLayer == Layers::MOVING || 
-               inLayer == Layers::NON_MOVING;
+    [[nodiscard]] virtual bool ShouldCollide(JPH::ObjectLayer inLayer) const override
+    {
+        return inLayer == Layers::RENDER_ONLY || inLayer == Layers::MOVING || inLayer == Layers::NON_MOVING;
     }
 };
 
@@ -138,7 +137,7 @@ public:
     JPH::BodyInterface* m_body_interface = nullptr;
 
 private:
-    JPH::TempAllocatorMalloc m_temp_allocator;
+    JPH::TempAllocatorImpl m_temp_allocator { 10 * 1024 * 1024 };
 
     const uint cMaxBodies = 65536;
     const uint cNumBodyMutexes = 0;
