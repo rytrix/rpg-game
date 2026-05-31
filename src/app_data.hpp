@@ -13,7 +13,7 @@ class Texture;
 
 #include "renderer/default_textures.hpp"
 
-#include "renderer/debug_lines.hpp"
+#include "renderer/line_renderer.hpp"
 #include "renderer/text.hpp"
 
 #include "scene/entity.hpp"
@@ -29,7 +29,7 @@ public:
     Renderer::DefaultTextures m_default_textures;
 
     Renderer::TextRenderer text_renderer;
-    Renderer::LineRenderer debug_renderer;
+    Renderer::LineRenderer line_renderer;
 
     Entity selected_entity;
 };

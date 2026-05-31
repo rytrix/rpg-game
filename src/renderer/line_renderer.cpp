@@ -1,4 +1,4 @@
-#include "debug_lines.hpp"
+#include "line_renderer.hpp"
 
 #include "../renderer/shader_preprocessor.hpp"
 

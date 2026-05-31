@@ -24,7 +24,7 @@ App::App()
     m_app_data.text_renderer.init("res/fonts/AdwaitaSans-Regular.ttf", 24);
     m_app_data.text_renderer.update_view(m_app_data.m_window.get_width(), m_app_data.m_window.get_height());
 
-    m_app_data.debug_renderer.init();
+    m_app_data.line_renderer.init();
 
     m_scene = new Scene(&m_app_data);
 
@@ -214,8 +214,8 @@ void App::fps_counter()
         if (time_passed >= 1.0F) {
             time_passed = 0;
             m_fps = frames;
-            auto title = std::format("{} {} fps", m_window_title, frames);
-            m_app_data.m_window.set_window_title(title.c_str());
+            // auto title = std::format("{} {} fps", m_window_title, frames);
+            // m_app_data.m_window.set_window_title(title.c_str());
             frames = 0;
         }
     }
@@ -272,13 +272,12 @@ void App::run()
         // }
 
         if (m_app_data.selected_entity.valid()) {
-            // m_gizmo.m_state = Gizmo::State::Rotation;
             m_gizmo.m_transform = &m_scene->m_registry.get<Transform>(m_app_data.selected_entity.get_id());
             m_gizmo.update();
             m_gizmo.draw();
         }
 
-        m_app_data.debug_renderer.draw(m_app_data.m_camera);
+        m_app_data.line_renderer.draw(m_app_data.m_camera);
 
         const ImGuiViewport* main_viewport = ImGui::GetMainViewport();
         ImGui::SetNextWindowPos(ImVec2(main_viewport->WorkPos.x + 20, main_viewport->WorkPos.y + 20), ImGuiCond_FirstUseEver);
