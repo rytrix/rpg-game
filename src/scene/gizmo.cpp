@@ -165,23 +165,19 @@ void Gizmo::test_intersection_lines()
         }
     };
 
+    // Get a normal that directly faces the camera
+    auto normal = ray.direction;
+
     line.position = m_transform->get_position() - glm::vec3(0.0, m_radius, 0.0);
-    line.normal = glm::vec3(1.0, 0.0, 0.0);
+    line.normal = glm::normalize(glm::vec3(normal.x, 0.0, normal.z));
     line.direction = glm::vec3(0.0, 1.0, 0.0);
     auto result = Utils::intersect_ray_line_closest(ray, line);
     if (result.has_value()) {
         handle_result(result.value());
     }
 
-    line.normal = glm::vec3(0.0, 0.0, 1.0);
-    line.direction = glm::vec3(0.0, 1.0, 0.0);
-    result = Utils::intersect_ray_line_closest(ray, line);
-    if (result.has_value()) {
-        handle_result(result.value());
-    }
-
     line.position = m_transform->get_position() - glm::vec3(m_radius, 0.0, 0.0);
-    line.normal = glm::vec3(0.0, 1.0, 0.0);
+    line.normal = glm::normalize(glm::vec3(0.0, normal.y, normal.z));
     line.direction = glm::vec3(1.0, 0.0, 0.0);
     result = Utils::intersect_ray_line_closest(ray, line);
     if (result.has_value()) {
@@ -189,7 +185,7 @@ void Gizmo::test_intersection_lines()
     }
 
     line.position = m_transform->get_position() - glm::vec3(0.0, 0.0, m_radius);
-    line.normal = glm::vec3(0.0, 1.0, 0.0);
+    line.normal = glm::normalize(glm::vec3(normal.x, normal.y, 0.0));
     line.direction = glm::vec3(0.0, 0.0, 1.0);
     result = Utils::intersect_ray_line_closest(ray, line);
     if (result.has_value()) {
