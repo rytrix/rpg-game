@@ -20,6 +20,8 @@ public:
 
     void draw();
 
+    void draw_entity_wireframe(Entity entity, glm::vec4 color);
+
     void draw_debug_imgui();
 
     const Utils::DeltaTime& get_clock();
@@ -28,6 +30,8 @@ public:
 
     Entity create_entity();
     void remove_entity(Entity entity);
+
+    Entity get_entity_by_name(const char* name);
 
     // Crashes if the scene already has this component
     template <typename T, typename... Args>
@@ -62,6 +66,9 @@ private:
     Renderer::Shader m_shadowmap_shader_bones;
     Renderer::Shader m_shadowmap_cubemap_shader;
     Renderer::Shader m_shadowmap_cubemap_shader_bones;
+
+    Renderer::Shader m_line_shader;
+    Renderer::Shader m_line_shader_bones;
 
     struct ModelMatrix {
         Renderer::Model* m_model;

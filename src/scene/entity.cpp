@@ -35,7 +35,7 @@ Scene* Entity::get_scene()
 
 void Entity::add_name(Entity entity, const char* name)
 {
-    entity.add_component<const char*>(name);
+    entity.add_component<Utils::String>(name);
 }
 
 void Entity::add_model(Entity entity, const char* path, GlobalAppData* app_data)

@@ -132,12 +132,55 @@ void LineRenderer::add_circle(const glm::mat4& transform, f32 radius, u32 segmen
     }
 }
 
+void LineRenderer::add_triangle(glm::vec3 vert1, glm::vec3 vert2, glm::vec3 vert3, glm::vec3 color)
+{
+    add_line(vert1, vert2, color);
+    add_line(vert2, vert3, color);
+    add_line(vert3, vert1, color);
+}
+
+void LineRenderer::add_triangle(const glm::mat4& transform, glm::vec3 vert1, glm::vec3 vert2, glm::vec3 vert3, glm::vec3 color)
+{
+    glm::vec3 vert1_t = transform * glm::vec4(vert1, 1.0);
+    glm::vec3 vert2_t = transform * glm::vec4(vert2, 1.0);
+    glm::vec3 vert3_t = transform * glm::vec4(vert3, 1.0);
+
+    add_line(vert1_t, vert2_t, color);
+    add_line(vert2_t, vert3_t, color);
+    add_line(vert3_t, vert1_t, color);
+}
+
+// This is not the way to do it, do not do this lol
+// void LineRenderer::add_mesh(const glm::mat4& transform, const Renderer::Mesh* mesh)
+// {
+//     usize offset = 0;
+//     glm::vec3 v1;
+//     glm::vec3 v2;
+//     glm::vec3 v3;
+
+//     for (std::size_t i = 0; i < mesh->m_base_vertices.size(); i++) {
+//         auto base = mesh->m_base_vertices[i].m_base;
+//         auto count = mesh->m_base_vertices[i].m_count;
+//         u32 j = offset;
+//         while (j + 2 < count + offset) {
+//             v1 = mesh->m_vertex_data.m_vertices[mesh->m_vertex_data.m_indices.at(j + 0) + base].m_pos;
+//             v2 = mesh->m_vertex_data.m_vertices[mesh->m_vertex_data.m_indices.at(j + 1) + base].m_pos;
+//             v3 = mesh->m_vertex_data.m_vertices[mesh->m_vertex_data.m_indices.at(j + 2) + base].m_pos;
+//             j += 3;
+
+//             add_triangle(transform, v1, v2, v3, Color::Red);
+//         }
+
+//         offset += count;
+//     }
+// }
+
 void LineRenderer::draw(const Camera& camera)
 {
+    util_assert(initialized == true, "not initialized");
     if (m_vertices.size() == 0) {
         return;
     }
-    util_assert(initialized == true, "not initialized");
     m_vao.bind();
     m_shader.bind();
 

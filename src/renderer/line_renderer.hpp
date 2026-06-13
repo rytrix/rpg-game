@@ -10,6 +10,8 @@
 
 namespace Renderer {
 
+class Mesh;
+
 class LineRenderer : public NoCopyNoMove {
 public:
     LineRenderer() = default;
@@ -28,6 +30,9 @@ public:
     // Defaults to the Y axis with no rotation
     void add_circle(const glm::mat4& transform, f32 radius, glm::vec3 color);
     void add_circle(const glm::mat4& transform, f32 radius, u32 segments, glm::vec3 color);
+
+    void add_triangle(glm::vec3 vert1, glm::vec3 vert2, glm::vec3 vert3, glm::vec3 color);
+    void add_triangle(const glm::mat4& transform, glm::vec3 vert1, glm::vec3 vert2, glm::vec3 vert3, glm::vec3 color);
 
     void draw(const Camera& camera);
 

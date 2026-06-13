@@ -82,27 +82,30 @@ App::App()
     Entity::add_pbr_directional_light(entity, directional);
     Entity::add_pbr_directional_light_shadow(entity);
 
-    // entity = m_scene->create_entity();
-    // Entity::add_name(entity, "Sponza Model");
-    // Entity::add_model(entity, "res/models/Sponza/glTF/Sponza.gltf", &m_data);
-    // // Entity::add_model(entity, "res/models/physics_plane/plane.obj", &m_data);
+    entity = m_scene->create_entity();
+    Entity::add_name(entity, "Sponza Model");
+    Entity::add_model(entity, "res/models/Sponza/glTF/Sponza.gltf", &m_app_data);
+    // Entity::add_model(entity, "res/models/physics_plane/plane.obj", &m_data);
     Transform transform {};
-    // transform.set_scale(glm::vec3(0.1));
-    // Entity::add_transform(entity, transform);
-    // Entity::add_physics_command(entity, [&](Physics::System* system, Renderer::Model* model) -> std::pair<JPH::BodyID, JPH::EMotionType> {
-    //     JPH::TriangleList triangles;
-    //     const auto* mesh = model->get_mesh();
-    //     Physics::System::create_mesh_triangle_list_base_index(triangles, transform.get_model(), mesh);
-    //     // Physics::System::create_mesh_triangle_list_base_index(triangles, mesh);
-    //     JPH::BodyID plane_id = system->m_body_interface->CreateAndAddBody(
-    //         JPH::BodyCreationSettings(
-    //             new JPH::MeshShapeSettings(triangles),
-    //             JPH::RVec3::sZero(), JPH::Quat::sIdentity(),
-    //             JPH::EMotionType::Static,
-    //             Physics::Layers::NON_MOVING),
-    //         JPH::EActivation::DontActivate);
-    //     return { plane_id, JPH::EMotionType::Static };
-    // });
+    transform.set_scale(glm::vec3(0.1));
+    Entity::add_transform(entity, transform);
+    Entity::add_physics_command(entity, [&](Physics::System* system, Renderer::Model* model) -> std::pair<JPH::BodyID, JPH::EMotionType> {
+        JPH::TriangleList triangles;
+        const auto* mesh = model->get_mesh();
+        Physics::System::create_mesh_triangle_list_base_index(triangles, transform.get_model_matrix(), mesh);
+        // Physics::System::create_mesh_triangle_list_base_index(triangles, mesh);
+
+        JPH::MeshShapeSettings* mesh_settings = new JPH::MeshShapeSettings(triangles);
+        JPH::BodyCreationSettings body_settings(mesh_settings,
+            JPH::RVec3::sZero(), JPH::Quat::sIdentity(),
+            JPH::EMotionType::Static,
+            Physics::Layers::NON_MOVING);
+        JPH::BodyID plane_id
+            = system->m_body_interface->CreateAndAddBody(
+                body_settings,
+                JPH::EActivation::DontActivate);
+        return { plane_id, JPH::EMotionType::Static };
+    });
 
     entity = m_scene->create_entity();
     Entity::add_name(entity, "Cube");
@@ -110,19 +113,20 @@ App::App()
     transform = {};
     Entity::add_transform(entity, transform);
     m_gizmo.m_transform = &entity.get_component<Transform>();
-    // Entity::add_physics_command(m_cube_entity, [](Physics::System* system, [[maybe_unused]] Renderer::Model* _model) -> std::pair<JPH::BodyID, JPH::EMotionType> {
-    //     JPH::BodyCreationSettings cube_settings(
-    //         new JPH::BoxShape(JPH::Vec3(0.5, 0.5, 0.5)),
-    //         JPH::RVec3(-7.05, 20.0, -5.5),
-    //         JPH::Quat::sIdentity(),
-    //         JPH::EMotionType::Dynamic,
-    //         Physics::Layers::MOVING);
+    Entity::add_physics_command(entity, [](Physics::System* system, [[maybe_unused]] Renderer::Model* _model) -> std::pair<JPH::BodyID, JPH::EMotionType> {
+        JPH::BoxShape* box_shape = new JPH::BoxShape(JPH::Vec3(0.5, 0.5, 0.5));
+        JPH::BodyCreationSettings cube_settings(
+            box_shape,
+            JPH::RVec3(-7.05, 20.0, -5.5),
+            JPH::Quat::sIdentity(),
+            JPH::EMotionType::Dynamic,
+            Physics::Layers::MOVING);
 
-    //     auto body = system->m_body_interface->CreateAndAddBody(
-    //         cube_settings,
-    //         JPH::EActivation::Activate);
-    //     return { body, JPH::EMotionType::Dynamic };
-    // });
+        auto body = system->m_body_interface->CreateAndAddBody(
+            cube_settings,
+            JPH::EActivation::Activate);
+        return { body, JPH::EMotionType::Dynamic };
+    });
 
     // for (int i = 0; i <= 50; i++) {
     //     e3.add_physics_command([](Physics::System* system, [[maybe_unused]] Renderer::Model* _model) -> std::pair<JPH::BodyID, JPH::EMotionType> {
@@ -260,15 +264,30 @@ void App::run()
 
         m_app_data.text_renderer.draw_text(10, m_app_data.m_window.get_height() - m_app_data.text_renderer.get_max_pixel_height(), std::format("Framerate {}", m_fps).c_str(), glm::vec3 { 1.0F });
 
-        // auto& transform = m_cube_entity.get_component<Transform>();
-        // auto* model = m_cube_entity.get_component<Renderer::Model*>();
-        // auto base_aabb = model->get_mesh()->m_aabbs[0];
-        // auto transform_aabb = base_aabb.transform(transform.get_model());
-        // m_data.debug_renderer.add_aabb(transform_aabb);
-        // if (ray_intersecton_mouse(transform_aabb, &m_data)) {
-        //     m_data.debug_renderer.draw(glm::vec3(0.0, 0.0, 1.0), m_data.m_camera);
-        // } else {
-        //     m_data.debug_renderer.draw(glm::vec3(1.0, 0.0, 0.0), m_data.m_camera);
+        auto entity = m_scene->get_entity_by_name("Sponza Model");
+        m_scene->draw_entity_wireframe(entity, glm::vec4(1.0, 0.0, 0.0, 1.0));
+
+        // auto view = m_scene->m_registry.view<Transform, Renderer::Model*>();
+        // float closest_distance = std::numeric_limits<float>::max();
+        // entt::entity closest_entity = entt::null;
+        // for (auto [entity, transform, model] : view.each()) {
+        //     auto ray = Utils::ray_from_mouse(&m_app_data);
+        //     for (auto& aabb : model->get_mesh()->m_aabbs) {
+        //         auto transform_aabb = aabb.transform(transform.get_model());
+        //         auto result = Utils::intersect_ray_aabb_hit(ray, transform_aabb);
+        //         if (result.has_value() && result->distance < closest_distance && result->distance > m_app_data.m_camera.get_near()) {
+        //             m_app_data.line_renderer.add_aabb(transform_aabb, glm::vec3(0.0, 0.0, 1.0));
+        //             closest_distance = result->distance;
+        //             closest_entity = entity;
+
+        //         } else {
+        //             m_app_data.line_renderer.add_aabb(transform_aabb, glm::vec3(1.0, 0.0, 0.0));
+        //         }
+        //     }
+        // }
+
+        // if (closest_entity != entt::null && m_scene->m_registry.valid(closest_entity)) {
+        //     m_app_data.selected_entity = Entity(m_scene, closest_entity);
         // }
 
         if (m_app_data.selected_entity.valid()) {
@@ -301,14 +320,23 @@ void App::run()
 
         ImGui::Checkbox("Toggle physics", &m_scene->m_physics_on);
 
-        if (ImGui::Button("Gizmo Translation")) {
-            m_gizmo.m_state = Gizmo::State::Translation;
-        }
-        if (ImGui::Button("Gizmo Rotation")) {
-            m_gizmo.m_state = Gizmo::State::Rotation;
-        }
-        if (ImGui::Button("Gizmo Scale")) {
-            m_gizmo.m_state = Gizmo::State::Scale;
+        if (m_app_data.selected_entity.valid()) {
+            if (ImGui::CollapsingHeader("Gizmo")) {
+                if (ImGui::Button("Gizmo Translation")) {
+                    m_gizmo.m_state = Gizmo::State::Translation;
+                }
+                ImGui::SameLine();
+                if (ImGui::Button("Gizmo Rotation")) {
+                    m_gizmo.m_state = Gizmo::State::Rotation;
+                }
+                ImGui::SameLine();
+                if (ImGui::Button("Gizmo Scale")) {
+                    m_gizmo.m_state = Gizmo::State::Scale;
+                }
+                if (ImGui::Button("Deselect Entity")) {
+                    m_app_data.selected_entity = Entity(m_scene, entt::null);
+                }
+            }
         }
 
         if (ImGui::CollapsingHeader("Scene_1")) {

@@ -115,6 +115,24 @@ constexpr void get_shadow_pass_point_geometry_shaders(ShaderInfoData<3>& out, co
     out.populate_info();
 }
 
+constexpr void get_lines_shaders(ShaderInfoData<2>& out, const std::string& vert_defines, const std::string& frag_defines)
+{
+    std::vector<char> pbr_file = read_file<char>("res/shaders/forward_pass/static_lines.glsl");
+    std::string_view pbr_file_view = { pbr_file.data(), pbr_file.size() };
+
+    // Vertex Shader
+    out.data.at(0) = std::format("#version 460 core\n");
+    out.data.at(0) += vert_defines;
+    out.data.at(0) += get_lines_between_delims(pbr_file_view, "// Vertex Begin", "// Vertex End");
+
+    // Fragment Shader
+    out.data.at(1) += "#version 460 core\n";
+    out.data.at(1) += frag_defines;
+    out.data.at(1) += get_lines_between_delims(pbr_file_view, "// Fragment Begin", "// Fragment End");
+
+    out.populate_info();
+}
+
 } // anonymous namespace
 
 Scene::Scene(GlobalAppData* app_data)
@@ -146,6 +164,19 @@ void Scene::remove_entity(Entity entity)
     m_registry.destroy(entity.get_id());
 }
 
+Entity Scene::get_entity_by_name(const char* name)
+{
+    auto view = m_registry.view<Utils::String>();
+
+    for (auto [entity, e_name] : view.each()) {
+        if (e_name == name) {
+            return { this, entity };
+        }
+    }
+
+    return { this, entt::null };
+}
+
 void Scene::update()
 {
     m_clock.update();
@@ -162,7 +193,7 @@ void Scene::update()
 
         for (auto [entity, transform, body, motion] : view.each()) {
             if (motion != JPH::EMotionType::Static) {
-                auto& model = transform.get_model_ref();
+                auto& model = transform.get_model_matrix_ref();
                 model = mat4_to_mat4(m_physics_system->m_body_interface->GetCenterOfMassTransform(body));
 
                 auto* point_light = m_registry.try_get<Renderer::Light::Pbr::Point>(entity);
@@ -197,12 +228,12 @@ void Scene::draw()
             }
 
             if (!contained) {
-                m_models_instance_draw_cache.emplace_back(model, transform.get_model());
+                m_models_instance_draw_cache.emplace_back(model, transform.get_model_matrix());
             }
 
             for (auto& model_cached : m_models_instance_draw_cache) {
                 if (model == model_cached.m_model) {
-                    model_cached.m_model_matrices.emplace_back(transform.get_model());
+                    model_cached.m_model_matrices.emplace_back(transform.get_model_matrix());
 
                     if (model_cached.m_model->get_mesh()->m_has_bones) {
                         auto& data = m_registry.get<Renderer::AnimationData>(entity);
@@ -223,7 +254,7 @@ void Scene::draw()
         for (auto [entity, transform, model] : model_view.each()) {
             for (usize j = 0; j < m_models_instance_draw_cache.size(); j++) {
                 if (model == m_models_instance_draw_cache[j].m_model) {
-                    m_models_instance_draw_cache[j].m_model_matrices.emplace_back(transform.get_model());
+                    m_models_instance_draw_cache[j].m_model_matrices.emplace_back(transform.get_model_matrix());
                 }
             }
         }
@@ -362,6 +393,32 @@ void Scene::draw()
     Renderer::Texture::reset_texture_units();
 }
 
+void Scene::draw_entity_wireframe(Entity entity, glm::vec4 color)
+{
+    if (!entity.valid()) {
+        LOG_ERROR("Invalid entity provided to draw_mesh_lines");
+        return;
+    }
+    auto transform = entity.get_component<Transform>();
+    auto* model = entity.get_component<Renderer::Model*>();
+
+    glDisable(GL_DEPTH_TEST);
+    glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+
+    m_line_shader.bind();
+    // m_line_shader.set_mat4("model", model);
+    std::array<glm::mat4, 1> transform_temp { transform.get_model_matrix() };
+    model->update(transform_temp, {});
+
+    m_line_shader.set_mat4("proj", m_app_data->m_camera.get_proj());
+    m_line_shader.set_mat4("view", m_app_data->m_camera.get_view());
+    m_line_shader.set_vec4("u_color", color);
+    model->draw_untextured(m_line_shader);
+
+    glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+    glEnable(GL_DEPTH_TEST);
+}
+
 void Scene::draw_debug_imgui()
 {
     if (ImGui::Button("Reload shaders")) {
@@ -391,9 +448,10 @@ void Scene::draw_debug_imgui()
         for (auto [entity] : view.each()) {
             ImGui::PushID(i);
 
-            const char** name_check = m_registry.try_get<const char*>(entity);
-            const char* entity_name = name_check == nullptr ? "no_name" : *name_check;
-            auto name = std::format("{} e{}", entity_name, i);
+            Utils::String no_name("no_name");
+            Utils::String* name_check = m_registry.try_get<Utils::String>(entity);
+            Utils::String& entity_name = name_check == nullptr ? no_name : *name_check;
+            auto name = std::format("{} e{}", entity_name.c_str(), i);
 
             if (ImGui::CollapsingHeader(name.c_str())) {
                 auto* try_model = m_registry.try_get<Renderer::Model*>(entity);
@@ -410,6 +468,9 @@ void Scene::draw_debug_imgui()
                 if (try_transform != nullptr) {
                     if (ImGui::Button("Select Entity")) {
                         m_app_data->selected_entity = Entity(this, entity);
+                    }
+                    if (ImGui::Button("Deselect Entity")) {
+                        m_app_data->selected_entity = Entity(this, entt::null);
                     }
                 }
 
@@ -585,6 +646,18 @@ void Scene::compile_shaders()
             get_shadow_pass_point_geometry_shaders(cubemap_shaders, bone_defines, no_defines);
             m_shadowmap_cubemap_shader_bones.init(cubemap_shaders.info.data(), cubemap_shaders.info.size());
         }
+    }
+
+    if (!m_line_shader.is_initialized()) {
+        ShaderInfoData<2> line_shaders;
+        get_lines_shaders(line_shaders, "#define SSBO0\n", "");
+        m_line_shader.init(line_shaders.info.data(), line_shaders.info.size());
+    }
+
+    if (!m_line_shader_bones.is_initialized()) {
+        ShaderInfoData<2> line_shaders_bones;
+        get_lines_shaders(line_shaders_bones, "#define SSBO0\n" + bone_defines, "");
+        m_line_shader_bones.init(line_shaders_bones.info.data(), line_shaders_bones.info.size());
     }
 
     m_shaders_need_update = false;
