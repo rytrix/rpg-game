@@ -1,6 +1,6 @@
 #include "text.hpp"
-#include "shader_preprocessor.hpp"
 #include "../utils/file.hpp"
+#include "shader_preprocessor.hpp"
 
 namespace Renderer {
 
@@ -147,6 +147,8 @@ int TextRenderer::load_glyph(char c)
     subimage_info.type = GL_UNSIGNED_BYTE;
     subimage_info.pixels = m_face->glyph->bitmap.buffer;
     m_texture_atlas.sub_image(subimage_info);
+
+    glPixelStorei(GL_PACK_ALIGNMENT, 1); // enable byte-alignment restriction
 
     Character& character = m_characters[c];
     character.valid = true;
