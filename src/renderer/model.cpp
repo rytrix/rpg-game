@@ -97,6 +97,7 @@ void Model::draw(Shader& shader)
 void Model::update(std::span<glm::mat4> models, std::span<AnimationData*> animation_data)
 {
     util_assert(initialized == true, "not initialized");
+
     m_mesh.next_ssbo_frame();
     m_mesh.update_instance_count(models.size());
     m_mesh.update_model_ssbos(models);
@@ -115,7 +116,7 @@ void Model::process_node(aiNode* node, const aiScene* scene)
 {
     for (u32 i = 0; i < node->mNumMeshes; i++) {
         aiMesh* mesh = scene->mMeshes[node->mMeshes[i]];
-        LOG_DEBUG(std::format("Loading mesh: {} from scene", node->mMeshes[i]));
+        LOG_INFO(std::format("Loading mesh: {} from scene", node->mMeshes[i]));
         process_mesh(mesh, scene);
     }
 
