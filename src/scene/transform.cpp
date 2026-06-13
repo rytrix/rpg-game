@@ -56,24 +56,24 @@ void Transform::set_scale(const glm::vec3& scale)
     return m_scale;
 }
 
-const glm::mat4& Transform::get_model()
+const glm::mat4& Transform::get_model_matrix()
 {
     if (needs_update) {
-        m_model = glm::translate(glm::mat4(1.0F), m_position)
+        m_model_matrix = glm::translate(glm::mat4(1.0F), m_position)
             * glm::mat4_cast(m_rotation)
             * glm::scale(glm::mat4(1.0F), m_scale);
         needs_update = false;
     }
-    return m_model;
+    return m_model_matrix;
 }
 
-glm::mat4& Transform::get_model_ref()
+glm::mat4& Transform::get_model_matrix_ref()
 {
-    return m_model;
+    return m_model_matrix;
 }
 
 void Transform::set_model(const glm::mat4& model)
 {
-    m_model = model;
+    m_model_matrix = model;
     needs_update = false;
 }
