@@ -81,8 +81,6 @@ void Mesh::update_bone_matrices(std::span<AnimationData*> animation_data)
     void* ptr = m_bone_ssbo.get_ptr();
     for (auto* anim : animation_data) {
         auto* current_animation = anim->data[anim->selected_animation];
-        // TODO: make sure this is done somewhere else
-        // anim_cache->update_transforms();
         std::memcpy((void*)((char*)ptr + offset), current_animation->m_final_transforms, current_animation->m_final_transforms_size * sizeof(glm::mat4));
         offset += MAX_BONES * sizeof(glm::mat4);
     }
