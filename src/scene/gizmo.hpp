@@ -30,7 +30,8 @@ public:
 private:
     GlobalAppData* m_app_data = nullptr;
 
-    static constexpr f32 LINE_THICKNESS = 0.3F;
+    static constexpr f32 LINE_THICKNESS = 0.1F;
+    static constexpr f32 LINE_THICKNESS_DOUBLE_DISTANCE = 10.0F;
 
     struct PreviousHit {
         bool on_down;

@@ -144,7 +144,10 @@ void Gizmo::test_intersection_lines()
 
     Utils::Line line {};
     line.length = m_radius * 2;
-    line.thickness = LINE_THICKNESS;
+
+    auto get_line_thickness = [&]() {
+        return std::min(LINE_THICKNESS + glm::distance(ray.position, line.position) / LINE_THICKNESS_DOUBLE_DISTANCE + LINE_THICKNESS, 1.0F);
+    };
 
     float closest_distance = std::numeric_limits<float>::max();
 
@@ -171,6 +174,8 @@ void Gizmo::test_intersection_lines()
     line.position = m_transform->get_position() - glm::vec3(0.0, m_radius, 0.0);
     line.normal = glm::normalize(glm::vec3(normal.x, 0.0, normal.z));
     line.direction = glm::vec3(0.0, 1.0, 0.0);
+    line.thickness = get_line_thickness();
+
     auto result = Utils::intersect_ray_line_closest(ray, line);
     if (result.has_value()) {
         handle_result(result.value());
@@ -179,6 +184,8 @@ void Gizmo::test_intersection_lines()
     line.position = m_transform->get_position() - glm::vec3(m_radius, 0.0, 0.0);
     line.normal = glm::normalize(glm::vec3(0.0, normal.y, normal.z));
     line.direction = glm::vec3(1.0, 0.0, 0.0);
+    line.thickness = get_line_thickness();
+
     result = Utils::intersect_ray_line_closest(ray, line);
     if (result.has_value()) {
         handle_result(result.value());
@@ -187,6 +194,8 @@ void Gizmo::test_intersection_lines()
     line.position = m_transform->get_position() - glm::vec3(0.0, 0.0, m_radius);
     line.normal = glm::normalize(glm::vec3(normal.x, normal.y, 0.0));
     line.direction = glm::vec3(0.0, 0.0, 1.0);
+    line.thickness = get_line_thickness();
+
     result = Utils::intersect_ray_line_closest(ray, line);
     if (result.has_value()) {
         handle_result(result.value());
@@ -199,9 +208,10 @@ void Gizmo::test_intersection_rotation()
 
     Utils::Ring ring {};
     ring.position = m_transform->get_position();
-    ring.normal = glm::vec3(1.0, 0.0, 0.0);
     ring.radius = m_radius;
-    ring.thickness = LINE_THICKNESS;
+    ring.thickness = std::min(
+        LINE_THICKNESS + glm::distance(ray.position, ring.position) / LINE_THICKNESS_DOUBLE_DISTANCE + LINE_THICKNESS,
+        1.0F);
 
     float closest_distance = std::numeric_limits<float>::max();
 
@@ -209,7 +219,6 @@ void Gizmo::test_intersection_rotation()
         auto [hit, distance] = result;
         if (distance < closest_distance) {
             closest_distance = distance;
-            // std::println("Gizmo intersection worked {}", glm::length(ray.position - hit));
             m_prev_hit.on_down = true;
             m_prev_hit.hit = hit;
             m_prev_hit.normal = ring.normal;
@@ -217,6 +226,7 @@ void Gizmo::test_intersection_rotation()
         }
     };
 
+    ring.normal = glm::vec3(1.0, 0.0, 0.0);
     auto result = Utils::intersect_ray_ring(ray, ring);
     if (result.has_value()) {
         handle_result(result.value());
@@ -239,21 +249,21 @@ void Gizmo::batch_rotations(f32 radius)
 {
     Transform transform;
     transform.set_position(m_transform->get_position());
-    m_app_data->line_renderer.add_circle(transform.get_model(), radius, Color::Blue);
+    m_app_data->line_renderer.add_circle(transform.get_model_matrix(), radius, Color::Blue);
     transform.set_euler_angles(glm::vec3(90.0, 0.0, 0.0));
-    m_app_data->line_renderer.add_circle(transform.get_model(), radius, Color::Green);
+    m_app_data->line_renderer.add_circle(transform.get_model_matrix(), radius, Color::Green);
     transform.set_euler_angles(glm::vec3(0.0, 90.0, 0.0));
-    m_app_data->line_renderer.add_circle(transform.get_model(), radius, Color::Red);
+    m_app_data->line_renderer.add_circle(transform.get_model_matrix(), radius, Color::Red);
 }
 
 void Gizmo::batch_lines(f32 radius)
 {
     Transform transform;
     transform.set_position(m_transform->get_position());
-    m_app_data->line_renderer.add_line(transform.get_model(),
+    m_app_data->line_renderer.add_line(transform.get_model_matrix(),
         glm::vec3(0.0, -radius, 0.0), glm::vec3(0.0, radius, 0.0), Color::Blue);
-    m_app_data->line_renderer.add_line(transform.get_model(),
+    m_app_data->line_renderer.add_line(transform.get_model_matrix(),
         glm::vec3(-radius, 0.0, 0.0), glm::vec3(radius, 0.0, 0.0), Color::Green);
-    m_app_data->line_renderer.add_line(transform.get_model(),
+    m_app_data->line_renderer.add_line(transform.get_model_matrix(),
         glm::vec3(0.0, 0.0, -radius), glm::vec3(0.0, 0.0, radius), Color::Red);
 }
