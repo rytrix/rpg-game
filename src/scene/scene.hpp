@@ -67,21 +67,21 @@ private:
     Renderer::Shader m_shadowmap_cubemap_shader;
     Renderer::Shader m_shadowmap_cubemap_shader_bones;
 
-    Renderer::Shader m_line_shader;
-    Renderer::Shader m_line_shader_bones;
+    Renderer::Shader m_wireframe_shader;
+    Renderer::Shader m_wireframe_shader_bones;
 
-    struct ModelMatrix {
+    struct ModelInstanceCache {
         Renderer::Model* m_model;
         std::vector<glm::mat4> m_model_matrices;
         std::vector<Renderer::AnimationData*> m_animation_data;
 
-        ModelMatrix(Renderer::Model* model, glm::mat4 matrix)
+        ModelInstanceCache(Renderer::Model* model, glm::mat4 matrix)
             : m_model(model)
             , m_model_matrices({ matrix })
         {
         }
     };
-    std::vector<ModelMatrix> m_models_instance_draw_cache;
+    std::vector<ModelInstanceCache> m_models_instance_draw_cache;
     bool m_models_instance_draw_cache_needs_update = false;
 
     Renderer::RandomSamplingTexture m_random_sampling_texture;
