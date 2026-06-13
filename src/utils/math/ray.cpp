@@ -36,7 +36,11 @@ glm::vec3 Ray::get_inverse()
 
     glm::vec4 target
         = inv_proj_view * glm::vec4(screen_coord.x, screen_coord.y, 1.0F, 1.0F);
-    glm::vec3 ray_dir = glm::normalize(glm::vec3(target) / target.w);
+    // glm::vec3 ray_dir = glm::normalize(glm::vec3(target) / target.w);
+
+    glm::vec3 world_point = glm::vec3(target) / target.w;
+    glm::vec3 camera_pos = data->m_camera.get_pos();
+    glm::vec3 ray_dir = glm::normalize(world_point - camera_pos);
 
     return { data->m_camera.get_pos(), ray_dir };
 }
@@ -46,7 +50,10 @@ glm::vec3 Ray::get_inverse()
     glm::mat4 inv_proj_view = data->m_camera.get_inverse_proj_view();
     glm::vec4 target
         = inv_proj_view * glm::vec4(0.0F, 0.0F, 1.0F, 1.0F);
-    glm::vec3 ray_dir = glm::normalize(glm::vec3(target) / target.w);
+
+    glm::vec3 world_point = glm::vec3(target) / target.w;
+    glm::vec3 camera_pos = data->m_camera.get_pos();
+    glm::vec3 ray_dir = glm::normalize(world_point - camera_pos);
 
     return { data->m_camera.get_pos(), ray_dir };
 }
@@ -102,35 +109,42 @@ glm::vec3 Ray::get_inverse()
 
 [[nodiscard]] std::optional<glm::vec3> intersect_ray_line(const Ray& ray, const Line& line)
 {
-    float denom = glm::dot(ray.direction, line.normal);
+    glm::vec3 ray_dir = ray.direction;
+    glm::vec3 line_dir = line.direction;
+    glm::vec3 origin_offset = ray.position - line.position;
 
-#ifdef PARALLEL_TO_PLANE_CHECK
-    if (glm::abs(denom) < PARALLEL_PRECISION) {
-        return std::nullopt; // Parallel to plane
+    float dot_directions = glm::dot(ray_dir, line_dir);
+    float dot_ray_offset = glm::dot(ray_dir, origin_offset);
+    float dot_line_offset = glm::dot(line_dir, origin_offset);
+
+    float denominator = 1.0F - (dot_directions * dot_directions);
+    float dist_along_ray = 0.0F;
+    float dist_along_line = 0.0F;
+
+    // Handle parallel lines to avoid division by zero
+    if (denominator < PARALLEL_PRECISION) {
+        dist_along_ray = 0.0F;
+        dist_along_line = dot_line_offset;
+    } else {
+        dist_along_ray = (dot_directions * dot_line_offset - 1.0F * dot_ray_offset) / denominator;
+        dist_along_line = (1.0F * dot_line_offset - dot_directions * dot_ray_offset) / denominator;
     }
-#endif
 
-    float t = glm::dot(line.position - ray.position, line.normal) / denom;
-
-    if (t < 0.0F) {
+    // The ray is pointing away from the line
+    if (dist_along_ray < 0.0F) {
         return std::nullopt;
     }
 
-    glm::vec3 plane_hit_point = ray.position + (ray.direction * t);
+    glm::vec3 ray_hit_point = ray.position + (dist_along_ray * ray_dir);
+    glm::vec3 closest_point = line.position + (dist_along_line * line_dir);
 
-    glm::vec3 vector_to_hit = plane_hit_point - line.position;
-    float length_along_line = glm::dot(vector_to_hit, line.direction);
-    glm::vec3 closest_point = line.position + (length_along_line * line.direction);
+    bool within_bounds = (dist_along_line >= 0.0F) && (dist_along_line <= line.length);
 
-    bool within_bounds = (length_along_line >= 0.0F) && (length_along_line <= line.length);
-
-    // Use squared distance instead of glm::distance to avoid sqrt
-    float squared_distance_to_line = glm::dot(plane_hit_point - closest_point, plane_hit_point - closest_point);
-    float squared_thickness = line.thickness * line.thickness;
-    bool is_touching_line = squared_distance_to_line <= squared_thickness;
+    float distance_to_line = glm::distance(ray_hit_point, closest_point);
+    bool is_touching_line = distance_to_line <= line.thickness;
 
     if (within_bounds && is_touching_line) {
-        return plane_hit_point;
+        return ray_hit_point;
     }
 
     return std::nullopt;
@@ -138,35 +152,42 @@ glm::vec3 Ray::get_inverse()
 
 [[nodiscard]] std::optional<RayLineResult> intersect_ray_line_closest(const Ray& ray, const Line& line)
 {
-    float denom = glm::dot(ray.direction, line.normal);
+    glm::vec3 ray_dir = ray.direction;
+    glm::vec3 line_dir = line.direction;
+    glm::vec3 origin_offset = ray.position - line.position;
 
-#ifdef PARALLEL_TO_PLANE_CHECK
-    if (glm::abs(denom) < PARALLEL_PRECISION) {
-        return std::nullopt; // Parallel to plane
+    float dot_directions = glm::dot(ray_dir, line_dir);
+    float dot_ray_offset = glm::dot(ray_dir, origin_offset);
+    float dot_line_offset = glm::dot(line_dir, origin_offset);
+
+    float denominator = 1.0F - (dot_directions * dot_directions);
+    float dist_along_ray = 0.0F;
+    float dist_along_line = 0.0F;
+
+    // Handle parallel lines to avoid division by zero
+    if (denominator < PARALLEL_PRECISION) {
+        dist_along_ray = 0.0F;
+        dist_along_line = dot_line_offset;
+    } else {
+        dist_along_ray = (dot_directions * dot_line_offset - 1.0F * dot_ray_offset) / denominator;
+        dist_along_line = (1.0F * dot_line_offset - dot_directions * dot_ray_offset) / denominator;
     }
-#endif
 
-    float t = glm::dot(line.position - ray.position, line.normal) / denom;
-
-    if (t < 0.0F) {
+    // The ray is pointing away from the line
+    if (dist_along_ray < 0.0F) {
         return std::nullopt;
     }
 
-    glm::vec3 plane_hit_point = ray.position + (ray.direction * t);
+    glm::vec3 ray_hit_point = ray.position + (dist_along_ray * ray_dir);
+    glm::vec3 closest_point = line.position + (dist_along_line * line_dir);
 
-    glm::vec3 vector_to_hit = plane_hit_point - line.position;
-    float length_along_line = glm::dot(vector_to_hit, line.direction);
-    glm::vec3 closest_point = line.position + (length_along_line * line.direction);
+    bool within_bounds = (dist_along_line >= 0.0F) && (dist_along_line <= line.length);
 
-    bool within_bounds = (length_along_line >= 0.0F) && (length_along_line <= line.length);
-
-    // Use squared distance instead of glm::distance to avoid sqrt
-    float squared_distance_to_line = glm::dot(plane_hit_point - closest_point, plane_hit_point - closest_point);
-    float squared_thickness = line.thickness * line.thickness;
-    bool is_touching_line = squared_distance_to_line <= squared_thickness;
+    float distance_to_line = glm::distance(ray_hit_point, closest_point);
+    bool is_touching_line = distance_to_line <= line.thickness;
 
     if (within_bounds && is_touching_line) {
-        return RayLineResult { .hit = plane_hit_point, .closest = closest_point };
+        return RayLineResult { .hit = ray_hit_point, .closest = closest_point };
     }
 
     return std::nullopt;

@@ -31,7 +31,8 @@ private:
     GlobalAppData* m_app_data = nullptr;
 
     static constexpr f32 LINE_THICKNESS = 0.1F;
-    static constexpr f32 LINE_THICKNESS_DOUBLE_DISTANCE = 10.0F;
+    static constexpr f32 LINE_THICKNESS_DOUBLE_DISTANCE = 50.0F;
+    static constexpr f32 RADIUS_DOUBLE_DISTANCE = 10.0F;
 
     struct PreviousHit {
         bool on_down;
@@ -45,12 +46,19 @@ private:
         float prev_rotation;
     };
 
-    PreviousHit m_prev_hit {};
+#ifdef GIZMO_DEBUG_RAY
+    std::optional<Utils::Ray> m_prev_ray;
+#endif
 
-    void batch_rotations(f32 radius);
-    void batch_lines(f32 radius);
+    PreviousHit m_prev_hit {};
 
     void test_intersection();
     void test_intersection_lines();
     void test_intersection_rotation();
+
+    // Get a radius value that scales up with distance
+    f32 get_radius();
+
+    void batch_rotations(f32 radius);
+    void batch_lines(f32 radius);
 };

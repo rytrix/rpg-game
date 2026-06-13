@@ -30,6 +30,9 @@ void Gizmo::on_event(Event event)
         if (event.m_sdl_event.type == SDL_EVENT_MOUSE_BUTTON_DOWN) {
             if (event.m_sdl_event.button.button == SDL_BUTTON_LEFT) {
                 test_intersection();
+#ifdef GIZMO_DEBUG_RAY
+                m_prev_ray = Utils::ray_from_mouse(m_app_data);
+#endif
             }
         } else if (event.m_sdl_event.type == SDL_EVENT_MOUSE_BUTTON_UP) {
             if (event.m_sdl_event.button.button == SDL_BUTTON_LEFT) {
@@ -117,12 +120,17 @@ void Gizmo::draw()
     switch (m_state) {
         case State::Translation:
         case State::Scale:
-            batch_lines(m_radius);
+            batch_lines(get_radius());
             break;
         case State::Rotation:
-            batch_rotations(m_radius);
+            batch_rotations(get_radius());
             break;
     }
+#ifdef GIZMO_DEBUG_RAY
+    if (m_prev_ray.has_value()) {
+        m_app_data->line_renderer.add_ray(m_prev_ray.value(), 50.0F, Color::Red);
+    }
+#endif
 }
 
 void Gizmo::test_intersection()
@@ -141,13 +149,13 @@ void Gizmo::test_intersection()
 void Gizmo::test_intersection_lines()
 {
     auto ray = Utils::ray_from_mouse(m_app_data);
+    auto view_direction = glm::normalize(m_transform->get_position() - ray.position);
+    auto radius = get_radius();
 
     Utils::Line line {};
-    line.length = m_radius * 2;
-
-    auto get_line_thickness = [&]() {
-        return std::min(LINE_THICKNESS + glm::distance(ray.position, line.position) / LINE_THICKNESS_DOUBLE_DISTANCE + LINE_THICKNESS, 1.0F);
-    };
+    line.length = radius * 2;
+    line.thickness = LINE_THICKNESS + glm::distance(ray.position, m_transform->get_position()) / LINE_THICKNESS_DOUBLE_DISTANCE + LINE_THICKNESS;
+    std::println("Line thickness {}", line.thickness);
 
     float closest_distance = std::numeric_limits<float>::max();
 
@@ -159,7 +167,6 @@ void Gizmo::test_intersection_lines()
 
             m_prev_hit.on_down = true;
             m_prev_hit.hit = closest;
-            m_prev_hit.normal = line.normal;
             m_prev_hit.direction = line.direction;
             m_prev_hit.scale = m_transform->get_scale();
             // closest_point - transform_position
@@ -169,35 +176,32 @@ void Gizmo::test_intersection_lines()
     };
 
     // Get a normal that directly faces the camera
-    auto normal = ray.direction;
+    auto normal = view_direction;
 
-    line.position = m_transform->get_position() - glm::vec3(0.0, m_radius, 0.0);
-    line.normal = glm::normalize(glm::vec3(normal.x, 0.0, normal.z));
+    line.position = m_transform->get_position() - glm::vec3(0.0, radius, 0.0);
     line.direction = glm::vec3(0.0, 1.0, 0.0);
-    line.thickness = get_line_thickness();
 
     auto result = Utils::intersect_ray_line_closest(ray, line);
     if (result.has_value()) {
+        m_prev_hit.normal = glm::normalize(glm::vec3(normal.x, 0.0, normal.z));
         handle_result(result.value());
     }
 
-    line.position = m_transform->get_position() - glm::vec3(m_radius, 0.0, 0.0);
-    line.normal = glm::normalize(glm::vec3(0.0, normal.y, normal.z));
+    line.position = m_transform->get_position() - glm::vec3(radius, 0.0, 0.0);
     line.direction = glm::vec3(1.0, 0.0, 0.0);
-    line.thickness = get_line_thickness();
 
     result = Utils::intersect_ray_line_closest(ray, line);
     if (result.has_value()) {
+        m_prev_hit.normal = glm::normalize(glm::vec3(0.0, normal.y, normal.z));
         handle_result(result.value());
     }
 
-    line.position = m_transform->get_position() - glm::vec3(0.0, 0.0, m_radius);
-    line.normal = glm::normalize(glm::vec3(normal.x, normal.y, 0.0));
+    line.position = m_transform->get_position() - glm::vec3(0.0, 0.0, radius);
     line.direction = glm::vec3(0.0, 0.0, 1.0);
-    line.thickness = get_line_thickness();
 
     result = Utils::intersect_ray_line_closest(ray, line);
     if (result.has_value()) {
+        m_prev_hit.normal = glm::normalize(glm::vec3(normal.x, normal.y, 0.0));
         handle_result(result.value());
     }
 }
@@ -208,10 +212,8 @@ void Gizmo::test_intersection_rotation()
 
     Utils::Ring ring {};
     ring.position = m_transform->get_position();
-    ring.radius = m_radius;
-    ring.thickness = std::min(
-        LINE_THICKNESS + glm::distance(ray.position, ring.position) / LINE_THICKNESS_DOUBLE_DISTANCE + LINE_THICKNESS,
-        1.0F);
+    ring.radius = get_radius();
+    ring.thickness = LINE_THICKNESS + glm::distance(ray.position, ring.position) / LINE_THICKNESS_DOUBLE_DISTANCE * LINE_THICKNESS;
 
     float closest_distance = std::numeric_limits<float>::max();
 
@@ -243,6 +245,13 @@ void Gizmo::test_intersection_rotation()
     if (result.has_value()) {
         handle_result(result.value());
     }
+}
+
+f32 Gizmo::get_radius()
+{
+    auto camera_pos = m_app_data->m_camera.get_pos();
+    auto gizmo_pos = m_transform->get_position();
+    return m_radius + glm::distance(camera_pos, gizmo_pos) / RADIUS_DOUBLE_DISTANCE * m_radius;
 }
 
 void Gizmo::batch_rotations(f32 radius)
