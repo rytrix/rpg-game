@@ -36,7 +36,6 @@ glm::vec3 Ray::get_inverse()
 
     glm::vec4 target
         = inv_proj_view * glm::vec4(screen_coord.x, screen_coord.y, 1.0F, 1.0F);
-    // glm::vec3 ray_dir = glm::normalize(glm::vec3(target) / target.w);
 
     glm::vec3 world_point = glm::vec3(target) / target.w;
     glm::vec3 camera_pos = data->m_camera.get_pos();
@@ -76,7 +75,7 @@ glm::vec3 Ray::get_inverse()
 
     glm::vec3 hit_point = ray.position + (ray.direction * t);
 
-    float dist_from_center = glm::length(hit_point - ring.position);
+    float dist_from_center = glm::distance(hit_point, ring.position);
 
     float dist_from_radius = glm::abs(dist_from_center - ring.radius);
     if (dist_from_radius <= ring.thickness * 0.5) {

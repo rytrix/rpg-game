@@ -155,7 +155,6 @@ void Gizmo::test_intersection_lines()
     Utils::Line line {};
     line.length = radius * 2;
     line.thickness = LINE_THICKNESS + glm::distance(ray.position, m_transform->get_position()) / LINE_THICKNESS_DOUBLE_DISTANCE + LINE_THICKNESS;
-    std::println("Line thickness {}", line.thickness);
 
     float closest_distance = std::numeric_limits<float>::max();
 
