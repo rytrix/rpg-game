@@ -81,9 +81,9 @@ void System::create_mesh_triangle_list(JPH::TriangleList& triangles, const glm::
         glm::vec3 v3;
         u32 j = 0;
         while (j + 2 < mesh->m_vertex_data.m_indices.size()) {
-            v1 = glm::vec4(mesh->m_vertex_data.m_vertices[mesh->m_vertex_data.m_indices.at(j + 0)].m_pos, 1.0F) * model;
-            v2 = glm::vec4(mesh->m_vertex_data.m_vertices[mesh->m_vertex_data.m_indices.at(j + 1)].m_pos, 1.0F) * model;
-            v3 = glm::vec4(mesh->m_vertex_data.m_vertices[mesh->m_vertex_data.m_indices.at(j + 2)].m_pos, 1.0F) * model;
+            v1 = model * glm::vec4(mesh->m_vertex_data.m_vertices[mesh->m_vertex_data.m_indices.at(j + 0)].m_pos, 1.0F);
+            v2 = model * glm::vec4(mesh->m_vertex_data.m_vertices[mesh->m_vertex_data.m_indices.at(j + 1)].m_pos, 1.0F);
+            v3 = model * glm::vec4(mesh->m_vertex_data.m_vertices[mesh->m_vertex_data.m_indices.at(j + 2)].m_pos, 1.0F);
             j += 3;
 
             JPH::Triangle triangle(vec3_to_float3(v1), vec3_to_float3(v2), vec3_to_float3(v3));
@@ -129,9 +129,9 @@ void System::create_mesh_triangle_list_base_index(JPH::TriangleList& triangles, 
         auto count = mesh->m_base_vertices[i].m_count;
         u32 j = offset;
         while (j + 2 < count + offset) {
-            v1 = glm::vec4(mesh->m_vertex_data.m_vertices[mesh->m_vertex_data.m_indices.at(j + 0) + base].m_pos, 1.0F) * model;
-            v2 = glm::vec4(mesh->m_vertex_data.m_vertices[mesh->m_vertex_data.m_indices.at(j + 1) + base].m_pos, 1.0F) * model;
-            v3 = glm::vec4(mesh->m_vertex_data.m_vertices[mesh->m_vertex_data.m_indices.at(j + 2) + base].m_pos, 1.0F) * model;
+            v1 = model * glm::vec4(mesh->m_vertex_data.m_vertices[mesh->m_vertex_data.m_indices.at(j + 0) + base].m_pos, 1.0F);
+            v2 = model * glm::vec4(mesh->m_vertex_data.m_vertices[mesh->m_vertex_data.m_indices.at(j + 1) + base].m_pos, 1.0F);
+            v3 = model * glm::vec4(mesh->m_vertex_data.m_vertices[mesh->m_vertex_data.m_indices.at(j + 2) + base].m_pos, 1.0F);
             j += 3;
 
             JPH::Triangle triangle(vec3_to_float3(v1), vec3_to_float3(v2), vec3_to_float3(v3));
@@ -140,6 +140,32 @@ void System::create_mesh_triangle_list_base_index(JPH::TriangleList& triangles, 
 
         offset += count;
     }
+}
+
+std::optional<JPH::BodyID> System::ray_cast(Utils::Ray ray, float max_distance)
+{
+    const JPH::NarrowPhaseQuery& narrow_phase = m_physics_system.GetNarrowPhaseQuery();
+
+    JPH::RRayCast jph_ray;
+    jph_ray.mOrigin.Set(ray.position.x, ray.position.y, ray.position.z);
+    jph_ray.mDirection.Set(ray.direction.x * max_distance, ray.direction.y * max_distance, ray.direction.z * max_distance);
+
+    JPH::RayCastSettings settings;
+    JPH::ClosestHitCollisionCollector<JPH::CastRayCollector> collector;
+
+    narrow_phase.CastRay(jph_ray, settings, collector);
+
+    if (collector.HadHit()) {
+        const JPH::RayCastResult& hit = collector.mHit;
+
+        // float hit_fraction = hit.mFraction;
+        // JPH::RVec3 hit_point = jph_ray.GetPointOnRay(hit_fraction);
+        JPH::BodyID body_id = hit.mBodyID;
+
+        return body_id;
+    }
+
+    return std::nullopt;
 }
 
 void System::optimize()

@@ -2,6 +2,8 @@
 
 #include "../renderer/mesh.hpp"
 
+#include "../utils/math/ray.hpp"
+
 namespace Physics {
 
 namespace Layers {
@@ -131,6 +133,8 @@ public:
 
     static void create_mesh_triangle_list_base_index(JPH::TriangleList& triangles, const Renderer::Mesh* mesh);
     static void create_mesh_triangle_list_base_index(JPH::TriangleList& triangles, const glm::mat4& model, const Renderer::Mesh* mesh);
+
+    std::optional<JPH::BodyID> ray_cast(Utils::Ray ray, float max_distance);
 
     void optimize();
 
