@@ -1,5 +1,6 @@
 #include "app.hpp"
 
+#include "physics/helpers.hpp"
 #include "renderer/text.hpp"
 
 #include "utils/color.hpp"
@@ -66,6 +67,17 @@ App::App()
             }
         }
 
+        if (event.type == SDL_EVENT_MOUSE_BUTTON_DOWN) {
+            if (event.button.button == SDL_BUTTON_LEFT) {
+                if (!m_app_data.selected_entity.valid()) {
+                    if (m_app_data.hovered_entity.valid()) {
+                        m_app_data.selected_entity = m_app_data.hovered_entity;
+                        m_gizmo.m_state = Gizmo::State::Translation;
+                    }
+                }
+            }
+        }
+
         Event engine_event {};
         engine_event.m_type = Event::Type::SDL;
         engine_event.m_sdl_event = event;
@@ -89,22 +101,23 @@ App::App()
     Transform transform {};
     transform.set_scale(glm::vec3(0.1));
     Entity::add_transform(entity, transform);
-    Entity::add_physics_command(entity, [&](Physics::System* system, Renderer::Model* model) -> std::pair<JPH::BodyID, JPH::EMotionType> {
+    Entity::add_physics_command(entity, [](Physics::System* system, Entity entity) -> PhysicsInfo {
         JPH::TriangleList triangles;
-        const auto* mesh = model->get_mesh();
+        const auto* mesh = entity.get_component<Renderer::Model*>()->get_mesh();
+        auto& transform = entity.get_component<Transform>();
         Physics::System::create_mesh_triangle_list_base_index(triangles, transform.get_model_matrix(), mesh);
         // Physics::System::create_mesh_triangle_list_base_index(triangles, mesh);
 
-        JPH::MeshShapeSettings* mesh_settings = new JPH::MeshShapeSettings(triangles);
-        JPH::BodyCreationSettings body_settings(mesh_settings,
+        JPH::MeshShapeSettings mesh_settings(triangles);
+        JPH::BodyCreationSettings body_settings(mesh_settings.Create().Get(),
             JPH::RVec3::sZero(), JPH::Quat::sIdentity(),
             JPH::EMotionType::Static,
             Physics::Layers::NON_MOVING);
-        JPH::BodyID plane_id
+        JPH::BodyID body_id
             = system->m_body_interface->CreateAndAddBody(
                 body_settings,
                 JPH::EActivation::DontActivate);
-        return { plane_id, JPH::EMotionType::Static };
+        return { .m_id = body_id, .m_motion_type = JPH::EMotionType::Static, .m_physics_fn = {} };
     });
 
     entity = m_scene->create_entity();
@@ -113,7 +126,7 @@ App::App()
     transform = {};
     Entity::add_transform(entity, transform);
     m_gizmo.m_transform = &entity.get_component<Transform>();
-    Entity::add_physics_command(entity, [](Physics::System* system, [[maybe_unused]] Renderer::Model* _model) -> std::pair<JPH::BodyID, JPH::EMotionType> {
+    Entity::add_physics_command(entity, [](Physics::System* system, [[maybe_unused]] Entity entity) -> PhysicsInfo {
         JPH::BoxShape* box_shape = new JPH::BoxShape(JPH::Vec3(0.5, 0.5, 0.5));
         JPH::BodyCreationSettings cube_settings(
             box_shape,
@@ -125,7 +138,8 @@ App::App()
         auto body = system->m_body_interface->CreateAndAddBody(
             cube_settings,
             JPH::EActivation::Activate);
-        return { body, JPH::EMotionType::Dynamic };
+
+        return { .m_id = body, .m_motion_type = JPH::EMotionType::Dynamic, .m_physics_fn = {} };
     });
 
     // for (int i = 0; i <= 50; i++) {
@@ -264,8 +278,22 @@ void App::run()
 
         m_app_data.text_renderer.draw_text(10, m_app_data.m_window.get_height() - m_app_data.text_renderer.get_max_pixel_height(), std::format("Framerate {}", m_fps).c_str(), glm::vec3 { 1.0F });
 
-        auto entity = m_scene->get_entity_by_name("Sponza Model");
-        m_scene->draw_entity_wireframe(entity, glm::vec4(1.0, 0.0, 0.0, 1.0));
+        if (!m_app_data.selected_entity.valid()) {
+            auto ray_result = m_scene->m_physics_system->ray_cast(Utils::ray_from_mouse(&m_app_data), m_app_data.m_camera.get_far());
+            if (ray_result.has_value()) {
+                auto body_id = ray_result.value();
+                auto view = m_scene->m_registry.view<PhysicsInfo>();
+                for (auto [entity, body] : view.each()) {
+                    if (body.m_id == body_id) {
+                        m_app_data.hovered_entity = Entity(m_scene, entity);
+                        // auto entity = m_scene->get_entity_by_name("Dog");
+                        m_scene->draw_entity_wireframe(m_app_data.hovered_entity, glm::vec4(1.0, 0.0, 0.0, 1.0));
+                    }
+                }
+            }
+        } else {
+            m_app_data.hovered_entity = Entity(m_scene, entt::null);
+        }
 
         // auto view = m_scene->m_registry.view<Transform, Renderer::Model*>();
         // float closest_distance = std::numeric_limits<float>::max();
@@ -291,8 +319,31 @@ void App::run()
         // }
 
         if (m_app_data.selected_entity.valid()) {
-            m_gizmo.m_transform = &m_scene->m_registry.get<Transform>(m_app_data.selected_entity.get_id());
+            auto* transform = &m_app_data.selected_entity.get_component<Transform>();
+            if (m_app_data.selected_entity.has_component<PhysicsInfo>()) {
+                auto& physics_info = m_app_data.selected_entity.get_component<PhysicsInfo>();
+                if (physics_info.m_motion_type != JPH::EMotionType::Static) {
+                    glm::vec3 pos = vec3_to_vec3(m_scene->m_physics_system->m_body_interface->GetPosition(physics_info.m_id));
+                    transform->set_position(pos);
+
+                    glm::quat quat = quat_to_quat(m_scene->m_physics_system->m_body_interface->GetRotation(physics_info.m_id));
+                    transform->set_rotation(quat);
+                }
+            }
+
+            m_gizmo.m_transform = transform;
             m_gizmo.update();
+
+            if (m_app_data.selected_entity.has_component<PhysicsInfo>()) {
+                auto& physics_info = m_app_data.selected_entity.get_component<PhysicsInfo>();
+
+                if (physics_info.m_motion_type != JPH::EMotionType::Static) {
+                    JPH::Vec3 pos = vec3_to_vec3(transform->get_position());
+                    JPH::Quat quat = quat_to_quat(transform->get_rotation());
+
+                    m_scene->m_physics_system->m_body_interface->SetPositionAndRotation(physics_info.m_id, pos, quat, JPH::EActivation::Activate);
+                }
+            }
             m_gizmo.draw();
         }
 
@@ -329,9 +380,13 @@ void App::run()
                 if (ImGui::Button("Gizmo Rotation")) {
                     m_gizmo.m_state = Gizmo::State::Rotation;
                 }
-                ImGui::SameLine();
-                if (ImGui::Button("Gizmo Scale")) {
-                    m_gizmo.m_state = Gizmo::State::Scale;
+                if (!m_app_data.selected_entity.has_component<PhysicsInfo>()
+                    || (m_app_data.selected_entity.has_component<PhysicsInfo>()
+                        && m_app_data.selected_entity.get_component<PhysicsInfo>().m_motion_type == JPH::EMotionType::Static)) {
+                    ImGui::SameLine();
+                    if (ImGui::Button("Gizmo Scale")) {
+                        m_gizmo.m_state = Gizmo::State::Scale;
+                    }
                 }
                 if (ImGui::Button("Deselect Entity")) {
                     m_app_data.selected_entity = Entity(m_scene, entt::null);

@@ -3,7 +3,15 @@
 #include "scene.hpp"
 #include "transform.hpp"
 
-using PhysicsFn = std::function<std::pair<JPH::BodyID, JPH::EMotionType>(Physics::System* engine, Renderer::Model* model)>;
+struct PhysicsInfo;
+
+using PhysicsFn = std::function<PhysicsInfo(Physics::System* engine, Entity entity)>;
+
+struct PhysicsInfo {
+    JPH::BodyID m_id;
+    JPH::EMotionType m_motion_type {};
+    PhysicsFn m_physics_fn;
+};
 
 class Entity {
 public:

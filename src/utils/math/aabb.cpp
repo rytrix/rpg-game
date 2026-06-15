@@ -17,7 +17,6 @@ namespace Utils {
 {
     AABB result;
 
-    // Calculate all corners
     std::array<glm::vec3, 8> corners;
     corners[0] = transform * glm::vec4 { min, 1.0F };
     corners[1] = transform * glm::vec4 { max.x, min.y, min.z, 1.0F };
@@ -28,7 +27,6 @@ namespace Utils {
     corners[6] = transform * glm::vec4 { max.x, min.y, max.z, 1.0F };
     corners[7] = transform * glm::vec4 { min.x, max.y, max.z, 1.0F };
 
-    // Find new min/max
     result.min = corners[0];
     result.max = corners[0];
     for (u32 i = 1; i < corners.size(); i++) {

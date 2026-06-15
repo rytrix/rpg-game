@@ -59,10 +59,11 @@ void Entity::add_physics_command(Entity entity, const PhysicsFn& create_body_fun
 {
     util_assert(entity.has_component<Renderer::Model*>() == true, "Cannot add physics to an entity without a model");
 
-    auto physics_info = create_body_function(entity.get_scene()->m_physics_system.get(), entity.get_component<Renderer::Model*>());
+    auto physics_info = create_body_function(entity.get_scene()->m_physics_system.get(), entity);
+    physics_info.m_physics_fn = create_body_function;
 
-    entity.add_component<JPH::BodyID>(physics_info.first);
-    entity.add_component<JPH::EMotionType>(physics_info.second);
+    entity.add_component<PhysicsInfo>(physics_info);
+
     entity.get_scene()->m_physics_needs_optimize = true;
 }
 

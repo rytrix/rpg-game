@@ -5,14 +5,14 @@
 
 #include "transform.hpp"
 
-Gizmo::Gizmo(GlobalAppData* app_data, Transform* transform)
-    : m_transform(transform)
-    , m_app_data(app_data)
+Gizmo::Gizmo(GlobalAppData* app_data)
+    : m_app_data(app_data)
 {
 }
 
-Gizmo::Gizmo(GlobalAppData* app_data)
+Gizmo::Gizmo(GlobalAppData* app_data, Transform* transform)
     : m_app_data(app_data)
+    , m_transform(transform)
 {
 }
 
@@ -82,6 +82,7 @@ void Gizmo::update()
 
             float angle_difference = angle - m_prev_hit.prev_rotation;
             m_prev_hit.prev_rotation = angle;
+
             m_transform->rotate(angle_difference, plane.normal);
         }
     } else {

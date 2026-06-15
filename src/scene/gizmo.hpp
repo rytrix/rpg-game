@@ -13,8 +13,8 @@ public:
         Rotation,
         Scale,
     };
-    Gizmo(GlobalAppData* app_data, Transform* transform);
     Gizmo(GlobalAppData* app_data);
+    Gizmo(GlobalAppData* app_data, Transform* transform);
 
     void on_event(Event event);
     void update();
@@ -25,6 +25,7 @@ public:
 
     State m_state = State::Translation;
     f32 m_radius = 2.0;
+
     Transform* m_transform = nullptr;
 
 private:

@@ -32,4 +32,5 @@ public:
     Renderer::LineRenderer line_renderer;
 
     Entity selected_entity;
+    Entity hovered_entity;
 };

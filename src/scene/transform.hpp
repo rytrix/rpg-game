@@ -13,7 +13,7 @@ public:
 
     [[nodiscard]] glm::vec3 get_position() const;
     [[nodiscard]] glm::quat get_rotation() const;
-    [[nodiscard]] glm::vec3 get_euler_angles();
+    [[nodiscard]] glm::vec3 get_euler_angles() const;
     [[nodiscard]] glm::vec3 get_scale() const;
 
     // Updates the model matrix

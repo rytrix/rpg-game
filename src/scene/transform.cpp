@@ -30,7 +30,7 @@ void Transform::set_euler_angles(const glm::vec3& degrees)
     needs_update = true;
 }
 
-glm::vec3 Transform::get_euler_angles()
+glm::vec3 Transform::get_euler_angles() const
 {
     return glm::degrees(glm::eulerAngles(m_rotation));
 }

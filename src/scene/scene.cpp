@@ -146,10 +146,10 @@ Scene::Scene(GlobalAppData* app_data)
 
 Scene::~Scene()
 {
-    auto view = m_registry.view<JPH::BodyID>();
+    auto view = m_registry.view<PhysicsInfo>();
     for (auto [entity, body] : view.each()) {
-        m_physics_system->m_body_interface->RemoveBody(body);
-        m_physics_system->m_body_interface->DestroyBody(body);
+        m_physics_system->m_body_interface->RemoveBody(body.m_id);
+        m_physics_system->m_body_interface->DestroyBody(body.m_id);
     }
 }
 
@@ -189,12 +189,12 @@ void Scene::update()
     if (m_physics_on) {
         m_physics_system->update(m_clock.delta_time<float>());
 
-        auto view = m_registry.view<Transform, JPH::BodyID, JPH::EMotionType>();
+        auto view = m_registry.view<Transform, PhysicsInfo>();
 
-        for (auto [entity, transform, body, motion] : view.each()) {
-            if (motion != JPH::EMotionType::Static) {
+        for (auto [entity, transform, body] : view.each()) {
+            if (body.m_motion_type != JPH::EMotionType::Static) {
                 auto& model = transform.get_model_matrix_ref();
-                model = mat4_to_mat4(m_physics_system->m_body_interface->GetCenterOfMassTransform(body));
+                model = mat4_to_mat4(m_physics_system->m_body_interface->GetCenterOfMassTransform(body.m_id));
 
                 auto* point_light = m_registry.try_get<Renderer::Light::Pbr::Point>(entity);
                 if (point_light != nullptr) {
@@ -469,8 +469,7 @@ void Scene::draw_debug_imgui()
                 auto* try_animation_data = m_registry.try_get<Renderer::AnimationData>(entity);
                 auto* try_transform = m_registry.try_get<Transform>(entity);
 
-                auto* try_body_id = m_registry.try_get<JPH::BodyID>(entity);
-                auto* try_motion_type = m_registry.try_get<JPH::EMotionType>(entity);
+                auto* try_physics_info = m_registry.try_get<PhysicsInfo>(entity);
 
                 auto* try_point = m_registry.try_get<Renderer::Light::Pbr::Point>(entity);
                 auto* try_directional = m_registry.try_get<Renderer::Light::Pbr::Directional>(entity);
@@ -521,9 +520,10 @@ void Scene::draw_debug_imgui()
                     }
                 }
 
-                if (try_body_id != nullptr && try_motion_type != nullptr) {
-                    auto& body_id = *try_body_id;
-                    auto& motion_type = *try_motion_type;
+                if (try_physics_info != nullptr) {
+                    auto& physics_info = *try_physics_info;
+                    auto& body_id = physics_info.m_id;
+                    auto& motion_type = physics_info.m_motion_type;
 
                     if (motion_type != JPH::EMotionType::Static) {
                         ImGui::Text("Physics");
@@ -545,10 +545,22 @@ void Scene::draw_debug_imgui()
                         }
                     } else {
                         ImGui::Text("Physics - Static Object");
+                        if (ImGui::Button("Recreate static body")) {
+                            assert(m_physics_system->m_body_interface->IsAdded(body_id));
+                            m_physics_system->m_body_interface->RemoveBody(body_id);
+                            m_physics_system->m_body_interface->DestroyBody(body_id);
+                            assert(!m_physics_system->m_body_interface->IsAdded(body_id));
+
+                            auto new_physics_info = physics_info.m_physics_fn(m_physics_system.get(), Entity(this, entity));
+                            physics_info.m_id = new_physics_info.m_id;
+                            physics_info.m_motion_type = new_physics_info.m_motion_type;
+
+                            m_physics_needs_optimize = true;
+                        }
                     }
                 }
 
-                if (try_transform != nullptr && try_body_id == nullptr) {
+                if (try_transform != nullptr && try_physics_info == nullptr) {
                     auto& transform = *try_transform;
 
                     ImGui::Text("Transform");
