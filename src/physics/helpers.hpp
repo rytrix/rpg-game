@@ -1,5 +1,7 @@
 #pragma once
 
+namespace Physics {
+
 static constexpr JPH::Float3 vec3_to_float3(glm::vec3 vec)
 {
     return { vec.x, vec.y, vec.z };
@@ -54,3 +56,5 @@ static constexpr glm::mat4 mat4_to_mat4(JPH::DMat44 dmat4)
 
     return out;
 }
+
+} // namespace Physics

@@ -43,18 +43,20 @@ System::~System()
 
 void System::update(float delta_time)
 {
-    // If you take larger steps than 1 / 60th of a second you
-    // need to do multiple collision steps in order to keep the simulation stable.
-    // Do 1 collision step per 1 / 60th of a second (round up).
-    // For some reason I have to cap it at a number or it will segfault the program
-    const int collision_steps = std::min(std::max(static_cast<int>(std::ceil(delta_time / (1.0f / 60.0f))), 1), 10);
+    // Cap the input delta time to prevent problems during hitches
+    const float max_physics_delta = 0.1f;
+    const float clamped_delta = std::min(delta_time, max_physics_delta);
 
-    m_physics_system.Update(delta_time, collision_steps, &m_temp_allocator, s_job_system);
+    // If clamped_delta is 0.1s, this yields ceil(0.1 / 0.01666) = 6 steps
+    const float target_step_size = 1.0f / 60.0f;
+    const int collision_steps = std::max(static_cast<int>(std::ceil(clamped_delta / target_step_size)), 1);
+
+    m_physics_system.Update(clamped_delta, collision_steps, &m_temp_allocator, s_job_system);
 }
 
 void System::create_mesh_triangle_list(JPH::TriangleList& triangles, const std::deque<Renderer::Mesh>* meshes)
 {
-    for (std::size_t i = 0; i < meshes->size(); i++) {
+    for (usize i = 0; i < meshes->size(); i++) {
         const Renderer::Mesh* mesh = &meshes->at(i);
         glm::vec3 v1;
         glm::vec3 v2;
@@ -74,7 +76,7 @@ void System::create_mesh_triangle_list(JPH::TriangleList& triangles, const std::
 
 void System::create_mesh_triangle_list(JPH::TriangleList& triangles, const glm::mat4& model, const std::deque<Renderer::Mesh>* meshes)
 {
-    for (std::size_t i = 0; i < meshes->size(); i++) {
+    for (usize i = 0; i < meshes->size(); i++) {
         const Renderer::Mesh* mesh = &meshes->at(i);
         glm::vec3 v1;
         glm::vec3 v2;
@@ -95,7 +97,7 @@ void System::create_mesh_triangle_list(JPH::TriangleList& triangles, const glm::
 void System::create_mesh_triangle_list_base_index(JPH::TriangleList& triangles, const Renderer::Mesh* mesh)
 {
     usize offset = 0;
-    for (std::size_t i = 0; i < mesh->m_base_vertices.size(); i++) {
+    for (usize i = 0; i < mesh->m_base_vertices.size(); i++) {
         glm::vec3 v1;
         glm::vec3 v2;
         glm::vec3 v3;
@@ -120,7 +122,7 @@ void System::create_mesh_triangle_list_base_index(JPH::TriangleList& triangles, 
 void System::create_mesh_triangle_list_base_index(JPH::TriangleList& triangles, const glm::mat4& model, const Renderer::Mesh* mesh)
 {
     usize offset = 0;
-    for (std::size_t i = 0; i < mesh->m_base_vertices.size(); i++) {
+    for (usize i = 0; i < mesh->m_base_vertices.size(); i++) {
         glm::vec3 v1;
         glm::vec3 v2;
         glm::vec3 v3;
