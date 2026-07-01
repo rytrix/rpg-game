@@ -8,6 +8,13 @@ DeltaTime::DeltaTime()
     update();
 }
 
+void DeltaTime::reset()
+{
+    m_start_time = m_clock.now();
+    m_current_time = m_start_time;
+    m_delta_time = std::chrono::duration<double, std::chrono::seconds::period>(m_current_time - m_start_time).count();
+}
+
 void DeltaTime::update()
 {
     m_start_time = m_current_time;

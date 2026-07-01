@@ -7,6 +7,7 @@ public:
     DeltaTime();
     ~DeltaTime() = default;
 
+    void reset();
     void update();
 
     template <typename T>
