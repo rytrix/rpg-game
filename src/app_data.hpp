@@ -1,11 +1,5 @@
 #pragma once
 
-namespace Renderer {
-class Model;
-class Mesh;
-class Texture;
-};
-
 #include "scene/resource_manager.hpp"
 
 #include "renderer/camera.hpp"
@@ -16,10 +10,10 @@ class Texture;
 #include "renderer/line_renderer.hpp"
 #include "renderer/text.hpp"
 
-#include "scene/entity.hpp"
+#include "scene/components/entity_selector.hpp"
+#include "scene/components/gizmo.hpp"
 
-class GlobalAppData {
-public:
+struct GlobalAppData {
     Renderer::Window m_window;
     Renderer::Camera m_camera;
 
@@ -28,9 +22,11 @@ public:
 
     Renderer::DefaultTextures m_default_textures;
 
-    Renderer::TextRenderer text_renderer;
-    Renderer::LineRenderer line_renderer;
+    Renderer::TextRenderer m_text_renderer;
+    Renderer::LineRenderer m_line_renderer;
 
-    Entity selected_entity;
-    Entity hovered_entity;
+    EntitySelector m_entity_selector;
+    Gizmo m_gizmo;
+
+    bool m_capture_mouse = true;
 };

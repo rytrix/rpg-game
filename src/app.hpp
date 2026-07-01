@@ -2,7 +2,6 @@
 
 #include "renderer.hpp"
 
-#include "scene/gizmo.hpp"
 #include "scene/scene.hpp"
 
 #include "app_data.hpp"
@@ -17,14 +16,13 @@ public:
 private:
     void fps_counter();
 
-    bool m_capture_mouse = true;
+    // bool m_capture_mouse = true;
     bool m_vsync = true;
     u32 m_fps = 0;
 
     const char* m_window_title = "test window";
 
     GlobalAppData m_app_data;
-    Gizmo m_gizmo;
 
     Scene* m_scene = nullptr;
 };
