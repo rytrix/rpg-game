@@ -4,6 +4,8 @@
 
 #include "../app_data.hpp"
 
+#include "../physics/interface.hpp"
+
 Entity::Entity(Scene* scene, entt::entity entity)
     : m_scene(scene)
     , m_entity(entity)
@@ -58,15 +60,19 @@ void Entity::add_model(Entity entity, const char* path, GlobalAppData* app_data)
     entity.get_scene()->m_models_instance_draw_cache_needs_update = true;
 }
 
-void Entity::add_physics_command(Entity entity, const PhysicsFn& create_body_function)
+void Entity::add_static_body(Entity entity)
 {
     util_assert(entity.has_component<Renderer::Model*>() == true, "Cannot add physics to an entity without a model");
+    auto physics_info = Physics::create_static_body(entity);
+    entity.add_component<Physics::PhysicsInfo>(physics_info);
+    entity.get_scene()->m_physics_needs_optimize = true;
+}
 
-    auto physics_info = create_body_function(entity.get_scene()->m_physics_system.get(), entity);
-    physics_info.m_physics_fn = create_body_function;
-
-    entity.add_component<PhysicsInfo>(physics_info);
-
+void Entity::add_dynamic_body(Entity entity, JPH::Ref<JPH::Shape> shape)
+{
+    util_assert(entity.has_component<Renderer::Model*>() == true, "Cannot add physics to an entity without a model");
+    auto physics_info = Physics::create_dynamic_body(entity, shape);
+    entity.add_component<Physics::PhysicsInfo>(physics_info);
     entity.get_scene()->m_physics_needs_optimize = true;
 }
 

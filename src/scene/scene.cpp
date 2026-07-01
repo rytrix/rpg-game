@@ -1,6 +1,7 @@
 #include "scene.hpp"
 
 #include "../physics/helpers.hpp"
+#include "../physics/interface.hpp"
 
 #include "../utils/file.hpp"
 #include "../utils/assert.hpp"
@@ -147,7 +148,7 @@ Scene::Scene(GlobalAppData* app_data)
 
 Scene::~Scene()
 {
-    auto view = m_registry.view<PhysicsInfo>();
+    auto view = m_registry.view<Physics::PhysicsInfo>();
     for (auto [entity, body] : view.each()) {
         m_physics_system->m_body_interface->RemoveBody(body.m_id);
         m_physics_system->m_body_interface->DestroyBody(body.m_id);
@@ -195,7 +196,7 @@ void Scene::update()
     if (m_physics_on) {
         m_physics_system->update(m_clock.delta_time<float>());
 
-        auto view = m_registry.view<Transform, PhysicsInfo>();
+        auto view = m_registry.view<Transform, Physics::PhysicsInfo>();
 
         for (auto [entity, transform, body] : view.each()) {
             if (body.m_motion_type != JPH::EMotionType::Static) {
@@ -475,7 +476,7 @@ void Scene::draw_debug_imgui()
                 auto* try_animation_data = m_registry.try_get<Renderer::AnimationData>(entity);
                 auto* try_transform = m_registry.try_get<Transform>(entity);
 
-                auto* try_physics_info = m_registry.try_get<PhysicsInfo>(entity);
+                auto* try_physics_info = m_registry.try_get<Physics::PhysicsInfo>(entity);
 
                 auto* try_point = m_registry.try_get<Renderer::Light::Pbr::Point>(entity);
                 auto* try_directional = m_registry.try_get<Renderer::Light::Pbr::Directional>(entity);
@@ -557,7 +558,9 @@ void Scene::draw_debug_imgui()
                             m_physics_system->m_body_interface->DestroyBody(body_id);
                             util_assert(!m_physics_system->m_body_interface->IsAdded(body_id), "body not removed");
 
-                            auto new_physics_info = physics_info.m_physics_fn(m_physics_system.get(), Entity(this, entity));
+
+                            auto new_physics_info = Physics::create_static_body(Entity(this, entity));
+                            // auto new_physics_info = physics_info.m_physics_fn(m_physics_system.get(), Entity(this, entity));
                             physics_info.m_id = new_physics_info.m_id;
                             physics_info.m_motion_type = new_physics_info.m_motion_type;
 

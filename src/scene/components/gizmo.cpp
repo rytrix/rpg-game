@@ -13,8 +13,8 @@ Gizmo::Gizmo(GlobalAppData* app_data)
 }
 
 Gizmo::Gizmo(GlobalAppData* app_data, Transform* transform)
-    : m_app_data(app_data)
-    , m_transform(transform)
+    : m_transform(transform)
+    , m_app_data(app_data)
 {
 }
 

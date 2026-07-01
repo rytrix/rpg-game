@@ -17,6 +17,7 @@ add_executable(${PROJECT_NAME}
     src/scene/components/entity_selector.cpp
 
     src/physics/engine.cpp
+    src/physics/interface.cpp
 
     src/utils/deltatime.cpp
     src/utils/math/ray.cpp

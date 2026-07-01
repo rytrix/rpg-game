@@ -3,23 +3,10 @@
 #include "scene.hpp"
 #include "transform.hpp"
 
-struct PhysicsInfo;
-
-using PhysicsFn = std::function<PhysicsInfo(Physics::System* engine, Entity entity)>;
-
-enum class PhysicsType {
-    Mesh,
-    Shape,
-};
-
-struct PhysicsInfo {
-    JPH::BodyID m_id;
-    JPH::EMotionType m_motion_type {};
-    PhysicsFn m_physics_fn;
-    
-    PhysicsType m_type;
-    JPH::Ref<JPH::Shape> m_shape;
-};
+class Entity;
+namespace Physics {
+    class PhysicsInfo;
+}
 
 class Entity {
 public:
@@ -47,7 +34,8 @@ public:
     // Helper functions
     static void add_name(Entity entity, const char* name);
     static void add_model(Entity entity, const char* path, GlobalAppData* app_data);
-    static void add_physics_command(Entity entity, const PhysicsFn& create_body_function);
+    static void add_static_body(Entity entity);
+    static void add_dynamic_body(Entity entity, JPH::Ref<JPH::Shape> shape);
     static void add_pbr_directional_light(Entity entity, Renderer::Light::Pbr::Directional& info);
     static void add_pbr_directional_light_shadow(Entity entity);
     static void add_pbr_point_light(Entity entity, Renderer::Light::Pbr::Point& info);

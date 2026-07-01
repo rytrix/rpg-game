@@ -4,11 +4,13 @@
 
 #include "utils/math/ray.hpp"
 
+#include "physics/interface.hpp"
+
 App::App()
 {
     Physics::Engine::setup_singletons();
 
-    m_app_data.m_window.init(m_window_title, 800, 600);
+    m_app_data.m_window.init("Test Window", 800, 600);
     m_app_data.m_window.set_relative_mode(m_app_data.m_capture_mouse);
 
     m_app_data.m_camera.init(90.0F, 1.0F, 500.0F, m_app_data.m_window.get_aspect_ratio(), { -2.0F, 1.5F, 4.0F });
@@ -16,7 +18,7 @@ App::App()
 
     m_app_data.m_model_cache.init(100);
     m_app_data.m_texture_cache.init(500);
-    
+
     m_app_data.m_default_textures.init(&m_app_data.m_texture_cache);
 
     m_app_data.m_text_renderer.init("res/fonts/AdwaitaSans-Regular.ttf", 24);
@@ -87,47 +89,16 @@ App::App()
     Transform transform {};
     transform.set_scale(glm::vec3(0.1));
     Entity::add_transform(entity, transform);
-    Entity::add_physics_command(entity, [](Physics::System* system, Entity entity) -> PhysicsInfo {
-        JPH::TriangleList triangles;
-        const auto* mesh = entity.get_component<Renderer::Model*>()->get_mesh();
-        auto& transform = entity.get_component<Transform>();
-        Physics::System::create_mesh_triangle_list_base_index(triangles, transform.get_model_matrix(), mesh);
-        // Physics::System::create_mesh_triangle_list_base_index(triangles, mesh);
-
-        JPH::MeshShapeSettings mesh_settings(triangles);
-        mesh_settings.Sanitize();
-        JPH::BodyCreationSettings body_settings(mesh_settings.Create().Get(),
-            JPH::RVec3::sZero(), JPH::Quat::sIdentity(),
-            JPH::EMotionType::Static,
-            Physics::Layers::NON_MOVING);
-        JPH::BodyID body_id
-            = system->m_body_interface->CreateAndAddBody(
-                body_settings,
-                JPH::EActivation::DontActivate);
-        return { .m_id = body_id, .m_motion_type = JPH::EMotionType::Static, .m_physics_fn = {} };
-    });
+    Entity::add_static_body(entity);
 
     entity = m_scene->create_entity();
     Entity::add_name(entity, "Cube");
     Entity::add_model(entity, "res/models/physics_cube/cube.obj", &m_app_data);
     transform = {};
+    transform.set_position(glm::vec3(0.0, 5.0, 0.0));
     Entity::add_transform(entity, transform);
-    Entity::add_physics_command(entity, [](Physics::System* system, [[maybe_unused]] Entity entity) -> PhysicsInfo {
-        // JPH::BoxShape box_shape(JPH::Vec3(0.5, 0.5, 0.5));
-        JPH::Ref<JPH::Shape> box_shape = new JPH::BoxShape(JPH::Vec3(0.5, 0.5, 0.5));
-        JPH::BodyCreationSettings cube_settings(
-            box_shape,
-            JPH::RVec3(-7.05, 20.0, -5.5),
-            JPH::Quat::sIdentity(),
-            JPH::EMotionType::Dynamic,
-            Physics::Layers::MOVING);
-
-        auto body = system->m_body_interface->CreateAndAddBody(
-            cube_settings,
-            JPH::EActivation::Activate);
-
-        return { .m_id = body, .m_motion_type = JPH::EMotionType::Dynamic, .m_physics_fn = {} };
-    });
+    JPH::Ref<JPH::Shape> box_shape = new JPH::BoxShape(JPH::Vec3(0.5, 0.5, 0.5));
+    Entity::add_dynamic_body(entity, box_shape);
 
     entity = m_scene->create_entity();
     Renderer::Light::Pbr::Point point {};
@@ -199,8 +170,6 @@ void App::fps_counter()
         if (time_passed >= 1.0F) {
             time_passed = 0;
             m_fps = frames;
-            // auto title = std::format("{} {} fps", m_window_title, frames);
-            // m_app_data.m_window.set_window_title(title.c_str());
             frames = 0;
         }
     }
@@ -284,9 +253,9 @@ void App::run()
                 if (ImGui::Button("Gizmo Rotation")) {
                     m_app_data.m_gizmo.m_state = Gizmo::State::Rotation;
                 }
-                if (!m_app_data.m_entity_selector.m_selected_entity.has_component<PhysicsInfo>()
-                    || (m_app_data.m_entity_selector.m_selected_entity.has_component<PhysicsInfo>()
-                        && m_app_data.m_entity_selector.m_selected_entity.get_component<PhysicsInfo>().m_motion_type == JPH::EMotionType::Static)) {
+                if (!m_app_data.m_entity_selector.m_selected_entity.has_component<Physics::PhysicsInfo>()
+                    || (m_app_data.m_entity_selector.m_selected_entity.has_component<Physics::PhysicsInfo>()
+                        && m_app_data.m_entity_selector.m_selected_entity.get_component<Physics::PhysicsInfo>().m_motion_type == JPH::EMotionType::Static)) {
                     ImGui::SameLine();
                     if (ImGui::Button("Gizmo Scale")) {
                         m_app_data.m_gizmo.m_state = Gizmo::State::Scale;
