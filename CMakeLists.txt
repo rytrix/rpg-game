@@ -13,7 +13,8 @@ add_executable(${PROJECT_NAME}
     src/scene/entity.cpp
     src/scene/transform.cpp
     src/scene/resource_manager.cpp
-    src/scene/gizmo.cpp
+    src/scene/components/gizmo.cpp
+    src/scene/components/entity_selector.cpp
 
     src/physics/engine.cpp
 

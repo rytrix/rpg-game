@@ -1,10 +1,10 @@
 #pragma once
 
-#include "../app_data.hpp"
+class GlobalAppData;
 
-#include "transform.hpp"
+#include "../transform.hpp"
 
-#include "event.hpp"
+#include "../event.hpp"
 
 class Gizmo {
 public:
@@ -13,10 +13,15 @@ public:
         Rotation,
         Scale,
     };
+    Gizmo() = default;
+
     Gizmo(GlobalAppData* app_data);
     Gizmo(GlobalAppData* app_data, Transform* transform);
 
-    void on_event(Event event);
+    void init(GlobalAppData* app_data);
+    void init(GlobalAppData* app_data, Transform* transform);
+
+    void on_event(Event& event);
     void update();
 
     // This function only batches to the Line Renderer
