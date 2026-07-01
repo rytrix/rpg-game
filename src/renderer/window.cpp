@@ -249,4 +249,9 @@ void Window::set_window_title(const char* title)
     SDL_SetWindowTitle(m_window, title);
 }
 
+const char* Window::get_window_title() {
+    util_assert(initialized == true, "not initialized");
+    return SDL_GetWindowTitle(m_window);
+}
+
 } // namespace Renderer

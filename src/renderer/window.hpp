@@ -27,7 +27,9 @@ public:
     [[nodiscard]] f32 get_mouse_y() const;
     [[nodiscard]] glm::vec2 get_mouse_pos() const;
     void set_should_close();
+
     void set_window_title(const char* title);
+    const char* get_window_title();
 
 private:
     bool initialized = false;
