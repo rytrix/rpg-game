@@ -102,6 +102,7 @@ void Entity::add_pbr_point_light_shadow(Entity entity)
 
 void Entity::add_pbr_spot_light(Entity entity, Renderer::Light::Pbr::Spot& info)
 {
+    info.calculate_cutoffs();
     entity.add_component<Renderer::Light::Pbr::Spot>(info);
     entity.get_scene()->m_shaders_need_update = true;
 }

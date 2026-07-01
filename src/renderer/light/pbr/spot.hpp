@@ -13,6 +13,10 @@ struct Spot {
     f32 inner_cutoff;
     f32 outer_cutoff;
 
+    f32 inner_cutoff_degrees;
+    f32 outer_cutoff_degrees;
+
+    void calculate_cutoffs();
     void set_uniforms(Renderer::Shader& shader, const char* light_name) const;
 };
 

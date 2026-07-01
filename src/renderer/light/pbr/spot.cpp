@@ -2,6 +2,12 @@
 
 namespace Renderer::Light::Pbr {
 
+void Spot::calculate_cutoffs()
+{
+    inner_cutoff = glm::cos(glm::radians(inner_cutoff_degrees));
+    outer_cutoff = glm::cos(glm::radians(outer_cutoff_degrees));
+}
+
 void Spot::set_uniforms(Renderer::Shader& shader, const char* light_name) const
 {
     shader.set_vec3(std::format("{}.position", light_name).c_str(), position);

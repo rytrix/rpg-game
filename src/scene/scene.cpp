@@ -616,8 +616,11 @@ void Scene::draw_debug_imgui()
                     ImGui::DragFloat3("Position XYZ", &spot.position.x, 1.0F, MIN_TRANSFORM, MAX_TRANSFORM);
                     ImGui::DragFloat3("Direction XYZ", &spot.direction.x, 1.0F, -1.0F, 1.0F);
                     ImGui::DragFloat3("RGB", &spot.color.x, 10.0F, MIN_COLOR, MAX_COLOR);
-                    ImGui::DragFloat("inner_cutoff", &spot.inner_cutoff);
-                    ImGui::DragFloat("outer_cutoff", &spot.outer_cutoff);
+                    bool inner_cutoff_result = ImGui::DragFloat("inner_cutoff", &spot.inner_cutoff_degrees);
+                    bool outer_cutoff_result= ImGui::DragFloat("outer_cutoff", &spot.outer_cutoff_degrees);
+                    if (inner_cutoff_result || outer_cutoff_result) {
+                        spot.calculate_cutoffs();
+                    }
                 }
             }
 

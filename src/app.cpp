@@ -120,8 +120,8 @@ App::App()
     spot.position = glm::vec3(-6.0F, 8.0F, 10.0F);
     spot.direction = glm::vec3(0.2, 0.0, -1.0);
     spot.color = glm::vec3(50.0, 25.0, 25.0);
-    spot.inner_cutoff = glm::cos(glm::radians(12.5F));
-    spot.outer_cutoff = glm::cos(glm::radians(20.5F));
+    spot.inner_cutoff_degrees = 12.5F;
+    spot.outer_cutoff_degrees = 20.5F;
     Entity::add_name(entity, "Spot Light");
     Entity::add_pbr_spot_light(entity, spot);
     Entity::add_pbr_spot_light_shadow(entity);
