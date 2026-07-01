@@ -3,6 +3,7 @@
 #include "../physics/helpers.hpp"
 
 #include "../utils/file.hpp"
+#include "../utils/assert.hpp"
 
 #include "glm/gtc/quaternion.hpp"
 
@@ -179,6 +180,11 @@ Entity Scene::get_entity_by_name(const char* name)
 
 void Scene::update()
 {
+    if (m_first_update) {
+        m_clock.reset();
+        m_first_update = false;
+    }
+
     m_clock.update();
 
     if (m_physics_needs_optimize) {
@@ -194,7 +200,7 @@ void Scene::update()
         for (auto [entity, transform, body] : view.each()) {
             if (body.m_motion_type != JPH::EMotionType::Static) {
                 auto& model = transform.get_model_matrix_ref();
-                model = mat4_to_mat4(m_physics_system->m_body_interface->GetCenterOfMassTransform(body.m_id));
+                model = Physics::mat4_to_mat4(m_physics_system->m_body_interface->GetCenterOfMassTransform(body.m_id));
 
                 auto* point_light = m_registry.try_get<Renderer::Light::Pbr::Point>(entity);
                 if (point_light != nullptr) {
@@ -477,10 +483,10 @@ void Scene::draw_debug_imgui()
 
                 if (try_transform != nullptr) {
                     if (ImGui::Button("Select Entity")) {
-                        m_app_data->selected_entity = Entity(this, entity);
+                        m_app_data->m_entity_selector.select_entity(Entity(this, entity));
                     }
                     if (ImGui::Button("Deselect Entity")) {
-                        m_app_data->selected_entity = Entity(this, entt::null);
+                        m_app_data->m_entity_selector.select_entity(Entity(this, entt::null));
                     }
                 }
 
@@ -527,29 +533,29 @@ void Scene::draw_debug_imgui()
 
                     if (motion_type != JPH::EMotionType::Static) {
                         ImGui::Text("Physics");
-                        glm::vec3 cube_pos = vec3_to_vec3(m_physics_system->m_body_interface->GetPosition(body_id));
+                        glm::vec3 cube_pos = Physics::vec3_to_vec3(m_physics_system->m_body_interface->GetPosition(body_id));
                         if (ImGui::DragFloat3("XYZ", &cube_pos.x, 1.0F, MIN_TRANSFORM, MAX_TRANSFORM)) {
                             m_physics_system->m_body_interface->SetPosition(
                                 body_id,
-                                vec3_to_vec3(cube_pos),
+                                Physics::vec3_to_vec3(cube_pos),
                                 JPH::EActivation::Activate);
                         }
 
-                        glm::quat cube_rot = quat_to_quat(m_physics_system->m_body_interface->GetRotation(body_id));
+                        glm::quat cube_rot = Physics::quat_to_quat(m_physics_system->m_body_interface->GetRotation(body_id));
                         glm::vec3 euler_angles = glm::degrees(glm::eulerAngles(cube_rot));
                         if (ImGui::DragFloat3("Rotation: XYZ", &euler_angles.x, 1.0F, MIN_ROTATION, MAX_ROTATION)) {
                             m_physics_system->m_body_interface->SetRotation(
                                 body_id,
-                                quat_to_quat(glm::quat(glm::radians(euler_angles))),
+                                Physics::quat_to_quat(glm::quat(glm::radians(euler_angles))),
                                 JPH::EActivation::Activate);
                         }
                     } else {
                         ImGui::Text("Physics - Static Object");
                         if (ImGui::Button("Recreate static body")) {
-                            assert(m_physics_system->m_body_interface->IsAdded(body_id));
+                            util_assert(m_physics_system->m_body_interface->IsAdded(body_id), "body not present");
                             m_physics_system->m_body_interface->RemoveBody(body_id);
                             m_physics_system->m_body_interface->DestroyBody(body_id);
-                            assert(!m_physics_system->m_body_interface->IsAdded(body_id));
+                            util_assert(!m_physics_system->m_body_interface->IsAdded(body_id), "body not removed");
 
                             auto new_physics_info = physics_info.m_physics_fn(m_physics_system.get(), Entity(this, entity));
                             physics_info.m_id = new_physics_info.m_id;

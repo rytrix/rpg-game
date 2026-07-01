@@ -12,6 +12,9 @@ Entity::Entity(Scene* scene, entt::entity entity)
 
 bool Entity::valid()
 {
+    if (m_scene == nullptr) {
+        return false;
+    }
     if (m_entity == entt::null) {
         return false;
     }

@@ -7,10 +7,18 @@ struct PhysicsInfo;
 
 using PhysicsFn = std::function<PhysicsInfo(Physics::System* engine, Entity entity)>;
 
+enum class PhysicsType {
+    Mesh,
+    Shape,
+};
+
 struct PhysicsInfo {
     JPH::BodyID m_id;
     JPH::EMotionType m_motion_type {};
     PhysicsFn m_physics_fn;
+    
+    PhysicsType m_type;
+    JPH::Ref<JPH::Shape> m_shape;
 };
 
 class Entity {

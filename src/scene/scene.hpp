@@ -60,10 +60,13 @@ private:
 
     GlobalAppData* m_app_data;
 
+    bool m_first_update = true;
+
     bool m_shaders_need_update = true;
 
     Renderer::Shader m_shader;
     Renderer::Shader m_shader_bones;
+    
     Renderer::Shader m_shadowmap_shader;
     Renderer::Shader m_shadowmap_shader_bones;
     Renderer::Shader m_shadowmap_cubemap_shader;
