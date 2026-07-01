@@ -19,7 +19,6 @@ physics
   - player character
   - ray selection
 
-imgizmo
 scene saving
 adding/removing entities into the scene
 add/removing components from entities
