@@ -5,7 +5,7 @@
 
 class Entity;
 namespace Physics {
-    class PhysicsInfo;
+class PhysicsInfo;
 }
 
 class Entity {
@@ -33,16 +33,17 @@ public:
 
     // Helper functions
     static void add_name(Entity entity, const char* name);
+    static void add_transform(Entity entity, const Transform& transform);
     static void add_model(Entity entity, const char* path, GlobalAppData* app_data);
     static void add_static_body(Entity entity);
     static void add_dynamic_body(Entity entity, JPH::Ref<JPH::Shape> shape);
+    static void add_convex_hull_body(Entity entity);
     static void add_pbr_directional_light(Entity entity, Renderer::Light::Pbr::Directional& info);
     static void add_pbr_directional_light_shadow(Entity entity);
     static void add_pbr_point_light(Entity entity, Renderer::Light::Pbr::Point& info);
     static void add_pbr_point_light_shadow(Entity entity);
     static void add_pbr_spot_light(Entity entity, Renderer::Light::Pbr::Spot& info);
     static void add_pbr_spot_light_shadow(Entity entity);
-    static void add_transform(Entity entity, const Transform& transform);
 
 private:
     Scene* m_scene = nullptr;

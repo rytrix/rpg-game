@@ -8,9 +8,11 @@
 class GlobalAppData;
 
 class Entity;
+class EntitySelector;
 
 class Scene : public NoCopyNoMove {
     friend class Entity;
+    friend class EntitySelector;
 
 public:
     explicit Scene(GlobalAppData* app_data);

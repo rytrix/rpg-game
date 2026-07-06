@@ -129,12 +129,17 @@ public:
     void update(float delta_time);
 
     static void create_mesh_triangle_list(JPH::TriangleList& triangles, const std::deque<Renderer::Mesh>* meshes);
-    static void create_mesh_triangle_list(JPH::TriangleList& triangles, const glm::mat4& model, const std::deque<Renderer::Mesh>* meshes);
+    static void create_mesh_triangle_list(JPH::TriangleList& triangles, const glm::mat4& transform, const std::deque<Renderer::Mesh>* meshes);
 
     static void create_mesh_triangle_list_base_index(JPH::TriangleList& triangles, const Renderer::Mesh* mesh);
-    static void create_mesh_triangle_list_base_index(JPH::TriangleList& triangles, const glm::mat4& model, const Renderer::Mesh* mesh);
+    static void create_mesh_triangle_list_base_index(JPH::TriangleList& triangles, const glm::mat4& transform, const Renderer::Mesh* mesh);
+
+    static void create_mesh_vec3s_base_index(JPH::Array<JPH::Vec3>& triangles, const Renderer::Mesh* mesh);
+    static void create_mesh_vec3s_base_index(JPH::Array<JPH::Vec3>& triangles, const glm::mat4& transform, const Renderer::Mesh* mesh);
 
     std::optional<JPH::BodyID> ray_cast(Utils::Ray ray, float max_distance);
+
+    void remove_delete_body(JPH::BodyID body);
 
     void optimize();
 

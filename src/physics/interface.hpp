@@ -4,6 +4,9 @@
 
 namespace Physics {
 
+// Documentation
+// https://jrouwe.github.io/JoltPhysicsDocs/3.0.1/
+
 enum class PhysicsType {
     Mesh,
     Shape,
@@ -21,5 +24,6 @@ struct PhysicsInfo {
 
 PhysicsInfo create_static_body(Entity entity);
 PhysicsInfo create_dynamic_body(Entity entity, JPH::Ref<JPH::Shape> shape);
+PhysicsInfo create_convex_hull(Entity entity);
 
 } // namespace Physics 

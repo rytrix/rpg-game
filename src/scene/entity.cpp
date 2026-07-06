@@ -43,6 +43,11 @@ void Entity::add_name(Entity entity, const char* name)
     entity.add_component<Utils::String>(name);
 }
 
+void Entity::add_transform(Entity entity, const Transform& transform)
+{
+    entity.add_component<Transform>(transform);
+}
+
 void Entity::add_model(Entity entity, const char* path, GlobalAppData* app_data)
 {
     auto* model_cache = &app_data->m_model_cache;
@@ -72,6 +77,14 @@ void Entity::add_dynamic_body(Entity entity, JPH::Ref<JPH::Shape> shape)
 {
     util_assert(entity.has_component<Renderer::Model*>() == true, "Cannot add physics to an entity without a model");
     auto physics_info = Physics::create_dynamic_body(entity, shape);
+    entity.add_component<Physics::PhysicsInfo>(physics_info);
+    entity.get_scene()->m_physics_needs_optimize = true;
+}
+
+void Entity::add_convex_hull_body(Entity entity)
+{
+    util_assert(entity.has_component<Renderer::Model*>() == true, "Cannot add physics to an entity without a model");
+    auto physics_info = Physics::create_convex_hull(entity);
     entity.add_component<Physics::PhysicsInfo>(physics_info);
     entity.get_scene()->m_physics_needs_optimize = true;
 }
@@ -111,9 +124,4 @@ void Entity::add_pbr_spot_light_shadow(Entity entity)
 {
     entity.add_component<Renderer::Light::Pbr::SpotShadow>().init();
     entity.get_scene()->m_shaders_need_update = true;
-}
-
-void Entity::add_transform(Entity entity, const Transform& transform)
-{
-    entity.add_component<Transform>(transform);
 }
