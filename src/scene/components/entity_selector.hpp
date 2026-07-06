@@ -23,4 +23,24 @@ public:
 private:
     GlobalAppData* m_app_data = nullptr;
     Scene* m_scene = nullptr;
+
+    struct EntityComponents {
+        Entity entity;
+        Scene* scene = nullptr;
+        Utils::String* name = nullptr;
+        Renderer::Model** model = nullptr;
+        Renderer::AnimationData* animation_data = nullptr;
+        Transform* transform = nullptr;
+        Physics::PhysicsInfo* physics_info = nullptr;
+        Renderer::Light::Pbr::Point* point = nullptr;
+        Renderer::Light::Pbr::PointShadow* point_shadow = nullptr;
+        Renderer::Light::Pbr::Directional* directional = nullptr;
+        Renderer::Light::Pbr::DirectionalShadow* directional_shadow = nullptr;
+        Renderer::Light::Pbr::Spot* spot = nullptr;
+        Renderer::Light::Pbr::SpotShadow* spot_shadow = nullptr;
+    };
+
+    bool m_imgui_first_time = true;
+    void draw_selected_entity_imgui();
+    void draw_add_remove_component_imgui(EntityComponents& components);
 };

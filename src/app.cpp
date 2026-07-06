@@ -35,7 +35,7 @@ App::App()
         if (event.type == SDL_EVENT_WINDOW_RESIZED) {
             m_app_data.m_camera.update_aspect(m_app_data.m_window.get_aspect_ratio());
             m_scene->update();
-            m_app_data.m_text_renderer.update_view((float)m_app_data.m_window.get_width(), (float)m_app_data.m_window.get_height());
+            m_app_data.m_text_renderer.update_view((f32)m_app_data.m_window.get_width(), (f32)m_app_data.m_window.get_height());
         }
         if (event.type == SDL_EVENT_MOUSE_MOTION) {
             if (m_app_data.m_capture_mouse) {
@@ -59,8 +59,7 @@ App::App()
         if (event.type == SDL_EVENT_MOUSE_BUTTON_DOWN) {
             if (event.button.button == SDL_BUTTON_LEFT) {
                 if (!m_app_data.m_entity_selector.m_selected_entity.valid() && m_app_data.m_entity_selector.m_hovered_entity.valid()) {
-                    m_app_data.m_entity_selector.m_selected_entity = m_app_data.m_entity_selector.m_hovered_entity;
-                    m_app_data.m_gizmo.m_state = Gizmo::State::Translation;
+                    m_app_data.m_entity_selector.select_entity(m_app_data.m_entity_selector.m_hovered_entity);
                 }
             }
         }
@@ -97,7 +96,8 @@ App::App()
     transform = {};
     transform.set_position(glm::vec3(0.0, 5.0, 0.0));
     Entity::add_transform(entity, transform);
-    JPH::Ref<JPH::Shape> box_shape = new JPH::BoxShape(JPH::Vec3(0.5, 0.5, 0.5));
+    JPH::BoxShapeSettings box_shape_settings(JPH::Vec3(0.5, 0.5, 0.5));
+    JPH::Ref<JPH::Shape> box_shape = box_shape_settings.Create().Get();
     Entity::add_dynamic_body(entity, box_shape);
 
     entity = m_scene->create_entity();
@@ -132,6 +132,7 @@ App::App()
     Entity::add_name(entity, "Defeated");
     Entity::add_model(entity, "res/models/Defeated.fbx", &m_app_data);
     Entity::add_transform(entity, transform);
+    Entity::add_convex_hull_body(entity);
 
     entity = m_scene->create_entity();
     transform = {};
@@ -209,15 +210,11 @@ void App::run()
         scancodes();
 
         m_scene->update();
-
         m_app_data.m_entity_selector.update();
 
         m_scene->draw();
-
         m_app_data.m_entity_selector.draw();
-
         m_app_data.m_line_renderer.draw(m_app_data.m_camera);
-
         m_app_data.m_text_renderer.draw_text(10,
             m_app_data.m_window.get_height() - m_app_data.m_text_renderer.get_max_pixel_height(),
             std::format("Framerate {}", m_fps).c_str(), glm::vec3 { 1.0F });
