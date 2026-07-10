@@ -16,7 +16,7 @@ App::App()
     m_app_data.m_camera.init(90.0F, 1.0F, 500.0F, m_app_data.m_window.get_aspect_ratio(), { -2.0F, 1.5F, 4.0F });
     m_app_data.m_camera.set_speed(10.0F);
 
-    m_app_data.m_model_cache.init(100);
+    m_app_data.m_mesh_cache.init(100);
     m_app_data.m_texture_cache.init(500);
 
     m_app_data.m_default_textures.init(&m_app_data.m_texture_cache);
@@ -46,21 +46,12 @@ App::App()
             if (event.key.key == SDLK_ESCAPE) {
                 m_app_data.m_capture_mouse = !m_app_data.m_capture_mouse;
                 m_app_data.m_window.set_relative_mode(m_app_data.m_capture_mouse);
-                m_app_data.m_entity_selector.m_selected_entity = Entity(m_scene, entt::null);
             }
             if (event.key.key == SDLK_E) {
                 m_scene->m_physics_on = !m_scene->m_physics_on;
             }
             if (event.key.key == SDLK_Q) {
                 m_app_data.m_window.set_should_close();
-            }
-        }
-
-        if (event.type == SDL_EVENT_MOUSE_BUTTON_DOWN) {
-            if (event.button.button == SDL_BUTTON_LEFT) {
-                if (!m_app_data.m_entity_selector.m_selected_entity.valid() && m_app_data.m_entity_selector.m_hovered_entity.valid()) {
-                    m_app_data.m_entity_selector.select_entity(m_app_data.m_entity_selector.m_hovered_entity);
-                }
             }
         }
 
@@ -214,6 +205,7 @@ void App::run()
 
         m_scene->draw();
         m_app_data.m_entity_selector.draw();
+
         m_app_data.m_line_renderer.draw(m_app_data.m_camera);
         m_app_data.m_text_renderer.draw_text(10,
             m_app_data.m_window.get_height() - m_app_data.m_text_renderer.get_max_pixel_height(),
@@ -240,29 +232,6 @@ void App::run()
         }
 
         ImGui::Checkbox("Toggle physics", &m_scene->m_physics_on);
-
-        if (m_app_data.m_entity_selector.m_selected_entity.valid()) {
-            if (ImGui::CollapsingHeader("Gizmo")) {
-                if (ImGui::Button("Gizmo Translation")) {
-                    m_app_data.m_gizmo.m_state = Gizmo::State::Translation;
-                }
-                ImGui::SameLine();
-                if (ImGui::Button("Gizmo Rotation")) {
-                    m_app_data.m_gizmo.m_state = Gizmo::State::Rotation;
-                }
-                if (!m_app_data.m_entity_selector.m_selected_entity.has_component<Physics::PhysicsInfo>()
-                    || (m_app_data.m_entity_selector.m_selected_entity.has_component<Physics::PhysicsInfo>()
-                        && m_app_data.m_entity_selector.m_selected_entity.get_component<Physics::PhysicsInfo>().m_motion_type == JPH::EMotionType::Static)) {
-                    ImGui::SameLine();
-                    if (ImGui::Button("Gizmo Scale")) {
-                        m_app_data.m_gizmo.m_state = Gizmo::State::Scale;
-                    }
-                }
-                if (ImGui::Button("Deselect Entity")) {
-                    m_app_data.m_entity_selector.m_selected_entity = Entity(m_scene, entt::null);
-                }
-            }
-        }
 
         if (ImGui::CollapsingHeader("Scene_1")) {
             m_scene->draw_debug_imgui();

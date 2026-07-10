@@ -18,7 +18,7 @@ struct GlobalAppData {
     Renderer::Camera m_camera;
 
     TextureCache m_texture_cache;
-    ModelCache m_model_cache;
+    MeshCache m_mesh_cache;
 
     Renderer::DefaultTextures m_default_textures;
 

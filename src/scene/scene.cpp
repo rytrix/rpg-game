@@ -228,28 +228,28 @@ void Scene::update()
 
 void Scene::draw()
 {
-    if (m_models_instance_draw_cache_needs_update) {
-        auto model_view = m_registry.view<Transform, Renderer::Model*>();
+    if (m_mesh_instance_draw_cache_needs_update) {
+        auto mesh_view = m_registry.view<Transform, Renderer::Mesh*>();
 
-        m_models_instance_draw_cache.clear();
-        for (auto [entity, transform, model] : model_view.each()) {
+        m_mesh_instance_draw_cache.clear();
+        for (auto [entity, transform, mesh] : mesh_view.each()) {
 
             bool contained = false;
-            for (auto& model_cached : m_models_instance_draw_cache) {
-                if (model == model_cached.m_model) {
+            for (auto& mesh_cached : m_mesh_instance_draw_cache) {
+                if (mesh == mesh_cached.m_mesh) {
                     contained = true;
                 }
             }
 
             if (!contained) {
-                m_models_instance_draw_cache.emplace_back(model, transform.get_model_matrix());
+                m_mesh_instance_draw_cache.emplace_back(mesh, transform.get_model_matrix());
             }
 
-            for (auto& model_cached : m_models_instance_draw_cache) {
-                if (model == model_cached.m_model) {
-                    model_cached.m_model_matrices.emplace_back(transform.get_model_matrix());
+            for (auto& model_cached : m_mesh_instance_draw_cache) {
+                if (mesh == model_cached.m_mesh) {
+                    model_cached.m_transform_matrices.emplace_back(transform.get_model_matrix());
 
-                    if (model_cached.m_model->get_mesh()->m_has_bones) {
+                    if (model_cached.m_mesh->m_has_bones) {
                         auto& data = m_registry.get<Renderer::AnimationData>(entity);
                         model_cached.m_animation_data.emplace_back(&data);
                     }
@@ -258,24 +258,24 @@ void Scene::draw()
         }
 
         LOG_INFO("Updated scene instanced draw cache");
-        m_models_instance_draw_cache_needs_update = false;
+        m_mesh_instance_draw_cache_needs_update = false;
     } else {
-        auto model_view = m_registry.view<Transform, Renderer::Model*>();
+        auto mesh_view = m_registry.view<Transform, Renderer::Mesh*>();
 
-        for (auto& model : m_models_instance_draw_cache) {
-            model.m_model_matrices.clear();
+        for (auto& mesh : m_mesh_instance_draw_cache) {
+            mesh.m_transform_matrices.clear();
         }
-        for (auto [entity, transform, model] : model_view.each()) {
-            for (usize j = 0; j < m_models_instance_draw_cache.size(); j++) {
-                if (model == m_models_instance_draw_cache[j].m_model) {
-                    m_models_instance_draw_cache[j].m_model_matrices.emplace_back(transform.get_model_matrix());
+        for (auto [entity, transform, mesh] : mesh_view.each()) {
+            for (usize j = 0; j < m_mesh_instance_draw_cache.size(); j++) {
+                if (mesh == m_mesh_instance_draw_cache[j].m_mesh) {
+                    m_mesh_instance_draw_cache[j].m_transform_matrices.emplace_back(transform.get_model_matrix());
                 }
             }
         }
     }
 
-    for (auto& model : m_models_instance_draw_cache) {
-        for (auto* animation_data : model.m_animation_data) {
+    for (auto& mesh : m_mesh_instance_draw_cache) {
+        for (auto* animation_data : mesh.m_animation_data) {
             auto* current_animation = animation_data->data[animation_data->selected_animation];
             Renderer::PerAnimationData* second_animation = nullptr;
             if (animation_data->second_animation != UINT32_MAX) {
@@ -301,7 +301,7 @@ void Scene::draw()
 
             // animation_data->m_animation_time += animation_time;
         }
-        model.m_model->update(model.m_model_matrices, model.m_animation_data);
+        mesh.m_mesh->update(mesh.m_transform_matrices.size(), mesh.m_transform_matrices, mesh.m_animation_data);
     }
 
     glEnable(GL_DEPTH_TEST);
@@ -322,8 +322,8 @@ void Scene::draw()
     for (auto [entity, light, shadow] : directional_shadow_view.each()) {
         shadow.update(light, m_app_data->m_camera);
         shadow.shadowmap_begin();
-        for (auto& model : m_models_instance_draw_cache) {
-            shadow.shadowmap_draw(model.m_model);
+        for (auto& mesh : m_mesh_instance_draw_cache) {
+            shadow.shadowmap_draw(mesh.m_mesh);
         }
         shadow.shadowmap_end();
     }
@@ -332,9 +332,9 @@ void Scene::draw()
     for (auto [entity, light, shadow] : point_shadow_view.each()) {
         shadow.update(light);
         shadow.shadowmap_begin();
-        for (auto& model : m_models_instance_draw_cache) {
-            Renderer::Shader& shader = model.m_model->get_mesh()->m_has_bones ? m_shadowmap_cubemap_shader_bones : m_shadowmap_cubemap_shader;
-            shadow.shadowmap_draw(shader, light, model.m_model);
+        for (auto& mesh_instance : m_mesh_instance_draw_cache) {
+            Renderer::Shader& shader = mesh_instance.m_mesh->m_has_bones ? m_shadowmap_cubemap_shader_bones : m_shadowmap_cubemap_shader;
+            shadow.shadowmap_draw(shader, light, mesh_instance.m_mesh);
         }
         shadow.shadowmap_end();
     }
@@ -343,9 +343,9 @@ void Scene::draw()
     for (auto [entity, light, shadow] : spot_shadow_view.each()) {
         shadow.update(light);
         shadow.shadowmap_begin();
-        for (auto& model : m_models_instance_draw_cache) {
-            Renderer::Shader& shader = model.m_model->get_mesh()->m_has_bones ? m_shadowmap_shader_bones : m_shadowmap_shader;
-            shadow.shadowmap_draw(shader, model.m_model);
+        for (auto& mesh_instance : m_mesh_instance_draw_cache) {
+            Renderer::Shader& shader = mesh_instance.m_mesh->m_has_bones ? m_shadowmap_shader_bones : m_shadowmap_shader;
+            shadow.shadowmap_draw(shader, mesh_instance.m_mesh);
         }
         shadow.shadowmap_end();
     }
@@ -354,8 +354,8 @@ void Scene::draw()
     glViewport(0, 0, m_app_data->m_window.get_width(), m_app_data->m_window.get_height());
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-    for (auto& model : m_models_instance_draw_cache) {
-        Renderer::Shader& shader = model.m_model->get_mesh()->m_has_bones ? m_shader_bones : m_shader;
+    for (auto& mesh_instance : m_mesh_instance_draw_cache) {
+        Renderer::Shader& shader = mesh_instance.m_mesh->m_has_bones ? m_shader_bones : m_shader;
         shader.bind();
         shader.set_mat4("proj", m_app_data->m_camera.get_proj());
         shader.set_mat4("view", m_app_data->m_camera.get_view());
@@ -394,7 +394,7 @@ void Scene::draw()
 
         m_random_sampling_texture.bind_uniforms(shader, "tex_random_offset", &m_app_data->m_texture_cache);
 
-        model.m_model->draw(shader);
+        mesh_instance.m_mesh->draw(shader);
 
         Renderer::Texture::drop_texture_units(1);
     }
@@ -414,30 +414,30 @@ void Scene::draw_entity_wireframe(Entity entity, glm::vec4 color)
         return;
     }
     auto transform = entity.get_component<Transform>();
-    auto* model = entity.get_component<Renderer::Model*>();
+    auto* mesh = entity.get_component<Renderer::Mesh*>();
 
     glDisable(GL_DEPTH_TEST);
     glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 
     std::array<glm::mat4, 1> transform_temp { transform.get_model_matrix() };
-    if (model->get_mesh()->m_has_bones) {
+    if (mesh->m_has_bones) {
         auto& animation_data = entity.get_component<Renderer::AnimationData>();
         std::array<Renderer::AnimationData*, 1> animation_data_temp { &animation_data };
-        model->update(transform_temp, animation_data_temp);
+        mesh->update(1, transform_temp, animation_data_temp);
 
         m_wireframe_shader_bones.bind();
         m_wireframe_shader_bones.set_mat4("proj", m_app_data->m_camera.get_proj());
         m_wireframe_shader_bones.set_mat4("view", m_app_data->m_camera.get_view());
         m_wireframe_shader_bones.set_vec4("u_color", color);
-        model->draw_untextured(m_wireframe_shader_bones);
+        mesh->draw_untextured(m_wireframe_shader_bones);
     } else {
-        model->update(transform_temp, {});
+        mesh->update(1, transform_temp, {});
 
         m_wireframe_shader.bind();
         m_wireframe_shader.set_mat4("proj", m_app_data->m_camera.get_proj());
         m_wireframe_shader.set_mat4("view", m_app_data->m_camera.get_view());
         m_wireframe_shader.set_vec4("u_color", color);
-        model->draw_untextured(m_wireframe_shader);
+        mesh->draw_untextured(m_wireframe_shader);
     }
 
     glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
@@ -458,15 +458,6 @@ void Scene::draw_debug_imgui()
         m_app_data->m_camera.set_speed(camera_speed);
     }
 
-    // constexpr float MAX_TRANSFORM = 64.0F;
-    // constexpr float MIN_TRANSFORM = -64.0F;
-
-    // constexpr float MAX_ROTATION = 360.0F;
-    // constexpr float MIN_ROTATION = -360.0F;
-
-    // constexpr float MAX_COLOR = 3000.0F;
-    // constexpr float MIN_COLOR = 0.0F;
-
     i32 i = 0;
     if (ImGui::CollapsingHeader("Entities")) {
         auto view = m_registry.view<entt::entity>();
@@ -485,158 +476,6 @@ void Scene::draw_debug_imgui()
                     m_app_data->m_entity_selector.select_entity(Entity(this, entity));
                 }
             }
-
-            // if (ImGui::CollapsingHeader(name.c_str())) {
-            //     auto* try_model = m_registry.try_get<Renderer::Model*>(entity);
-            //     auto* try_animation_data = m_registry.try_get<Renderer::AnimationData>(entity);
-            //     auto* try_transform = m_registry.try_get<Transform>(entity);
-            //
-            //     auto* try_physics_info = m_registry.try_get<Physics::PhysicsInfo>(entity);
-            //
-            //     auto* try_point = m_registry.try_get<Renderer::Light::Pbr::Point>(entity);
-            //     auto* try_directional = m_registry.try_get<Renderer::Light::Pbr::Directional>(entity);
-            //     auto* try_spot = m_registry.try_get<Renderer::Light::Pbr::Spot>(entity);
-            //
-            //     if (try_transform != nullptr) {
-            //         if (ImGui::Button("Select Entity")) {
-            //             m_app_data->m_entity_selector.select_entity(Entity(this, entity));
-            //         }
-            //         if (ImGui::Button("Deselect Entity")) {
-            //             m_app_data->m_entity_selector.select_entity(Entity(this, entt::null));
-            //         }
-            //     }
-            //
-            //     if (try_model != nullptr && try_animation_data != nullptr) {
-            //         auto& model = *try_model;
-            //         auto& animation_data = *try_animation_data;
-            //
-            //         auto& animations = model->get_mesh()->m_animations;
-            //         i32 current_animation = static_cast<int>(animation_data.selected_animation);
-            //
-            //         ImGui::Text("Animation");
-            //         for (u32 j = 0; j < animations.size(); j++) {
-            //             float total_animation_time = animations[j].get_total_animation_time();
-            //             if ((int)j == current_animation) {
-            //                 ImGui::Text("(Selected) Animation: %s, %f ticks", animations[j].m_name.c_str(), total_animation_time);
-            //
-            //             } else {
-            //                 ImGui::Text("Animation: %s, %f ticks", animations[j].m_name.c_str(), total_animation_time);
-            //             }
-            //         }
-            //
-            //         if (ImGui::DragInt("Current Animation", &current_animation, 1.0F, 0, static_cast<int>(animations.size() - 1))) {
-            //             if (current_animation >= static_cast<i32>(animations.size())) {
-            //                 current_animation = static_cast<i32>(animations.size() - 1);
-            //             }
-            //             animation_data.second_animation = animation_data.selected_animation;
-            //             animation_data.selected_animation = current_animation;
-            //             animation_data.blend_factor = 0.0F;
-            //             m_models_instance_draw_cache_needs_update = true;
-            //         }
-            //
-            //         ImGui::Checkbox("Pause Animation", &animation_data.paused);
-            //
-            //         float ticks_per_second = animations[current_animation].get_ticks_per_second();
-            //         if (ImGui::DragFloat("Ticks per second", &ticks_per_second)) {
-            //             animations[current_animation].set_ticks_per_second(ticks_per_second);
-            //         }
-            //     }
-            //
-            //     if (try_physics_info != nullptr) {
-            //         auto& physics_info = *try_physics_info;
-            //         auto& body_id = physics_info.m_id;
-            //         auto& motion_type = physics_info.m_motion_type;
-            //
-            //         if (motion_type != JPH::EMotionType::Static) {
-            //             ImGui::Text("Physics");
-            //             glm::vec3 cube_pos = Physics::vec3_to_vec3(m_physics_system->m_body_interface->GetPosition(body_id));
-            //             if (ImGui::DragFloat3("XYZ", &cube_pos.x, 1.0F, MIN_TRANSFORM, MAX_TRANSFORM)) {
-            //                 m_physics_system->m_body_interface->SetPosition(
-            //                     body_id,
-            //                     Physics::vec3_to_vec3(cube_pos),
-            //                     JPH::EActivation::Activate);
-            //             }
-            //
-            //             glm::quat cube_rot = Physics::quat_to_quat(m_physics_system->m_body_interface->GetRotation(body_id));
-            //             glm::vec3 euler_angles = glm::degrees(glm::eulerAngles(cube_rot));
-            //             if (ImGui::DragFloat3("Rotation: XYZ", &euler_angles.x, 1.0F, MIN_ROTATION, MAX_ROTATION)) {
-            //                 m_physics_system->m_body_interface->SetRotation(
-            //                     body_id,
-            //                     Physics::quat_to_quat(glm::quat(glm::radians(euler_angles))),
-            //                     JPH::EActivation::Activate);
-            //             }
-            //         } else {
-            //             ImGui::Text("Physics - Static Object");
-            //             if (ImGui::Button("Recreate static body")) {
-            //                 util_assert(m_physics_system->m_body_interface->IsAdded(body_id), "body not present");
-            //                 m_physics_system->m_body_interface->RemoveBody(body_id);
-            //                 m_physics_system->m_body_interface->DestroyBody(body_id);
-            //                 util_assert(!m_physics_system->m_body_interface->IsAdded(body_id), "body not removed");
-            //
-            //                 auto new_physics_info = Physics::create_static_body(Entity(this, entity));
-            //                 // auto new_physics_info = physics_info.m_physics_fn(m_physics_system.get(), Entity(this, entity));
-            //                 physics_info.m_id = new_physics_info.m_id;
-            //                 physics_info.m_motion_type = new_physics_info.m_motion_type;
-            //
-            //                 m_physics_needs_optimize = true;
-            //             }
-            //         }
-            //     }
-            //
-            //     if (try_transform != nullptr && try_physics_info == nullptr) {
-            //         auto& transform = *try_transform;
-            //
-            //         ImGui::Text("Transform");
-            //         glm::vec3 transform_pos = transform.get_position();
-            //         if (ImGui::DragFloat3("Position: XYZ", &transform_pos.x, 1.0F, MIN_TRANSFORM, MAX_TRANSFORM)) {
-            //             transform.set_position(transform_pos);
-            //         }
-            //
-            //         glm::vec3 transform_rot = transform.get_euler_angles();
-            //         if (ImGui::DragFloat3("Rotation: XYZ", &transform_rot.x, 1.0F, MIN_ROTATION, MAX_ROTATION)) {
-            //             transform.set_euler_angles(transform_rot);
-            //         }
-            //
-            //         glm::vec3 transform_scale = transform.get_scale();
-            //         if (ImGui::DragFloat3("Scale: XYZ", &transform_scale.x, 1.0F, MIN_TRANSFORM, MAX_TRANSFORM)) {
-            //             transform.set_scale(transform_scale);
-            //         }
-            //
-            //         if (ImGui::DragFloat("Scale: All", &transform_scale.x, 1.0F, MIN_TRANSFORM, MAX_TRANSFORM)) {
-            //             transform.set_scale(glm::vec3(transform_scale.x));
-            //         }
-            //     }
-            //
-            //     if (try_point != nullptr) {
-            //         auto& point = *try_point;
-            //
-            //         ImGui::Text("Point Light");
-            //         ImGui::DragFloat3("XYZ", &point.position.x, 1.0F, MIN_TRANSFORM, MAX_TRANSFORM);
-            //         ImGui::DragFloat3("RGB", &point.color.x, 10.0F, MIN_COLOR, MAX_COLOR);
-            //     }
-            //
-            //     if (try_directional != nullptr) {
-            //         auto& directional = *try_directional;
-            //
-            //         ImGui::Text("Directional Light");
-            //         ImGui::DragFloat3("XYZ", &directional.direction.x, 1.0F, -1.0F, 1.0F);
-            //         ImGui::DragFloat3("RGB", &directional.color.x, 10.0F, MIN_COLOR, MAX_COLOR);
-            //     }
-            //
-            //     if (try_spot != nullptr) {
-            //         auto& spot = *try_spot;
-            //
-            //         ImGui::Text("Spot Light");
-            //         ImGui::DragFloat3("Position XYZ", &spot.position.x, 1.0F, MIN_TRANSFORM, MAX_TRANSFORM);
-            //         ImGui::DragFloat3("Direction XYZ", &spot.direction.x, 1.0F, -1.0F, 1.0F);
-            //         ImGui::DragFloat3("RGB", &spot.color.x, 10.0F, MIN_COLOR, MAX_COLOR);
-            //         bool inner_cutoff_result = ImGui::DragFloat("inner_cutoff", &spot.inner_cutoff_degrees);
-            //         bool outer_cutoff_result = ImGui::DragFloat("outer_cutoff", &spot.outer_cutoff_degrees);
-            //         if (inner_cutoff_result || outer_cutoff_result) {
-            //             spot.calculate_cutoffs();
-            //         }
-            //     }
-            // }
 
             ImGui::PopID();
             i++;

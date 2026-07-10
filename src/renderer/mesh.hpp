@@ -54,7 +54,7 @@ struct VertexBone {
 };
 
 class Mesh : public NoCopyNoMove {
-    friend class Model;
+    friend class ModelLoader;
 
 public:
     struct Vertex {
@@ -70,13 +70,11 @@ public:
         std::vector<u32> m_indices;
     };
 
+    Mesh(const char* path, GlobalAppData* app_data);
     Mesh() = default;
     ~Mesh();
 
-    void update_instance_count(u32 instance_count);
-    void update_model_ssbos(const std::span<glm::mat4> model_matrices);
-    void update_bone_matrices(const std::span<AnimationData*> animation_data);
-    void next_ssbo_frame();
+    void update(u32 instance_count, const std::span<glm::mat4> transform_matrices, const std::span<AnimationData*> animation_data);
 
     void draw_untextured(Renderer::Shader& shader);
     void draw(Shader& shader);
@@ -100,6 +98,11 @@ public:
 
 private:
     void setup_mesh();
+
+    void update_instance_count(u32 instance_count);
+    void update_model_ssbos(const std::span<glm::mat4> model_matrices);
+    void update_bone_matrices(const std::span<AnimationData*> animation_data);
+    void next_ssbo_frame();
 
     bool initialized = false;
 

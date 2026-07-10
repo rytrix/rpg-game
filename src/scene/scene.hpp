@@ -77,19 +77,19 @@ private:
     Renderer::Shader m_wireframe_shader;
     Renderer::Shader m_wireframe_shader_bones;
 
-    struct ModelInstanceCache {
-        Renderer::Model* m_model;
-        std::vector<glm::mat4> m_model_matrices;
+    struct MeshInstanceCache {
+        Renderer::Mesh* m_mesh;
+        std::vector<glm::mat4> m_transform_matrices;
         std::vector<Renderer::AnimationData*> m_animation_data;
 
-        ModelInstanceCache(Renderer::Model* model, glm::mat4 matrix)
-            : m_model(model)
-            , m_model_matrices({ matrix })
+        MeshInstanceCache(Renderer::Mesh* mesh, glm::mat4 transform)
+            : m_mesh(mesh)
+            , m_transform_matrices({ transform })
         {
         }
     };
-    std::vector<ModelInstanceCache> m_models_instance_draw_cache;
-    bool m_models_instance_draw_cache_needs_update = false;
+    std::vector<MeshInstanceCache> m_mesh_instance_draw_cache;
+    bool m_mesh_instance_draw_cache_needs_update = false;
 
     Renderer::RandomSamplingTexture m_random_sampling_texture;
 

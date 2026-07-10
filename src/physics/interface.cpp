@@ -12,7 +12,7 @@ PhysicsInfo create_static_body(Entity entity)
     PhysicsInfo info {};
 
     JPH::TriangleList triangles;
-    const auto* mesh = entity.get_component<Renderer::Model*>()->get_mesh();
+    const auto* mesh = entity.get_component<Renderer::Mesh*>();
     if (entity.has_component<Transform>()) {
         auto& transform = entity.get_component<Transform>();
         Physics::System::create_mesh_triangle_list_base_index(triangles, transform.get_model_matrix(), mesh);
@@ -88,7 +88,7 @@ PhysicsInfo create_convex_hull(Entity entity)
     JPH::Quat rotation { JPH::Quat::sIdentity() };
 
     JPH::Array<JPH::Vec3> triangles;
-    const auto* mesh = entity.get_component<Renderer::Model*>()->get_mesh();
+    const auto* mesh = entity.get_component<Renderer::Mesh*>();
     if (entity.has_component<Transform>()) {
         auto& transform = entity.get_component<Transform>();
 

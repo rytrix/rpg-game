@@ -72,5 +72,8 @@ T& Entity::get_component()
 template <typename T>
 bool Entity::has_component()
 {
+    if (!valid()) {
+        return false;
+    }
     return m_scene->m_registry.all_of<T>(m_entity);
 }

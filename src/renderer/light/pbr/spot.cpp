@@ -59,13 +59,13 @@ void SpotShadow::shadowmap_begin()
     glClear(GL_DEPTH_BUFFER_BIT);
 }
 
-void SpotShadow::shadowmap_draw(Renderer::Shader& shader, Renderer::Model* model)
+void SpotShadow::shadowmap_draw(Renderer::Shader& shader, Renderer::Mesh* mesh)
 {
     util_assert(initialized == true, "Light::SpotShadow has not been initialized");
 
     shader.bind();
     shader.set_mat4("light_space_matrix", m_light_space_matrix);
-    model->draw_untextured(shader);
+    mesh->draw_untextured(shader);
 }
 
 void SpotShadow::shadowmap_end()

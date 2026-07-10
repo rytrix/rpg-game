@@ -128,24 +128,24 @@ void DirectionalShadow::shadowmap_begin()
     glClear(GL_DEPTH_BUFFER_BIT);
 }
 
-void DirectionalShadow::shadowmap_draw(Renderer::Model* model)
+void DirectionalShadow::shadowmap_draw(Renderer::Mesh* mesh)
 {
     util_assert(initialized == true, "Light::DirectionalShadow has not been initialized");
 
-    Renderer::Shader& shader = model->get_mesh()->m_has_bones ? m_shader_bones : m_shader;
+    Renderer::Shader& shader = mesh->m_has_bones ? m_shader_bones : m_shader;
     shader.bind();
 
     if constexpr (USE_GEOMETRY_SHADER) {
         for (u32 i = 0; i < m_cascades; i++) {
             shader.set_mat4(std::format("light_space_matrices[{}]", i).c_str(), m_light_space_matrix.at(i));
         }
-        model->draw_untextured(shader);
+        mesh->draw_untextured(shader);
     } else {
         for (u32 i = 0; i < m_cascades; i++) {
             m_shadowmap.bind_texture_layer(static_cast<i32>(i));
             // m_shadowmap.bind();
             shader.set_mat4("light_space_matrix", m_light_space_matrix.at(i));
-            model->draw_untextured(shader);
+            mesh->draw_untextured(shader);
         }
     }
 

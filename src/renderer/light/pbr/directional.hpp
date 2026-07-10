@@ -22,7 +22,7 @@ public:
     void init();
     void update(const Directional& light, const Renderer::Camera& camera);
     void shadowmap_begin();
-    void shadowmap_draw(Renderer::Model* model);
+    void shadowmap_draw(Renderer::Mesh* mesh);
     void shadowmap_end();
     void set_uniforms(Renderer::Shader& shader, const char* light_name);
 

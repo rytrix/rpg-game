@@ -50,24 +50,24 @@ void Entity::add_transform(Entity entity, const Transform& transform)
 
 void Entity::add_model(Entity entity, const char* path, GlobalAppData* app_data)
 {
-    auto* model_cache = &app_data->m_model_cache;
-    auto handle = model_cache->get_or_create(path, path, app_data);
-    auto* model = model_cache->get(handle);
+    auto* mesh_cache = &app_data->m_mesh_cache;
+    auto handle = mesh_cache->get_or_create(path, path, app_data);
+    auto* mesh = mesh_cache->get(handle);
 
-    if (model->get_mesh()->m_has_bones) {
+    if (mesh->m_has_bones) {
         auto& data = entity.add_component<Renderer::AnimationData>();
-        for (auto& animation : model->get_mesh()->m_animations) {
+        for (auto& animation : mesh->m_animations) {
             data.data.emplace_back(animation.create_per_animation_data());
         }
     }
 
-    entity.add_component<Renderer::Model*>(model);
-    entity.get_scene()->m_models_instance_draw_cache_needs_update = true;
+    entity.add_component<Renderer::Mesh*>(mesh);
+    entity.get_scene()->m_mesh_instance_draw_cache_needs_update = true;
 }
 
 void Entity::add_static_body(Entity entity)
 {
-    util_assert(entity.has_component<Renderer::Model*>() == true, "Cannot add physics to an entity without a model");
+    util_assert(entity.has_component<Renderer::Mesh*>() == true, "Cannot add physics to an entity without a mesh");
     auto physics_info = Physics::create_static_body(entity);
     entity.add_component<Physics::PhysicsInfo>(physics_info);
     entity.get_scene()->m_physics_needs_optimize = true;
@@ -75,7 +75,7 @@ void Entity::add_static_body(Entity entity)
 
 void Entity::add_dynamic_body(Entity entity, JPH::Ref<JPH::Shape> shape)
 {
-    util_assert(entity.has_component<Renderer::Model*>() == true, "Cannot add physics to an entity without a model");
+    util_assert(entity.has_component<Renderer::Mesh*>() == true, "Cannot add physics to an entity without a mesh");
     auto physics_info = Physics::create_dynamic_body(entity, shape);
     entity.add_component<Physics::PhysicsInfo>(physics_info);
     entity.get_scene()->m_physics_needs_optimize = true;
@@ -83,7 +83,7 @@ void Entity::add_dynamic_body(Entity entity, JPH::Ref<JPH::Shape> shape)
 
 void Entity::add_convex_hull_body(Entity entity)
 {
-    util_assert(entity.has_component<Renderer::Model*>() == true, "Cannot add physics to an entity without a model");
+    util_assert(entity.has_component<Renderer::Mesh*>() == true, "Cannot add physics to an entity without a mesh");
     auto physics_info = Physics::create_convex_hull(entity);
     entity.add_component<Physics::PhysicsInfo>(physics_info);
     entity.get_scene()->m_physics_needs_optimize = true;

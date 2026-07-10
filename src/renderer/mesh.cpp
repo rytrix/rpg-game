@@ -7,6 +7,8 @@
 
 #include "../app_data.hpp"
 
+#include "model.hpp"
+
 namespace Renderer {
 
 VertexBone::VertexBone()
@@ -35,9 +37,26 @@ void VertexBone::add_bone(const u32 bone_id, const float weight)
     util_error("Exceded max number of bones per vertex");
 }
 
+Mesh::Mesh(const char* path, GlobalAppData* app_data)
+{
+    load_mesh(*this, path, app_data);
+}
+
 Mesh::~Mesh()
 {
     initialized = false;
+}
+
+void Mesh::update(u32 instance_count, const std::span<glm::mat4> transform_matrices, const std::span<AnimationData*> animation_data)
+{
+    util_assert(initialized == true, "not initialized");
+
+    next_ssbo_frame();
+    update_instance_count(instance_count);
+    update_model_ssbos(transform_matrices);
+    if (m_has_bones) {
+        update_bone_matrices(animation_data);
+    }
 }
 
 void Mesh::update_instance_count(u32 instance_count)

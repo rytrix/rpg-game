@@ -10,21 +10,69 @@
 
 #include "../app_data.hpp"
 
+#include "../scene/resource_manager.hpp"
+
+#include <assimp/scene.h>
+
 namespace Renderer {
 
-Model::Model(const char* file_path, GlobalAppData* app_data)
+class ModelLoader : public NoCopyNoMove {
+public:
+    ModelLoader() = default;
+    ModelLoader(Mesh& mesh, const char* path, GlobalAppData* app_data);
+    ~ModelLoader();
+
+    void init(const char* path, GlobalAppData* app_data);
+
+    // void update(std::span<glm::mat4> models, std::span<AnimationData*> animation_data);
+    //
+    // void draw_untextured(Shader& shader);
+    // void draw(Shader& shader);
+
+    ModelResult m_error;
+
+private:
+    bool initialized = false;
+
+    GlobalAppData* m_app_data = nullptr;
+
+    std::string m_directory;
+
+    Mesh& m_mesh;
+
+    void setup_mesh(const aiScene* scene);
+    void setup_animations(const aiScene* scene);
+
+    void process_node(aiNode* node, const aiScene* scene);
+    void process_mesh(aiMesh* mesh, const aiScene* scene);
+    Handle load_material_texture(const aiMaterial* mat, const aiTextureType type, const aiScene* scene);
+};
+
+ModelResult load_mesh(Mesh& mesh, const char* path, GlobalAppData* app_data)
+{
+    ModelLoader loader(mesh, path, app_data);
+    return loader.m_error;
+}
+
+ModelLoader::ModelLoader(Mesh& mesh, const char* file_path, GlobalAppData* app_data)
+    : m_mesh(mesh)
 {
     init(file_path, app_data);
 }
 
-void Model::init(const char* file_path, GlobalAppData* app_data)
+void ModelLoader::init(const char* file_path, GlobalAppData* app_data)
 {
     util_assert(initialized == false, "already initialized");
 
     m_directory = file_path;
     m_app_data = app_data;
 
-    util_assert(std::filesystem::exists(file_path), std::format("Model \"{}\" is an invalid path", file_path));
+    if (!std::filesystem::exists(file_path)) {
+        m_error.type = ModelResultEnum::InvalidFilePath;
+        LOG_ERROR(std::format("Model \"{}\" is an invalid path", file_path));
+        return;
+    }
+    // util_assert(std::filesystem::exists(file_path), std::format("Model \"{}\" is an invalid path", file_path));
     m_directory = m_directory.substr(0, m_directory.find_last_of('/'));
 
     Assimp::Importer importer;
@@ -37,13 +85,20 @@ void Model::init(const char* file_path, GlobalAppData* app_data)
             | aiProcess_JoinIdenticalVertices
             | aiProcess_GenBoundingBoxes);
 
+    if (scene == nullptr) {
+        const char* error = importer.GetErrorString();
+        m_error.type = ModelResultEnum::UnknownError;
+        m_error.error = error;
+        return;
+    }
+
     setup_mesh(scene);
     setup_animations(scene);
 
     initialized = true;
 }
 
-void Model::setup_mesh(const aiScene* scene)
+void ModelLoader::setup_mesh(const aiScene* scene)
 {
     m_mesh.m_app_data = m_app_data;
 
@@ -58,7 +113,7 @@ void Model::setup_mesh(const aiScene* scene)
     m_mesh.setup_mesh();
 }
 
-void Model::setup_animations(const aiScene* scene)
+void ModelLoader::setup_animations(const aiScene* scene)
 {
     glm::mat4 global_inverse_transform = glm::inverse(mat4_to_mat4(scene->mRootNode->mTransformation));
 
@@ -75,44 +130,12 @@ void Model::setup_animations(const aiScene* scene)
     }
 }
 
-Model::~Model()
+ModelLoader::~ModelLoader()
 {
     initialized = false;
 }
 
-void Model::draw_untextured(Shader& shader)
-{
-    util_assert(initialized == true, "not initialized");
-
-    m_mesh.draw_untextured(shader);
-}
-
-void Model::draw(Shader& shader)
-{
-    util_assert(initialized == true, "not initialized");
-
-    m_mesh.draw(shader);
-}
-
-void Model::update(std::span<glm::mat4> models, std::span<AnimationData*> animation_data)
-{
-    util_assert(initialized == true, "not initialized");
-
-    m_mesh.next_ssbo_frame();
-    m_mesh.update_instance_count(models.size());
-    m_mesh.update_model_ssbos(models);
-    if (m_mesh.m_has_bones) {
-        m_mesh.update_bone_matrices(animation_data);
-    }
-}
-
-Mesh* Model::get_mesh()
-{
-    util_assert(initialized == true, "not initialized");
-    return &m_mesh;
-}
-
-void Model::process_node(aiNode* node, const aiScene* scene)
+void ModelLoader::process_node(aiNode* node, const aiScene* scene)
 {
     for (u32 i = 0; i < node->mNumMeshes; i++) {
         aiMesh* mesh = scene->mMeshes[node->mMeshes[i]];
@@ -125,7 +148,7 @@ void Model::process_node(aiNode* node, const aiScene* scene)
     }
 }
 
-void Model::process_mesh(aiMesh* mesh, const aiScene* scene)
+void ModelLoader::process_mesh(aiMesh* mesh, const aiScene* scene)
 {
     auto base_vertex = static_cast<GLsizei>(m_mesh.m_vertex_data.m_vertices.size());
     auto count = static_cast<GLsizei>(m_mesh.m_vertex_data.m_indices.size());
@@ -239,7 +262,7 @@ void Model::process_mesh(aiMesh* mesh, const aiScene* scene)
         base_vertex);
 }
 
-Handle Model::load_material_texture(const aiMaterial* mat, const aiTextureType type, const aiScene* scene)
+Handle ModelLoader::load_material_texture(const aiMaterial* mat, const aiTextureType type, const aiScene* scene)
 {
     if (mat->GetTextureCount(type) > 0) {
         aiString str;
@@ -287,34 +310,6 @@ Handle Model::load_material_texture(const aiMaterial* mat, const aiTextureType t
                 auto handle = texture_cache->get_or_create(texture_path, texture_info);
                 Texture* texture = texture_cache->get(handle);
                 texture->set_max_anisotropy(16.0F);
-
-                // int width, height, channels;
-                // TextureSubimageInfo subimage_info;
-                // stbi_set_flip_vertically_on_load((int)texture_info.flip);
-                // unsigned char* data = stbi_load_from_memory((const stbi_uc*)embedded_texture->pcData, embedded_texture->mWidth, &width, &height, &channels, 0);
-
-                // texture_info.from_file = GL_FALSE;
-                // if (channels == 4) {
-                //     texture_info.internal_format = GL_RGBA8;
-                //     subimage_info.format = GL_RGBA;
-                // } else if (channels == 3) {
-                //     texture_info.internal_format = GL_RGB8;
-                //     subimage_info.format = GL_RGB;
-                // }
-                // texture_info.size.width = width;
-                // texture_info.size.height = height;
-                // texture_info.size.depth = 0;
-                // auto handle = texture_cache->get_or_create(texture_path, texture_info);
-                // Texture* texture = texture_cache->get(handle);
-
-                // subimage_info.pixels = data;
-                // subimage_info.size = texture_info.size;
-                // subimage_info.type = GL_UNSIGNED_BYTE;
-                // texture->sub_image(subimage_info);
-
-                // texture->set_max_anisotropy(16.0F);
-
-                // stbi_image_free(data);
 
                 return handle;
             }

@@ -46,7 +46,7 @@ void PointShadow::shadowmap_begin()
     glClear(GL_DEPTH_BUFFER_BIT);
 }
 
-void PointShadow::shadowmap_draw(Renderer::Shader& shader, const Point& light, Renderer::Model* model)
+void PointShadow::shadowmap_draw(Renderer::Shader& shader, const Point& light, Renderer::Mesh* mesh)
 {
     util_assert(initialized == true, "Light::PointShadow has not been initialized");
 
@@ -61,12 +61,12 @@ void PointShadow::shadowmap_draw(Renderer::Shader& shader, const Point& light, R
         shader.set_mat4("light_space_matrices[3]", m_light_space_matrices[3]);
         shader.set_mat4("light_space_matrices[4]", m_light_space_matrices[4]);
         shader.set_mat4("light_space_matrices[5]", m_light_space_matrices[5]);
-        model->draw_untextured(shader);
+        mesh->draw_untextured(shader);
     } else {
         for (u32 i = 0; i < 6; i++) {
             m_shadowmap.bind_texture_layer(static_cast<i32>(i));
             shader.set_mat4("light_space_matrix", m_light_space_matrices.at(i));
-            model->draw_untextured(shader);
+            mesh->draw_untextured(shader);
         }
     }
 }
