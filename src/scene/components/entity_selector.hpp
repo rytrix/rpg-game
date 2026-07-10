@@ -11,11 +11,11 @@ public:
     void init(Scene* scene, GlobalAppData* app_data);
 
     void on_event(Event& event);
-    // Do after scene draw command
     void update();
     void draw();
 
     void select_entity(Entity entity);
+    void deselect_entity();
 
     Entity m_hovered_entity;
     Entity m_selected_entity;
@@ -24,11 +24,18 @@ private:
     GlobalAppData* m_app_data = nullptr;
     Scene* m_scene = nullptr;
 
+    enum State {
+        On,
+        Off,
+        Invalid
+    };
+    State m_prev_physics_state = State::Off;
+
     struct EntityComponents {
         Entity entity;
         Scene* scene = nullptr;
         Utils::String* name = nullptr;
-        Renderer::Model** model = nullptr;
+        Renderer::Mesh** mesh = nullptr;
         Renderer::AnimationData* animation_data = nullptr;
         Transform* transform = nullptr;
         Physics::PhysicsInfo* physics_info = nullptr;

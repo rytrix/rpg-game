@@ -28,24 +28,40 @@ void EntitySelector::on_event(Event& event)
                 }
             }
         }
+
+        if (event.m_sdl_event.type == SDL_EVENT_KEY_DOWN) {
+            if (event.m_sdl_event.key.key == SDLK_ESCAPE) {
+                deselect_entity();
+                event.m_consumed = true;
+            }
+        }
     }
 }
 
 void EntitySelector::update()
 {
-    if (!m_app_data->m_entity_selector.m_selected_entity.valid() && !m_app_data->m_capture_mouse) {
+    if (!m_selected_entity.valid() && !m_app_data->m_capture_mouse) {
         auto ray_result = m_scene->m_physics_system->ray_cast(Utils::ray_from_mouse(m_app_data), m_app_data->m_camera.get_far());
         if (ray_result.has_value()) {
             auto body_id = ray_result.value();
             auto view = m_scene->m_registry.view<Physics::PhysicsInfo>();
             for (auto [entity, body] : view.each()) {
                 if (body.m_id == body_id) {
-                    m_app_data->m_entity_selector.m_hovered_entity = Entity(m_scene, entity);
+                    m_hovered_entity = Entity(m_scene, entity);
                 }
             }
         }
     } else {
-        m_app_data->m_entity_selector.m_hovered_entity = Entity(m_scene, entt::null);
+        m_hovered_entity = Entity(m_scene, entt::null);
+    }
+
+    if (m_selected_entity.valid() && !m_app_data->m_capture_mouse) {
+        // Expect physics to be off when an entity is selected, but if it gets set to on,
+        // the user expects the physics state to remain consistant, so clicking while an entity
+        // is selected will invalidate the previous physics state.
+        if (m_scene->m_physics_on) {
+            m_prev_physics_state = State::Invalid;
+        }
     }
 }
 
@@ -92,8 +108,23 @@ void EntitySelector::draw()
 
 void EntitySelector::select_entity(Entity entity)
 {
+    util_assert(entity.valid(), "Trying to select an invalid entity");
     m_selected_entity = entity;
     m_app_data->m_gizmo.m_state = Gizmo::State::Translation;
+
+    if (m_selected_entity.valid()) {
+        m_prev_physics_state = m_scene->m_physics_on ? State::On : State::Off;
+        m_scene->m_physics_on = false;
+    }
+}
+
+void EntitySelector::deselect_entity()
+{
+    if (m_selected_entity.valid() && m_prev_physics_state != State::Invalid) {
+        m_scene->m_physics_on = m_prev_physics_state == State::On;
+    }
+
+    m_selected_entity = {};
 }
 
 void EntitySelector::draw_selected_entity_imgui()
@@ -125,7 +156,7 @@ void EntitySelector::draw_selected_entity_imgui()
     Utils::String* name_check = registry.try_get<Utils::String>(entity_id);
     components.name = name_check == nullptr ? &no_name : name_check;
 
-    components.model = registry.try_get<Renderer::Model*>(entity_id);
+    components.mesh = registry.try_get<Renderer::Mesh*>(entity_id);
     components.animation_data = registry.try_get<Renderer::AnimationData>(entity_id);
     components.transform = registry.try_get<Transform>(entity_id);
 
@@ -149,18 +180,20 @@ void EntitySelector::draw_selected_entity_imgui()
         m_imgui_first_time = false;
     }
 
+    ImGui::Text("%s", components.name->c_str());
+
     draw_add_remove_component_imgui(components);
 
     if (ImGui::Button("Deselect Entity")) {
-        m_app_data->m_entity_selector.select_entity(Entity(scene, entt::null));
+        m_app_data->m_entity_selector.deselect_entity();
         goto imgui_end_label;
     }
 
-    if (components.model != nullptr && components.animation_data != nullptr) {
-        auto& model = *components.model;
+    if (components.mesh != nullptr && components.animation_data != nullptr) {
+        auto& mesh = *components.mesh;
         auto& animation_data = *components.animation_data;
 
-        auto& animations = model->get_mesh()->m_animations;
+        auto& animations = mesh->m_animations;
         i32 current_animation = static_cast<int>(animation_data.selected_animation);
 
         ImGui::Text("Animation");
@@ -181,7 +214,7 @@ void EntitySelector::draw_selected_entity_imgui()
             animation_data.second_animation = animation_data.selected_animation;
             animation_data.selected_animation = current_animation;
             animation_data.blend_factor = 0.0F;
-            scene->m_models_instance_draw_cache_needs_update = true;
+            scene->m_mesh_instance_draw_cache_needs_update = true;
         }
 
         ImGui::Checkbox("Pause Animation", &animation_data.paused);
@@ -328,12 +361,12 @@ void EntitySelector::draw_add_remove_component_imgui(EntityComponents& component
         // }
         // if (ImGui::MenuItem("Add Transform")) {
         // }
-        if (components.model == nullptr && ImGui::MenuItem("Add Model")) {
+        if (components.mesh == nullptr && ImGui::MenuItem("Add Model")) {
         }
-        if (components.model != nullptr && components.physics_info == nullptr && ImGui::MenuItem("Add Static Body")) {
+        if (components.mesh != nullptr && components.physics_info == nullptr && ImGui::MenuItem("Add Static Body")) {
             Entity::add_static_body(components.entity);
         }
-        if (components.model != nullptr && components.physics_info == nullptr && ImGui::BeginMenu("Add Dynamic Body")) {
+        if (components.mesh != nullptr && components.physics_info == nullptr && ImGui::BeginMenu("Add Dynamic Body")) {
             if (ImGui::MenuItem("Box Shape")) {
                 JPH::BoxShapeSettings settings(JPH::Vec3(0.5, 0.5, 0.5));
                 JPH::Ref<JPH::Shape> shape = settings.Create().Get();
@@ -384,9 +417,9 @@ void EntitySelector::draw_add_remove_component_imgui(EntityComponents& component
         // if (components.transform != nullptr && ImGui::MenuItem("Remove Transform")) {
         //     components.entity.remove_component<Transform>();
         // }
-        if (components.model != nullptr && ImGui::MenuItem("Remove Model")) {
-            components.entity.remove_component<Renderer::Model*>();
-            components.scene->m_models_instance_draw_cache_needs_update = true;
+        if (components.mesh != nullptr && ImGui::MenuItem("Remove Model")) {
+            components.entity.remove_component<Renderer::Mesh*>();
+            components.scene->m_mesh_instance_draw_cache_needs_update = true;
         }
         if (components.physics_info != nullptr && components.physics_info->m_type == Physics::PhysicsType::Mesh && ImGui::MenuItem("Remove Static Body")) {
             components.entity.remove_component<Physics::PhysicsInfo>();
