@@ -131,7 +131,26 @@ void Window::process_input_internal()
         }
 
         ImGui_ImplSDL3_ProcessEvent(&event);
-        if (m_process_input_fn != nullptr) {
+
+        ImGuiIO& io = ImGui::GetIO();
+        bool consumed_by_imgui = false;
+
+        bool mouse_event = event.type == SDL_EVENT_MOUSE_MOTION || event.type == SDL_EVENT_MOUSE_BUTTON_DOWN || event.type == SDL_EVENT_MOUSE_BUTTON_UP || event.type == SDL_EVENT_MOUSE_WHEEL;
+        bool keyboard_event = event.type == SDL_EVENT_KEY_DOWN || event.type == SDL_EVENT_KEY_UP || event.type == SDL_EVENT_TEXT_INPUT;
+
+        if (io.WantCaptureMouse && mouse_event) {
+            consumed_by_imgui = true;
+        }
+
+        if (io.WantCaptureKeyboard && keyboard_event) {
+            consumed_by_imgui = true;
+        }
+
+        if (event.type == SDL_EVENT_KEY_DOWN && event.key.key == SDLK_ESCAPE) {
+            consumed_by_imgui = false;
+        }
+
+        if (!consumed_by_imgui && m_process_input_fn != nullptr) {
             m_process_input_fn(event);
         }
     }
@@ -249,7 +268,8 @@ void Window::set_window_title(const char* title)
     SDL_SetWindowTitle(m_window, title);
 }
 
-const char* Window::get_window_title() {
+const char* Window::get_window_title()
+{
     util_assert(initialized == true, "not initialized");
     return SDL_GetWindowTitle(m_window);
 }
