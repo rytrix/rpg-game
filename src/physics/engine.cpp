@@ -222,6 +222,16 @@ std::optional<JPH::BodyID> System::ray_cast(Utils::Ray ray, float max_distance)
     return std::nullopt;
 }
 
+void System::add_body(JPH::BodyID body)
+{
+    m_body_interface->AddBody(body, JPH::EActivation::Activate);
+}
+
+void System::remove_body(JPH::BodyID body)
+{
+    m_body_interface->RemoveBody(body);
+}
+
 void System::remove_delete_body(JPH::BodyID body)
 {
     m_body_interface->RemoveBody(body);

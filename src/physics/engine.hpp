@@ -139,6 +139,8 @@ public:
 
     std::optional<JPH::BodyID> ray_cast(Utils::Ray ray, float max_distance);
 
+    void add_body(JPH::BodyID body);
+    void remove_body(JPH::BodyID body);
     void remove_delete_body(JPH::BodyID body);
 
     void optimize();
