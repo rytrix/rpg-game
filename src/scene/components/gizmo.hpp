@@ -67,4 +67,6 @@ private:
 
     void batch_rotations(f32 radius);
     void batch_lines(f32 radius);
+    
+    void imgui_ui();
 };

@@ -7,6 +7,8 @@
 
 #include "../transform.hpp"
 
+#include "../../physics/interface.hpp"
+
 Gizmo::Gizmo(GlobalAppData* app_data)
     : m_app_data(app_data)
 {
@@ -145,6 +147,7 @@ void Gizmo::draw()
         m_app_data->line_renderer.add_ray(m_prev_ray.value(), 50.0F, Color::Red);
     }
 #endif
+    imgui_ui();
 }
 
 void Gizmo::test_intersection()
@@ -288,4 +291,32 @@ void Gizmo::batch_lines(f32 radius)
         glm::vec3(-radius, 0.0, 0.0), glm::vec3(radius, 0.0, 0.0), Color::Green);
     m_app_data->m_line_renderer.add_line(transform.get_model_matrix(),
         glm::vec3(0.0, 0.0, -radius), glm::vec3(0.0, 0.0, radius), Color::Red);
+}
+
+void Gizmo::imgui_ui()
+{
+    ImGui::Begin("Gizmo");
+
+    if (m_app_data->m_entity_selector.m_selected_entity.valid()) {
+        if (ImGui::Button("Gizmo Translation")) {
+            m_app_data->m_gizmo.m_state = Gizmo::State::Translation;
+        }
+        ImGui::SameLine();
+        if (ImGui::Button("Gizmo Rotation")) {
+            m_app_data->m_gizmo.m_state = Gizmo::State::Rotation;
+        }
+        if (!m_app_data->m_entity_selector.m_selected_entity.has_component<Physics::PhysicsInfo>()
+            || (m_app_data->m_entity_selector.m_selected_entity.has_component<Physics::PhysicsInfo>()
+                && m_app_data->m_entity_selector.m_selected_entity.get_component<Physics::PhysicsInfo>().m_motion_type == JPH::EMotionType::Static)) {
+            ImGui::SameLine();
+            if (ImGui::Button("Gizmo Scale")) {
+                m_app_data->m_gizmo.m_state = Gizmo::State::Scale;
+            }
+        }
+        if (ImGui::Button("Deselect Entity")) {
+            m_app_data->m_entity_selector.deselect_entity();
+        }
+    }
+
+    ImGui::End();
 }
