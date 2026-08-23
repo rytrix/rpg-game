@@ -36,29 +36,41 @@ LineRenderer::~LineRenderer()
     }
 }
 
-void LineRenderer::add_line(glm::vec3 begin, glm::vec3 end, glm::vec3 color)
+void LineRenderer::add_line(glm::vec3 begin, glm::vec3 end, u32 color)
 {
     util_assert(initialized == true, "not initialized");
     if (m_vertices.size() + 2 > m_max_vertices) {
         LOG_ERROR("Exceeding max number of lines, new lines are not being added");
         return;
     }
-    m_vertices.push_back({ begin, Color::pack(color) });
-    m_vertices.push_back({ end, Color::pack(color) });
+    m_vertices.push_back({ begin, color });
+    m_vertices.push_back({ end, color });
+}
+
+void LineRenderer::add_line(glm::vec3 begin, glm::vec3 end, glm::vec3 color)
+{
+    util_assert(initialized == true, "not initialized");
+    add_line(begin, end, Utils::Color::pack(color));
+}
+
+void LineRenderer::add_line(const glm::mat4& transform, glm::vec3 begin, glm::vec3 end, u32 color)
+{
+    util_assert(initialized == true, "not initialized");
+    if (m_vertices.size() + 2 > m_max_vertices) {
+        LOG_ERROR("Exceeding max number of lines, new lines are not being added");
+        return;
+    }
+    m_vertices.push_back({ transform * glm::vec4(begin, 1.0), color });
+    m_vertices.push_back({ transform * glm::vec4(end, 1.0), color });
 }
 
 void LineRenderer::add_line(const glm::mat4& transform, glm::vec3 begin, glm::vec3 end, glm::vec3 color)
 {
     util_assert(initialized == true, "not initialized");
-    if (m_vertices.size() + 2 > m_max_vertices) {
-        LOG_ERROR("Exceeding max number of lines, new lines are not being added");
-        return;
-    }
-    m_vertices.push_back({ transform * glm::vec4(begin, 1.0), Color::pack(color) });
-    m_vertices.push_back({ transform * glm::vec4(end, 1.0), Color::pack(color) });
+    add_line(transform, begin, end, Utils::Color::pack(color));
 }
 
-void LineRenderer::add_aabb(const Utils::AABB& aabb, glm::vec3 color)
+void LineRenderer::add_aabb(const Utils::AABB& aabb, u32 color)
 {
     util_assert(initialized == true, "not initialized");
 
@@ -92,20 +104,38 @@ void LineRenderer::add_aabb(const Utils::AABB& aabb, glm::vec3 color)
     add_line(c[3], c[7], color);
 }
 
-void LineRenderer::add_ray(const Utils::Ray& ray, float length, glm::vec3 color)
+void LineRenderer::add_aabb(const Utils::AABB& aabb, glm::vec3 color)
+{
+    util_assert(initialized == true, "not initialized");
+    add_aabb(aabb, Utils::Color::pack(color));
+}
+
+void LineRenderer::add_ray(const Utils::Ray& ray, float length, u32 color)
 {
     util_assert(initialized == true, "not initialized");
     glm::vec3 end = ray.position + (ray.direction * length);
     add_line(ray.position, end, color);
 }
 
-void LineRenderer::add_circle(const glm::mat4& transform, f32 radius, glm::vec3 color)
+void LineRenderer::add_ray(const Utils::Ray& ray, float length, glm::vec3 color)
+{
+    util_assert(initialized == true, "not initialized");
+    add_ray(ray, length, Utils::Color::pack(color));
+}
+
+void LineRenderer::add_circle(const glm::mat4& transform, f32 radius, u32 color)
 {
     util_assert(initialized == true, "not initialized");
     add_circle(transform, radius, DEFAULT_CIRCLE_SEGMENTS, color);
 }
 
-void LineRenderer::add_circle(const glm::mat4& transform, f32 radius, u32 segments, glm::vec3 color)
+void LineRenderer::add_circle(const glm::mat4& transform, f32 radius, glm::vec3 color)
+{
+    util_assert(initialized == true, "not initialized");
+    add_circle(transform, radius, DEFAULT_CIRCLE_SEGMENTS, Utils::Color::pack(color));
+}
+
+void LineRenderer::add_circle(const glm::mat4& transform, f32 radius, u32 segments, u32 color)
 {
     util_assert(initialized == true, "not initialized");
 
@@ -132,14 +162,27 @@ void LineRenderer::add_circle(const glm::mat4& transform, f32 radius, u32 segmen
     }
 }
 
-void LineRenderer::add_triangle(glm::vec3 vert1, glm::vec3 vert2, glm::vec3 vert3, glm::vec3 color)
+void LineRenderer::add_circle(const glm::mat4& transform, f32 radius, u32 segments, glm::vec3 color)
 {
+    util_assert(initialized == true, "not initialized");
+    add_circle(transform, radius, segments, Utils::Color::pack(color));
+}
+
+void LineRenderer::add_triangle(glm::vec3 vert1, glm::vec3 vert2, glm::vec3 vert3, u32 color)
+{
+    util_assert(initialized == true, "not initialized");
     add_line(vert1, vert2, color);
     add_line(vert2, vert3, color);
     add_line(vert3, vert1, color);
 }
 
-void LineRenderer::add_triangle(const glm::mat4& transform, glm::vec3 vert1, glm::vec3 vert2, glm::vec3 vert3, glm::vec3 color)
+void LineRenderer::add_triangle(glm::vec3 vert1, glm::vec3 vert2, glm::vec3 vert3, glm::vec3 color)
+{
+    util_assert(initialized == true, "not initialized");
+    add_triangle(vert1, vert2, vert3, Utils::Color::pack(color));
+}
+
+void LineRenderer::add_triangle(const glm::mat4& transform, glm::vec3 vert1, glm::vec3 vert2, glm::vec3 vert3, u32 color)
 {
     glm::vec3 vert1_t = transform * glm::vec4(vert1, 1.0);
     glm::vec3 vert2_t = transform * glm::vec4(vert2, 1.0);
@@ -148,6 +191,11 @@ void LineRenderer::add_triangle(const glm::mat4& transform, glm::vec3 vert1, glm
     add_line(vert1_t, vert2_t, color);
     add_line(vert2_t, vert3_t, color);
     add_line(vert3_t, vert1_t, color);
+}
+
+void LineRenderer::add_triangle(const glm::mat4& transform, glm::vec3 vert1, glm::vec3 vert2, glm::vec3 vert3, glm::vec3 color)
+{
+    add_triangle(transform, vert1, vert2, vert3, Utils::Color::pack(color));
 }
 
 // This is not the way to do it, do not do this lol

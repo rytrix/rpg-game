@@ -144,7 +144,7 @@ void Gizmo::draw()
     }
 #ifdef GIZMO_DEBUG_RAY
     if (m_prev_ray.has_value()) {
-        m_app_data->line_renderer.add_ray(m_prev_ray.value(), 50.0F, Color::Red);
+        m_app_data->line_renderer.add_ray(m_prev_ray.value(), 50.0F, Utils::Color::Red);
     }
 #endif
     imgui_ui();
@@ -274,11 +274,11 @@ void Gizmo::batch_rotations(f32 radius)
 {
     Transform transform;
     transform.set_position(m_transform->get_position());
-    m_app_data->m_line_renderer.add_circle(transform.get_model_matrix(), radius, Color::Blue);
+    m_app_data->m_line_renderer.add_circle(transform.get_model_matrix(), radius, Utils::Color::Blue);
     transform.set_euler_angles(glm::vec3(90.0, 0.0, 0.0));
-    m_app_data->m_line_renderer.add_circle(transform.get_model_matrix(), radius, Color::Green);
+    m_app_data->m_line_renderer.add_circle(transform.get_model_matrix(), radius, Utils::Color::Green);
     transform.set_euler_angles(glm::vec3(0.0, 90.0, 0.0));
-    m_app_data->m_line_renderer.add_circle(transform.get_model_matrix(), radius, Color::Red);
+    m_app_data->m_line_renderer.add_circle(transform.get_model_matrix(), radius, Utils::Color::Red);
 }
 
 void Gizmo::batch_lines(f32 radius)
@@ -286,11 +286,11 @@ void Gizmo::batch_lines(f32 radius)
     Transform transform;
     transform.set_position(m_transform->get_position());
     m_app_data->m_line_renderer.add_line(transform.get_model_matrix(),
-        glm::vec3(0.0, -radius, 0.0), glm::vec3(0.0, radius, 0.0), Color::Blue);
+        glm::vec3(0.0, -radius, 0.0), glm::vec3(0.0, radius, 0.0), Utils::Color::Blue);
     m_app_data->m_line_renderer.add_line(transform.get_model_matrix(),
-        glm::vec3(-radius, 0.0, 0.0), glm::vec3(radius, 0.0, 0.0), Color::Green);
+        glm::vec3(-radius, 0.0, 0.0), glm::vec3(radius, 0.0, 0.0), Utils::Color::Green);
     m_app_data->m_line_renderer.add_line(transform.get_model_matrix(),
-        glm::vec3(0.0, 0.0, -radius), glm::vec3(0.0, 0.0, radius), Color::Red);
+        glm::vec3(0.0, 0.0, -radius), glm::vec3(0.0, 0.0, radius), Utils::Color::Red);
 }
 
 void Gizmo::imgui_ui()
