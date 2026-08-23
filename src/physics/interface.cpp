@@ -111,6 +111,8 @@ PhysicsInfo create_convex_hull(Entity entity)
         JPH::EMotionType::Dynamic,
         Physics::Layers::MOVING);
 
+    body_settings.mMotionQuality = JPH::EMotionQuality::LinearCast;
+
     auto* system = entity.get_scene()->m_physics_system.get();
 
     auto body = system->m_body_interface->CreateAndAddBody(
@@ -121,7 +123,7 @@ PhysicsInfo create_convex_hull(Entity entity)
 
     info.m_id = body;
     info.m_motion_type = JPH::EMotionType::Dynamic;
-    info.m_type = PhysicsType::Shape;
+    info.m_type = PhysicsType::ConvexHull;
 
     return info;
 }

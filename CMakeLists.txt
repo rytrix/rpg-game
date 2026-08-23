@@ -58,6 +58,7 @@ add_executable(${PROJECT_NAME}
 )
 
 target_precompile_headers(${PROJECT_NAME} PUBLIC src/pch.hpp)
+target_compile_options(${PROJECT_NAME} PRIVATE -fno-rtti)
 
 add_subdirectory(vendor/sqlite)
 add_subdirectory(vendor/glad)
