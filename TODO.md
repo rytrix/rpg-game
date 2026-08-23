@@ -6,6 +6,7 @@ spell system
   - wait until there is gameplay
 
 lighting
+  - emissive property
 
 rendering engine
   - particles
@@ -17,8 +18,6 @@ ECS
 
 physics
   - player character
-  - ray selection
+  - auto sized capsule and box shapes (based on transform * AABB or something)
 
-scene saving
-adding/removing entities into the scene
-add/removing components from entities
+add/removing components from entities (need helper functions for removing still)
