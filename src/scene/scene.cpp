@@ -196,13 +196,13 @@ void Scene::to_json(nlohmann::json& json)
 
         // std::println("json_entity: {}", json_entity.dump());
 
-        json.emplace_back(json_entity);
+        json["entities"].emplace_back(json_entity);
     }
 }
 
 void Scene::from_json(nlohmann::json& json)
 {
-    for (auto& json_entity : json) {
+    for (auto& json_entity : json["entities"]) {
         auto entity = create_entity();
         Entity::from_json(json_entity, entity);
     }

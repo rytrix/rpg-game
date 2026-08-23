@@ -74,9 +74,6 @@ App::App()
     nlohmann::json json_scene = nlohmann::json::parse(text_scene.data());
     m_scene->from_json(json_scene);
 
-    // m_scene->to_json(json_scene);
-    // std::println("{}", json_scene.dump(2));
-
     m_scene->update();
 }
 
