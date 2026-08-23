@@ -9,6 +9,8 @@
 #include "texture.hpp"
 #include "vertex.hpp"
 
+#include "model.hpp"
+
 #include "../scene/resource_manager.hpp"
 
 class GlobalAppData;
@@ -79,6 +81,8 @@ public:
     void draw_untextured(Renderer::Shader& shader);
     void draw(Shader& shader);
 
+    ModelResult get_result();
+
     VertexData m_vertex_data;
 
     std::vector<Handle> m_diffuse_textures;
@@ -96,6 +100,8 @@ public:
 
     std::deque<Animation> m_animations;
 
+    Utils::String m_path;
+
 private:
     void setup_mesh();
 
@@ -104,7 +110,12 @@ private:
     void update_bone_matrices(const std::span<AnimationData*> animation_data);
     void next_ssbo_frame();
 
+    void assert_result_checked();
+
     bool initialized = false;
+
+    ModelResult m_result;
+    bool m_result_checked = false;
 
     VertexArray m_vao;
     Buffer m_vbo;

@@ -4,6 +4,7 @@
 
 #include "../../physics/helpers.hpp"
 #include "../../physics/interface.hpp"
+#include "imgui.h"
 
 EntitySelector::EntitySelector(Scene* scene, GlobalAppData* app_data)
     : m_app_data(app_data)
@@ -32,6 +33,7 @@ void EntitySelector::on_event(Event& event)
         if (event.m_sdl_event.type == SDL_EVENT_KEY_DOWN) {
             if (event.m_sdl_event.key.key == SDLK_ESCAPE) {
                 deselect_entity();
+                m_model_prompt.valid = false;
                 event.m_consumed = true;
             }
         }
@@ -104,6 +106,7 @@ void EntitySelector::draw()
     }
 
     draw_selected_entity_imgui();
+    draw_model_prompt_window();
 }
 
 void EntitySelector::select_entity(Entity entity)
@@ -180,7 +183,9 @@ void EntitySelector::draw_selected_entity_imgui()
         m_imgui_first_time = false;
     }
 
-    ImGui::Text("%s", components.name->c_str());
+    if (ImGui::InputText("##EntityNameInput", components.name->data(), components.name->capacity())) {
+        *components.name = Utils::String(components.name->c_str());
+    }
 
     draw_add_remove_component_imgui(components);
 
@@ -362,6 +367,10 @@ void EntitySelector::draw_add_remove_component_imgui(EntityComponents& component
         // if (ImGui::MenuItem("Add Transform")) {
         // }
         if (components.mesh == nullptr && ImGui::MenuItem("Add Model")) {
+            m_model_prompt.valid = true;
+            m_model_prompt.entity = m_selected_entity;
+            Utils::String string;
+            m_model_prompt.path = string;
         }
         if (components.mesh != nullptr && components.physics_info == nullptr && ImGui::MenuItem("Add Static Body")) {
             Entity::add_static_body(components.entity);
@@ -419,6 +428,9 @@ void EntitySelector::draw_add_remove_component_imgui(EntityComponents& component
         // }
         if (components.mesh != nullptr && ImGui::MenuItem("Remove Model")) {
             components.entity.remove_component<Renderer::Mesh*>();
+            if (components.entity.has_component<Renderer::AnimationData>()) {
+                components.entity.remove_component<Renderer::AnimationData>();
+            }
             components.scene->m_mesh_instance_draw_cache_needs_update = true;
         }
         if (components.physics_info != nullptr && components.physics_info->m_type == Physics::PhysicsType::Mesh && ImGui::MenuItem("Remove Static Body")) {
@@ -470,4 +482,28 @@ void EntitySelector::draw_add_remove_component_imgui(EntityComponents& component
 
         ImGui::EndPopup();
     }
+}
+
+void EntitySelector::draw_model_prompt_window()
+{
+    if (!m_model_prompt.valid) {
+        return;
+    }
+
+    ImGui::Begin("Add Model");
+
+    ImGui::InputText("##ModelPathInput", m_model_prompt.path.data(), m_model_prompt.path.capacity());
+
+    if (ImGui::Button("Add")) {
+        Entity::add_mesh(m_model_prompt.entity, m_model_prompt.path.c_str());
+        m_model_prompt.valid = false;
+    };
+
+    ImGui::SameLine();
+
+    if (ImGui::Button("Cancel")) {
+        m_model_prompt.valid = false;
+    };
+
+    ImGui::End();
 }

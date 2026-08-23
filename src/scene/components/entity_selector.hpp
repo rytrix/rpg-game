@@ -47,7 +47,15 @@ private:
         Renderer::Light::Pbr::SpotShadow* spot_shadow = nullptr;
     };
 
+    struct AddModelPrompt {
+        bool valid;
+        Entity entity;
+        Utils::String path;
+    };
+    AddModelPrompt m_model_prompt;
+
     bool m_imgui_first_time = true;
     void draw_selected_entity_imgui();
     void draw_add_remove_component_imgui(EntityComponents& components);
+    void draw_model_prompt_window();
 };

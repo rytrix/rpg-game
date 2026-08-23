@@ -12,8 +12,6 @@
 
 #include "../scene/resource_manager.hpp"
 
-#include <assimp/scene.h>
-
 namespace Renderer {
 
 class ModelLoader : public NoCopyNoMove {
@@ -23,11 +21,6 @@ public:
     ~ModelLoader();
 
     void init(const char* path, GlobalAppData* app_data);
-
-    // void update(std::span<glm::mat4> models, std::span<AnimationData*> animation_data);
-    //
-    // void draw_untextured(Shader& shader);
-    // void draw(Shader& shader);
 
     ModelResult m_error;
 
@@ -58,6 +51,7 @@ ModelLoader::ModelLoader(Mesh& mesh, const char* file_path, GlobalAppData* app_d
     : m_mesh(mesh)
 {
     init(file_path, app_data);
+    m_mesh.m_result = m_error;
 }
 
 void ModelLoader::init(const char* file_path, GlobalAppData* app_data)
@@ -69,9 +63,12 @@ void ModelLoader::init(const char* file_path, GlobalAppData* app_data)
 
     if (!std::filesystem::exists(file_path)) {
         m_error.type = ModelResultEnum::InvalidFilePath;
-        LOG_ERROR(std::format("Model \"{}\" is an invalid path", file_path));
+        m_error.error.format("Model \"{}\" is an invalid path", file_path);
         return;
     }
+
+    m_mesh.m_path = file_path;
+
     // util_assert(std::filesystem::exists(file_path), std::format("Model \"{}\" is an invalid path", file_path));
     m_directory = m_directory.substr(0, m_directory.find_last_of('/'));
 

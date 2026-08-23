@@ -50,6 +50,7 @@ Mesh::~Mesh()
 void Mesh::update(u32 instance_count, const std::span<glm::mat4> transform_matrices, const std::span<AnimationData*> animation_data)
 {
     util_assert(initialized == true, "not initialized");
+    assert_result_checked();
 
     next_ssbo_frame();
     update_instance_count(instance_count);
@@ -115,9 +116,10 @@ void Mesh::next_ssbo_frame()
     }
 }
 
-void Mesh::draw_untextured(Renderer::Shader& shader)
+void Mesh::draw_untextured([[maybe_unused]] Renderer::Shader& shader)
 {
     util_assert(initialized == true, "not initialized");
+    assert_result_checked();
 
     m_vao.bind();
 
@@ -153,6 +155,7 @@ void Mesh::draw_untextured(Renderer::Shader& shader)
 void Mesh::draw(Shader& shader)
 {
     util_assert(initialized == true, "not initialized");
+    assert_result_checked();
 
     m_vao.bind();
 
@@ -202,6 +205,12 @@ void Mesh::draw(Shader& shader)
             Texture::drop_texture_units(3);
         }
     }
+}
+
+ModelResult Mesh::get_result()
+{
+    m_result_checked = true;
+    return m_result;
 }
 
 void Mesh::setup_mesh()
@@ -282,6 +291,13 @@ void Mesh::setup_mesh()
     m_model_ssbo.init(3, m_instance_count * sizeof(glm::mat4));
 
     initialized = true;
+}
+
+void Mesh::assert_result_checked()
+{
+    if constexpr (Utils::runtime_checks) {
+        util_assert(m_result_checked == true, "did not check mesh result");
+    }
 }
 
 } // namespace Renderer

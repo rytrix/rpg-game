@@ -1,10 +1,11 @@
 #pragma once
 
+#include "../utils/string.hpp"
+
 class GlobalAppData;
 
-#include "mesh.hpp"
-
 namespace Renderer {
+class Mesh;
 
 enum struct ModelResultEnum {
     Ok,
@@ -13,10 +14,12 @@ enum struct ModelResultEnum {
 };
 
 struct ModelResult {
-    ModelResultEnum type;
+    ModelResultEnum type = ModelResultEnum::Ok;
     Utils::String error;
 };
 
 ModelResult load_mesh(Mesh& mesh, const char* path, GlobalAppData* app_data);
 
 } // namespace Renderer
+
+#include "mesh.hpp"
