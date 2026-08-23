@@ -2,6 +2,7 @@
 
 #include "renderer/text.hpp"
 
+#include "utils/file.hpp"
 #include "utils/math/ray.hpp"
 
 #include "physics/interface.hpp"
@@ -27,6 +28,7 @@ App::App()
     m_app_data.m_line_renderer.init();
 
     m_scene = new Scene(&m_app_data);
+    m_scene->m_name = "default_scene";
 
     m_app_data.m_gizmo.init(&m_app_data);
     m_app_data.m_entity_selector.init(m_scene, &m_app_data);
@@ -64,78 +66,16 @@ App::App()
         m_app_data.m_entity_selector.on_event(engine_event);
     });
 
-    auto entity = m_scene->create_entity();
-    Renderer::Light::Pbr::Directional directional {};
-    directional.direction = glm::vec3(-0.2F, -1.0F, 0.3F);
-    directional.color = glm::vec3(0.8);
-    Entity::add_name(entity, "Directional Light");
-    Entity::add_pbr_directional_light(entity, directional);
-    Entity::add_pbr_directional_light_shadow(entity);
-
-    entity = m_scene->create_entity();
-    Entity::add_name(entity, "Sponza Model");
-    Entity::add_model(entity, "res/models/Sponza/glTF/Sponza.gltf", &m_app_data);
-    // Entity::add_model(entity, "res/models/physics_plane/plane.obj", &m_data);
-    Transform transform {};
-    transform.set_scale(glm::vec3(0.1));
-    Entity::add_transform(entity, transform);
-    Entity::add_static_body(entity);
-
-    entity = m_scene->create_entity();
-    Entity::add_name(entity, "Cube");
-    Entity::add_model(entity, "res/models/physics_cube/cube.obj", &m_app_data);
-    transform = {};
-    transform.set_position(glm::vec3(0.0, 5.0, 0.0));
-    Entity::add_transform(entity, transform);
-    JPH::BoxShapeSettings box_shape_settings(JPH::Vec3(0.5, 0.5, 0.5));
-    JPH::Ref<JPH::Shape> box_shape = box_shape_settings.Create().Get();
-    Entity::add_dynamic_body(entity, box_shape);
-
-    entity = m_scene->create_entity();
-    Renderer::Light::Pbr::Point point {};
-    point.position = glm::vec3(6.0F, 6.0F, 8.0F);
-    point.color = glm::vec3(10.0, 10.0, 10.0);
-    Entity::add_name(entity, "Point light 1");
-    Entity::add_pbr_point_light(entity, point);
-    Entity::add_pbr_point_light_shadow(entity);
-
-    entity = m_scene->create_entity();
-    point.position = glm::vec3(6.0F, 6.0F, -8.0F);
-    point.color = glm::vec3(50.0, 25.0, 25.0);
-    Entity::add_name(entity, "Point light 2");
-    Entity::add_pbr_point_light(entity, point);
-    Entity::add_pbr_point_light_shadow(entity);
-
-    entity = m_scene->create_entity();
-    Renderer::Light::Pbr::Spot spot {};
-    spot.position = glm::vec3(-6.0F, 8.0F, 10.0F);
-    spot.direction = glm::vec3(0.2, 0.0, -1.0);
-    spot.color = glm::vec3(50.0, 25.0, 25.0);
-    spot.inner_cutoff_degrees = 12.5F;
-    spot.outer_cutoff_degrees = 20.5F;
-    Entity::add_name(entity, "Spot Light");
-    Entity::add_pbr_spot_light(entity, spot);
-    Entity::add_pbr_spot_light_shadow(entity);
-
-    entity = m_scene->create_entity();
-    transform = {};
-    transform.set_scale(glm::vec3(0.1));
-    Entity::add_name(entity, "Defeated");
-    Entity::add_model(entity, "res/models/Defeated.fbx", &m_app_data);
-    Entity::add_transform(entity, transform);
-    Entity::add_convex_hull_body(entity);
-
-    entity = m_scene->create_entity();
-    transform = {};
-    transform.set_scale(glm::vec3(10.0F));
-    transform.rotate(-90.0F, glm::vec3(1.0, 0.0, 0.0));
-    Entity::add_name(entity, "Dog");
-    Entity::add_model(entity, "res/models/dog/scene.gltf", &m_app_data);
-    Entity::add_transform(entity, transform);
-
     Renderer::SkyboxInfo skybox_info {};
     skybox_info.file = "res/skyboxes/Cubemap_Sky_14-512x512.png";
     m_scene->add_component<Renderer::Skybox>(skybox_info);
+
+    auto text_scene = read_file<char>("default_scene.json");
+    nlohmann::json json_scene = nlohmann::json::parse(text_scene.data());
+    m_scene->from_json(json_scene);
+
+    // m_scene->to_json(json_scene);
+    // std::println("{}", json_scene.dump(2));
 
     m_scene->update();
 }
@@ -233,7 +173,7 @@ void App::run()
 
         ImGui::Checkbox("Toggle physics", &m_scene->m_physics_on);
 
-        if (ImGui::CollapsingHeader("Scene_1")) {
+        if (ImGui::CollapsingHeader(m_scene->m_name.c_str())) {
             m_scene->draw_debug_imgui();
         }
 

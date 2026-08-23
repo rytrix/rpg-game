@@ -157,8 +157,15 @@ Scene::~Scene()
 
 Entity Scene::create_entity()
 {
-    auto entity = m_registry.create();
-    return { this, entity };
+    Entity entity { this, m_registry.create() };
+
+    Utils::String name;
+    name.format("default_{}", (size_t)entity.get_id());
+    Entity::add_name(entity, name.c_str());
+    Transform transform;
+    Entity::add_transform(entity, transform);
+
+    return entity;
 }
 
 void Scene::remove_entity(Entity entity)
@@ -177,6 +184,28 @@ Entity Scene::get_entity_by_name(const char* name)
     }
 
     return { this, entt::null };
+}
+
+void Scene::to_json(nlohmann::json& json)
+{
+    auto view = m_registry.view<entt::entity>();
+    for (auto [entt_entity] : view.each()) {
+        Entity entity(this, entt_entity);
+        nlohmann::json json_entity;
+        Entity::to_json(json_entity, entity);
+
+        // std::println("json_entity: {}", json_entity.dump());
+
+        json.emplace_back(json_entity);
+    }
+}
+
+void Scene::from_json(nlohmann::json& json)
+{
+    for (auto& json_entity : json) {
+        auto entity = create_entity();
+        Entity::from_json(json_entity, entity);
+    }
 }
 
 void Scene::update()
@@ -450,16 +479,32 @@ void Scene::draw_debug_imgui()
         m_shaders_need_update = true;
     }
 
+    if (ImGui::Button("Save scene")) {
+        nlohmann::json scene;
+        to_json(scene);
+
+        auto text = scene.dump(2);
+        Utils::String file_name;
+        file_name.format("{}.json", m_name.c_str());
+        std::ofstream file(file_name.c_str());
+
+        file << text;
+    }
+
     glm::vec3 cam_pos = m_app_data->m_camera.get_pos();
     ImGui::Text("%s", std::format("Camera Pos: {}, {}, {}", cam_pos.x, cam_pos.y, cam_pos.z).c_str());
 
     float camera_speed = m_app_data->m_camera.get_speed();
-    if (ImGui::DragFloat("Camera Speed", &camera_speed, 0.1F, 1.0F, 20.0F)) {
+    if (ImGui::DragFloat("Camera Speed", &camera_speed, 0.1F, 1.0F, 50.0F)) {
         m_app_data->m_camera.set_speed(camera_speed);
     }
 
     i32 i = 0;
     if (ImGui::CollapsingHeader("Entities")) {
+        if (ImGui::Button("Add Entity")) {
+            create_entity();
+        }
+
         auto view = m_registry.view<entt::entity>();
         for (auto [entity] : view.each()) {
             ImGui::PushID(i);

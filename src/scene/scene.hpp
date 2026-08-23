@@ -35,6 +35,9 @@ public:
 
     Entity get_entity_by_name(const char* name);
 
+    void to_json(nlohmann::json& json);
+    void from_json(nlohmann::json& json);
+
     // Crashes if the scene already has this component
     template <typename T, typename... Args>
     T& add_component(Args&&... args);
@@ -49,6 +52,8 @@ public:
     bool has_component();
 
     bool m_physics_on = true;
+
+    Utils::String m_name;
 
     Utils::DeltaTime m_clock;
 
@@ -68,7 +73,7 @@ private:
 
     Renderer::Shader m_shader;
     Renderer::Shader m_shader_bones;
-    
+
     Renderer::Shader m_shadowmap_shader;
     Renderer::Shader m_shadowmap_shader_bones;
     Renderer::Shader m_shadowmap_cubemap_shader;
@@ -99,11 +104,14 @@ private:
 template <typename T, typename... Args>
 T& Scene::add_component(Args&&... args)
 {
+    if (has_component<T>()) {
+        remove_component<T>();
+    }
     // if (has_component<T>()) {
     //     LOG_ERROR(std::format("Scene already has component \"{}\"", typeid(T).name()));
     //     return;
     // }
-    util_assert(has_component<T>() == false, std::format("Scene already has component \"{}\"", typeid(T).name()));
+    // util_assert(has_component<T>() == false, std::format("Scene already has component \"{}\"", typeid(T).name()));
     return m_registry.ctx().emplace<T>(std::forward<Args>(args)...);
 }
 

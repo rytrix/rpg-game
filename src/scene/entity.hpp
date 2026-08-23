@@ -34,7 +34,7 @@ public:
     // Helper functions
     static void add_name(Entity entity, const char* name);
     static void add_transform(Entity entity, const Transform& transform);
-    static void add_model(Entity entity, const char* path, GlobalAppData* app_data);
+    static void add_mesh(Entity entity, const char* path);
     static void add_static_body(Entity entity);
     static void add_dynamic_body(Entity entity, JPH::Ref<JPH::Shape> shape);
     static void add_convex_hull_body(Entity entity);
@@ -45,6 +45,9 @@ public:
     static void add_pbr_spot_light(Entity entity, Renderer::Light::Pbr::Spot& info);
     static void add_pbr_spot_light_shadow(Entity entity);
 
+    static void to_json(nlohmann::json& json, Entity entity);
+    static void from_json(nlohmann::json& json, Entity entity);
+
 private:
     Scene* m_scene = nullptr;
     entt::entity m_entity = entt::null;
@@ -53,7 +56,10 @@ private:
 template <typename T, typename... Args>
 T& Entity::add_component(Args&&... args)
 {
-    util_assert(has_component<T>() == false, std::format("Entity already has component \"{}\"", typeid(T).name()));
+    if (has_component<T>()) {
+        remove_component<T>();
+    }
+    // util_assert(has_component<T>() == false, std::format("Entity already has component \"{}\"", typeid(T).name()));
     return m_scene->m_registry.emplace<T>(m_entity, std::forward<Args>(args)...);
 }
 

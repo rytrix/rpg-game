@@ -1,0 +1,160 @@
+[
+  {
+    "directional_light": {
+      "color": [
+        0.800000011920929,
+        0.800000011920929,
+        0.800000011920929
+      ],
+      "direction": [
+        -0.20000000298023224,
+        -1.0,
+        0.30000001192092896
+      ],
+      "shadow": true
+    },
+    "name": "Directional Light"
+  },
+  {
+    "mesh": "res/models/Sponza/glTF/Sponza.gltf",
+    "name": "Sponza Model",
+    "physics_body": "Mesh",
+    "transform": {
+      "position": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "rotation": [
+        0.0,
+        -0.0,
+        0.0
+      ],
+      "scale": [
+        0.10000000149011612,
+        0.10000000149011612,
+        0.10000000149011612
+      ]
+    }
+  },
+  {
+    "mesh": "res/models/physics_cube/cube.obj",
+    "name": "Cube",
+    "physics_body": "ConvexHull",
+    "transform": {
+      "position": [
+        -6.178979873657227,
+        29.21490478515625,
+        -2.0557847023010254
+      ],
+      "rotation": [
+        91.1236801147461,
+        -0.4323713779449463,
+        -0.0017183214658871293
+      ],
+      "scale": [
+        1.0,
+        1.0,
+        1.0
+      ]
+    }
+  },
+  {
+    "name": "Point light 1",
+    "point_light": {
+      "color": [
+        10.0,
+        10.0,
+        10.0
+      ],
+      "position": [
+        6.0,
+        6.0,
+        8.0
+      ],
+      "shadow": true
+    }
+  },
+  {
+    "name": "Point light 2",
+    "point_light": {
+      "color": [
+        50.0,
+        25.0,
+        25.0
+      ],
+      "position": [
+        6.0,
+        6.0,
+        -8.0
+      ],
+      "shadow": true
+    }
+  },
+  {
+    "name": "Spot Light",
+    "spot_light": {
+      "color": [
+        50.0,
+        25.0,
+        25.0
+      ],
+      "cutoff_inner": 12.5,
+      "cutoff_outer": 20.5,
+      "direction": [
+        0.20000000298023224,
+        0.0,
+        -1.0
+      ],
+      "position": [
+        -6.0,
+        8.0,
+        10.0
+      ],
+      "shadow": true
+    }
+  },
+  {
+    "mesh": "res/models/Defeated.fbx",
+    "name": "Defeated",
+    "physics_body": "ConvexHull",
+    "transform": {
+      "position": [
+        -4.2620062828063965,
+        0.21637916564941406,
+        -2.1950597763061523
+      ],
+      "rotation": [
+        -4.717897415161133,
+        -8.067766189575195,
+        -3.271989345550537
+      ],
+      "scale": [
+        0.10000000149011612,
+        0.10000000149011612,
+        0.10000000149011612
+      ]
+    }
+  },
+  {
+    "mesh": "res/models/dog/scene.gltf",
+    "name": "Dog",
+    "transform": {
+      "position": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "rotation": [
+        -90.0,
+        0.0,
+        0.0
+      ],
+      "scale": [
+        10.0,
+        10.0,
+        10.0
+      ]
+    }
+  }
+]
