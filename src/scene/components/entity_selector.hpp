@@ -48,11 +48,11 @@ private:
     };
 
     struct AddModelPrompt {
-        bool valid;
+        bool valid = false;
         Entity entity;
         Utils::String path;
     };
-    AddModelPrompt m_model_prompt;
+    AddModelPrompt m_model_prompt {};
 
     bool m_imgui_first_time = true;
     void draw_selected_entity_imgui();
