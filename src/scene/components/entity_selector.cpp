@@ -436,10 +436,11 @@ void EntitySelector::draw_add_remove_component_imgui(EntityComponents& component
             components.scene->m_mesh_instance_draw_cache_needs_update = true;
         }
         if (components.physics_info != nullptr && components.physics_info->m_type == Physics::PhysicsType::Mesh && ImGui::MenuItem("Remove Static Body")) {
+            components.scene->m_physics_system->remove_delete_body(components.physics_info->m_id);
             components.entity.remove_component<Physics::PhysicsInfo>();
             components.scene->m_physics_needs_optimize = true;
         }
-        if (components.physics_info != nullptr && components.physics_info->m_type == Physics::PhysicsType::Shape && ImGui::MenuItem("Remove Dynamic Body")) {
+        if (components.physics_info != nullptr && components.physics_info->m_type != Physics::PhysicsType::Mesh && ImGui::MenuItem("Remove Dynamic Body")) {
             components.scene->m_physics_system->remove_delete_body(components.physics_info->m_id);
             components.entity.remove_component<Physics::PhysicsInfo>();
             components.scene->m_physics_needs_optimize = true;
