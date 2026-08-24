@@ -133,32 +133,6 @@ void Entity::add_pbr_spot_light_shadow(Entity entity)
     entity.get_scene()->m_shaders_need_update = true;
 }
 
-/*
-    {
-        "name": ""
-        "transform": {
-            "pos": [x,y,z],
-            "rotation": [x,y,z"],
-            "scale": [x,y,z],
-        }
-        "mesh_path": ""
-        "physics_body": "static/convex_hull"
-        "directional_light": bool
-        "directional_light_shadow": bool
-        "point_light": {
-            "position": [x,y,z],
-            "color": [x,y,z],
-        },
-        "point_light_shadow": bool
-        "spot_light": {
-            "position": [x,y,z],
-            "color": [x,y,z],
-
-        },
-        "spot_light_shadow": bool
-    }
-*/
-
 void Entity::to_json(nlohmann::json& json, Entity entity)
 {
     if (entity.has_component<Utils::String>()) {

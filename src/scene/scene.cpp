@@ -141,7 +141,7 @@ Scene::Scene(GlobalAppData* app_data)
     : m_app_data(app_data)
     , m_random_sampling_texture(Renderer::RandomSamplingTexture::create(16, 8, 2, &app_data->m_texture_cache))
 {
-    m_physics_system = std::make_unique<Physics::System>();
+    m_physics_system = std::make_unique<Physics::System>(this, app_data);
 
     update();
 }

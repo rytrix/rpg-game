@@ -253,6 +253,8 @@ void EntitySelector::draw_selected_entity_imgui()
                     Physics::quat_to_quat(glm::quat(glm::radians(euler_angles))),
                     JPH::EActivation::Activate);
             }
+
+            ImGui::Checkbox("Show Debug Physics Body Wireframe", &components.physics_info->m_should_debug_draw);
         } else {
             ImGui::Text("Physics - Static Object");
 

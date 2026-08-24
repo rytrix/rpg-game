@@ -148,6 +148,8 @@ void App::run()
             m_app_data.m_window.get_height() - m_app_data.m_text_renderer.get_max_pixel_height(),
             std::format("Framerate {}", m_fps).c_str(), glm::vec3 { 1.0F });
 
+        m_scene->m_physics_system->draw_bodies();
+
         const ImGuiViewport* main_viewport = ImGui::GetMainViewport();
         ImGui::SetNextWindowPos(ImVec2(main_viewport->WorkPos.x + 20, main_viewport->WorkPos.y + 20), ImGuiCond_FirstUseEver);
         ImGui::SetNextWindowSize(ImVec2(400, 600), ImGuiCond_FirstUseEver);

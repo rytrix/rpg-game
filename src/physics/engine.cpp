@@ -1,6 +1,7 @@
 #include "engine.hpp"
 
 #include "helpers.hpp"
+#include "interface.hpp"
 
 #include "../app_data.hpp"
 #include "../utils/color.hpp"
@@ -32,43 +33,9 @@ namespace Engine {
 
 } // namespace Engine
 
-DebugRenderer::DebugRenderer(GlobalAppData* app_data)
-    : m_app_data(app_data)
-{
-    Initialize();
-}
-
-void DebugRenderer::DrawLine(JPH::RVec3Arg inFrom, JPH::RVec3Arg inTo, JPH::ColorArg inColor)
-{
-    m_app_data->m_line_renderer.add_line(Physics::vec3_to_vec3(inFrom), Physics::vec3_to_vec3(inTo), inColor.GetUInt32());
-}
-
-void DebugRenderer::DrawTriangle(JPH::RVec3Arg inV1, JPH::RVec3Arg inV2, JPH::RVec3Arg inV3, JPH::ColorArg inColor, [[maybe_unused]] ECastShadow inCastShadow)
-{
-    m_app_data->m_line_renderer.add_triangle(Physics::vec3_to_vec3(inV1), Physics::vec3_to_vec3(inV2), Physics::vec3_to_vec3(inV3), inColor.GetUInt32());
-}
-
-void DebugRenderer::DrawText3D(JPH::RVec3Arg inPosition, const std::string_view& inString, JPH::ColorArg inColor, float inHeight)
-{
-}
-
-DebugRenderer::Batch DebugRenderer::CreateTriangleBatch(const Triangle* inTriangles, int inTriangleCount)
-{
-    Batch test;
-    return test;
-}
-
-DebugRenderer::Batch DebugRenderer::CreateTriangleBatch(const DebugRenderer::Vertex* inVertices, int inVertexCount, const u32* inIndices, int inIndexCount)
-{
-    Batch test;
-    return test;
-}
-
-void DebugRenderer::DrawGeometry(JPH::RMat44Arg inModelMatrix, const JPH::AABox& inWorldSpaceBounds, float inLODScaleSq, JPH::ColorArg inModelColor, const GeometryRef& inGeometry, ECullMode inCullMode, ECastShadow inCastShadow, EDrawMode inDrawMode)
-{
-}
-
-System::System()
+System::System(Scene* scene, GlobalAppData* app_data)
+    : m_debug_renderer(app_data)
+    , m_scene(scene)
 {
     m_physics_system.Init(cMaxBodies, cNumBodyMutexes, cMaxBodyPairs, cMaxContactConstraints, m_broad_phase_layer_interface, m_object_vs_broadphase_layer_filter, m_object_vs_object_layer_filter);
     m_body_interface = &m_physics_system.GetBodyInterface();
@@ -275,6 +242,37 @@ void System::remove_delete_body(JPH::BodyID body)
 {
     m_body_interface->RemoveBody(body);
     m_body_interface->DestroyBody(body);
+}
+
+class Filter : public JPH::BodyDrawFilter {
+public:
+    Filter(Scene* scene)
+        : m_scene(scene)
+    {
+    }
+
+    virtual bool ShouldDraw(const JPH::Body& inBody) const override
+    {
+        auto view = m_scene->m_registry.view<PhysicsInfo>();
+        for (auto [entity, info] : view.each()) {
+            if (info.m_should_debug_draw && info.m_id == inBody.GetID()) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+private:
+    Scene* m_scene;
+};
+
+void System::draw_bodies()
+{
+    JPH::BodyManager::DrawSettings draw_settings;
+    draw_settings.mDrawShapeWireframe = true;
+    Filter filter(m_scene);
+    m_physics_system.DrawBodies(draw_settings, &m_debug_renderer, &filter);
 }
 
 void System::optimize()

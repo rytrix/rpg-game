@@ -19,6 +19,8 @@ struct PhysicsInfo {
 
     PhysicsType m_type;
 
+    bool m_should_debug_draw = false;
+
     JPH::Ref<JPH::Shape> m_shape;
     Entity m_entity;
 };

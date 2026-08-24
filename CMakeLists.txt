@@ -18,6 +18,7 @@ add_executable(${PROJECT_NAME}
 
     src/physics/engine.cpp
     src/physics/interface.cpp
+    src/physics/debugrenderer.cpp
 
     src/utils/deltatime.cpp
     src/utils/math/ray.cpp
